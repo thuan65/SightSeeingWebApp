@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Thư viện ảnh</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin: 40px; }
+    input { padding: 10px; width: 300px; }
+    .gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .gallery img { width: 200px; height: 150px; object-fit: cover; border-radius: 8px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Thư viện ảnh</h1>
+  
+<!-- ô tìm kiếm -->
+  <input id="search" placeholder="Nhập từ khóa..." oninput="searchImages()">
+
+  <!-- nơi hiển thị kết quả -->
+  <div id="results" class="gallery"></div>
+
+  
+  
+  <script>
+    // Hàm tìm kiếm
+    async function searchImages() {
+      const query = document.getElementById('search').value;
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+
+      const container = document.getElementById('results');
+      container.innerHTML = data.map(img => `
+        <a href="/image/${img.id}">
+          <img src="/static/images/${img.filename}" alt="${img.name}">
+        </a>
+      `).join('');
+    }
+
+    // Hiển thị tất cả ảnh khi mở trang
+    window.onload = () => searchImages();
+  </script>
+  
+</body>
+</html>

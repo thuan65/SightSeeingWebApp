@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ image.name }}</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 40px auto; line-height: 1.6; }
+    img { width: 100%; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); margin-bottom: 20px; }
+    .desc { text-align: left; white-space: pre-line; }
+  </style>
+</head>
+<body>
+  <h1>{{ image.name }}</h1>
+  <img src="/static/images/{{ image.filename }}" alt="{{ image.name }}">
+  <p><b>Tags:</b> {{ image.tags }}</p>
+  <div class="desc">{{ image.description }}</div>
+  <p><a href="/"> Quay lại thư viện</a></p>
+</body>
+</html>
