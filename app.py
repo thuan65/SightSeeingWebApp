@@ -36,5 +36,38 @@ def search():
     data = [{"id": img.id, "name": img.name, "filename": img.filename} for img in results]
     return jsonify(data)
 
+# NEW CODE: để người dùng upload ảnh 
+import os
+from Search_Imagine import find_similar  # import hàm AI tìm ảnh tương tự
+
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+
+@app.route("/search_image", methods=["GET", "POST"])
+def search_image():
+    if request.method == "POST":
+        file = request.files.get("file")
+        if not file:
+            return "Không có ảnh nào được tải lên", 400
+
+        upload_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        file.save(upload_path)
+
+        # Gọi hàm tìm ảnh tương tự
+        best_match, score = find_similar(upload_path)
+
+        return render_template(
+            "search_result.html",
+            query=file.filename,
+            match=best_match,
+            score=round(score, 3)
+        )
+
+    return render_template("search_image.html")
+
+@app.route("/map")
+def show_map():
+    return render_template("map.html")
+
+
 if __name__ == "__main__":
     app.run(debug=True)

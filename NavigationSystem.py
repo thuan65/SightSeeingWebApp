@@ -17,6 +17,7 @@ Usage:
 import json
 import requests
 from GetCoordinates import get_address_coordinates, get_user_coordinates
+import os
 
 # --- SETUP ---
 GH_KEY = "510b2242-84d4-45c2-97fa-baa242e6a4b7" 
@@ -74,7 +75,8 @@ if __name__ == "__main__":
         "properties": {"distance_m": distance_m, "time_ms": time_ms}
     }
 
-    with open("route.geojson", "w", encoding="utf-8") as f:
+    output_path = os.path.join("static", "route.geojson")
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump({"type": "FeatureCollection", "features": [feature]}, f, ensure_ascii=False, indent=2)
 
-    print("✅ Route saved as 'route.geojson'. Open it at https://geojson.io to view the map.")
+    print(f"✅ Route saved as '{output_path}'. You can open http://127.0.0.1:5000/map to view it in your Flask app.")

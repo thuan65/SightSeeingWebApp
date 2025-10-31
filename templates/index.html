@@ -10,35 +10,66 @@
     .gallery img { width: 200px; height: 150px; object-fit: cover; border-radius: 8px; cursor: pointer; }
   </style>
 </head>
-<body>
-  <h1>Thư viện ảnh</h1>
+<!--<body>
+  <h1>Thư viện ảnh</h1>-->
   
 <!-- ô tìm kiếm -->
-  <input id="search" placeholder="Nhập từ khóa..." oninput="searchImages()">
+  <!--<input id="search" placeholder="Nhập từ khóa..." oninput="searchImages()">-->
 
   <!-- nơi hiển thị kết quả -->
-  <div id="results" class="gallery"></div>
+  <!--<div id="results" class="gallery"></div>-->
 
-  
-  
-  <script>
-    // Hàm tìm kiếm
-    async function searchImages() {
-      const query = document.getElementById('search').value;
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
+<!--UPDATE BODY ĐỂ HIỆN RA TÌM KIẾM BẰNG HÌNH ẢNH--> 
+<body>
+    <h1>Thư viện ảnh</h1>
 
-      const container = document.getElementById('results');
-      container.innerHTML = data.map(img => `
-        <a href="/image/${img.id}">
-          <img src="/static/images/${img.filename}" alt="${img.name}">
-        </a>
-      `).join('');
-    }
+    <!-- nút chuyển đến trang tìm kiếm bằng ảnh -->
+    <p>
+    <a href="/search_image" style="
+      display: inline-block;
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      margin: 0 10px 20px 0;
+    ">🔍 Tìm kiếm bằng hình ảnh</a>
 
-    // Hiển thị tất cả ảnh khi mở trang
-    window.onload = () => searchImages();
-  </script>
-  
+    <a href="/map" style="
+      display: inline-block;
+      background-color: #2196F3;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      margin-bottom: 20px;
+    ">🗺️ Xem bản đồ</a>
+</p>
+
+    <!-- ô tìm kiếm -->
+    <input id="search" placeholder="Nhập từ khóa..." oninput="searchImages()">
+
+    <!-- nơi hiển thị kết quả -->
+    <div id="results" class="gallery"></div>
+
+    <script>
+        // Hàm tìm kiếm
+        async function searchImages() {
+            const query = document.getElementById('search').value;
+            const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+            const data = await res.json();
+
+            const container = document.getElementById('results');
+            container.innerHTML = data.map(img => `
+            <a href="/image/${img.id}">
+              <img src="/static/images/${img.filename}" alt="${img.name}">
+            </a>
+          `).join('');
+        }
+
+        // Hiển thị tất cả ảnh khi mở trang
+        window.onload = () => searchImages();
+    </script>
+
 </body>
 </html>
