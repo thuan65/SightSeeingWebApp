@@ -3,6 +3,7 @@
 from flask import Flask, render_template, request, jsonify
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from chatBot import chatbot_reply
 from createDataBase import Image
 
 app = Flask(__name__)
@@ -68,6 +69,21 @@ def search_image():
 def show_map():
     return render_template("map.html")
 
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.get_json()
+    if not data or "message" not in data:
+        return jsonify({"error": "Missing 'message' in request"}), 400
+
+    user_message = data["message"].strip()
+    if not user_message:
+        return jsonify({"error": "Empty message"}), 400
+
+    try:
+        bot_response = chatbot_reply(user_message)
+        return jsonify({"reply": bot_response})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
