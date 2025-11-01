@@ -5,6 +5,7 @@ from sentence_transformers import SentenceTransformer, util
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from createDataBase import Image
+from chatBot import chatbot_reply
 import torch
 
 app = Flask(__name__)
@@ -123,11 +124,29 @@ def search_text():
     response = json.dumps(top_results, ensure_ascii=False)
     return Response(response, content_type="application/json; charset=utf-8")
 
-
 @app.route("/map")
 def show_map():
     return render_template("map.html")
 
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.get_json()
+    if not data or "message" not in data:
+        return jsonify({"error": "Missing 'message' in request"}), 400
+
+    user_message = data["message"].strip()
+    if not user_message:
+        return jsonify({"error": "Empty message"}), 400
+
+    try:
+        bot_response = chatbot_reply(user_message)
+        return jsonify({"reply": bot_response})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/chat_ui")
+def chat_ui():
+    return render_template("chat_ui.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
