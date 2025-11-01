@@ -15,3 +15,9 @@ python app.y
 
 link để vào web:
 http://localhost:5000/
+
+
+để chạy được Ai 
+đầu tiên tạo một file tên là ".env"
+lên https://aistudio.google.com/app/api-keys
+tạo API key mới và cho vào file ".env.

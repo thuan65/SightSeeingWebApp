@@ -4,6 +4,7 @@ from flask import Flask, render_template, request, jsonify, Response, json
 from sentence_transformers import SentenceTransformer, util
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from chatBot import chatbot_reply
 from createDataBase import Image
 from chatBot import chatbot_reply
 import torch
