@@ -64,6 +64,10 @@ def search_image():
 
     return render_template("search_image.html")
 
+@app.route("/map")
+def show_map():
+    return render_template("map.html")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
