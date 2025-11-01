@@ -2,118 +2,269 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Thư viện ảnh</title>
   <style>
-    body { font-family: sans-serif; text-align: center; margin: 40px; }
-    input { padding: 10px; width: 300px; }
-    .gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-    .gallery img { width: 200px; height: 150px; object-fit: cover; border-radius: 8px; cursor: pointer; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+          font-family: sans-serif;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          min-height: 100vh;
+          padding: 20px;
+      }
+
+      .container {
+          max-width: 1200px;
+          margin: 0 auto;
+          background: white;
+          border-radius: 20px;
+          padding: 30px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      }
+
+      h1 {
+          text-align: center;
+          color: #667eea;
+          margin-bottom: 30px;
+          font-size: 2.5em;
+      }
+
+      .search-box {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 30px;
+          max-width: 600px;
+          margin-left: auto;
+          margin-right: auto;
+      }
+
+      .search-box input {
+          flex: 1;
+          padding: 15px 20px;
+          border: 2px solid #667eea;
+          border-radius: 50px;
+          font-size: 16px;
+          outline: none;
+      }
+
+      .search-box button {
+          padding: 15px 30px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border: none;
+          border-radius: 50px;
+          cursor: pointer;
+      }
+
+      .image-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 20px;
+      }
+
+      .image-card {
+          background: white;
+          border-radius: 15px;
+          overflow: hidden;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+          cursor: pointer;
+          transition: 0.3s;
+      }
+
+      .image-card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+      }
+
+      .image-card img {
+          width: 100%;
+          height: 200px;
+          object-fit: cover;
+      }
+
+      .image-info { padding: 15px; }
+      .image-info h3 { margin-bottom: 5px; }
+      .tags { color: #667eea; font-style: italic; font-size: 14px; }
+
+      .no-results { text-align: center; padding: 40px; color: #777; }
   </style>
 </head>
-<!--<body>
-  <h1>Thư viện ảnh</h1>-->
-  
-<!-- ô tìm kiếm -->
-  <!--<input id="search" placeholder="Nhập từ khóa..." oninput="searchImages()">-->
-
-  <!-- nơi hiển thị kết quả -->
-  <!--<div id="results" class="gallery"></div>-->
-
 <!--UPDATE BODY ĐỂ HIỆN RA TÌM KIẾM BẰNG HÌNH ẢNH--> 
 <body>
-    <h1>Thư viện ảnh</h1>
 
-    <!-- nút chuyển đến trang tìm kiếm bằng ảnh -->
-    <p>
-    <a href="/search_image" style="
-      display: inline-block;
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 6px;
-      text-decoration: none;
-      margin: 0 10px 20px 0;
-    ">🔍 Tìm kiếm bằng hình ảnh</a>
+  <!-- nút chuyển đến trang tìm kiếm bằng ảnh -->
+  <p style="text-align: center;">
+  <a href="/search_image" style="
+    display: inline-block;
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    margin: 0 10px 20px 0;
+  ">🔍 Tìm kiếm bằng hình ảnh</a>
 
-    <a href="/map" style="
-      display: inline-block;
-      background-color: #2196F3;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 6px;
-      text-decoration: none;
-      margin-bottom: 20px;
-    ">🗺️ Xem bản đồ</a>
+  <a href="/map" style="
+    display: inline-block;
+    background-color: #2196F3;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    margin-bottom: 20px;
+  ">🗺️ Xem bản đồ</a>
+
+  <a href="/chat_ui" style="
+    display: inline-block;
+    background-color: #9C27B0;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    margin-bottom: 20px;
+  ">💬 Chatbot du lịch</a>
 </p>
+<div class="container">
+  <h1>Thư viện ảnh</h1>
 
-    <!-- ô tìm kiếm -->
-    <input id="search" placeholder="Nhập từ khóa..." oninput="searchImages()">
+  <div class="search-box">
+      <input id="searchInput" placeholder="Nhập từ khóa: cat, dog, mountain..." value="{{ keyword }}">
+      <button onclick="searchImages()">Tìm kiếm</button>
+  </div>
 
-    <!-- nơi hiển thị kết quả -->
-    <div id="results" class="gallery"></div>
+  <!-- Bộ lọc nâng cao -->
+    <div class="search-box" style="margin-top: 10px;">
+      <input id="cityInput" placeholder="Thành phố (VD: Hà Nội)">
+      <input id="tagInput" placeholder="Thẻ (VD: lịch sử, biển)">
+      <input id="ratingInput" type="number" min="0" max="5" step="0.5" placeholder="Điểm đánh giá tối thiểu">
+      <button onclick="searchFilter()">Lọc</button>
+    </div>
 
-    <script>
-        // Hàm tìm kiếm
-        async function searchImages() {
-            const query = document.getElementById('search').value;
-            const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-            const data = await res.json();
+    <!-- Tìm kiếm thông minh bằng ngôn ngữ tự nhiên -->
+    <div class="search-box" style="margin-top: 10px;">
+      <input id="queryText" placeholder="Nhập mô tả (VD: địa điểm có nhiều cây xanh, gần biển...)">
+      <button onclick="searchText()">Tìm bằng AI</button>
+  </div>
 
-            const container = document.getElementById('results');
-            container.innerHTML = data.map(img => `
-            <a href="/image/${img.id}">
-              <img src="/static/images/${img.filename}" alt="${img.name}">
-            </a>
-          `).join('');
-        }
+  {% if keyword %}
+  <div style="text-align:center; margin-bottom:15px;">
+      Tìm thấy <b>{{ images|length }}</b> ảnh cho "<b>{{ keyword }}</b>"
+  </div>
+  {% else %}
+  <div style="text-align:center; margin-bottom:15px;">
+      Hiển thị <b>{{ images|length }}</b> ảnh
+  </div>
+  {% endif %}
 
-        // Hiển thị tất cả ảnh khi mở trang
-        window.onload = () => searchImages();
-    </script>
+  <div id="results" class="image-grid">
+    {% for image in images %}
+    <div class="image-card" data-id="{{ image.id }}" onclick="viewDetail(this.dataset.id)">
+      <img src="{{ url_for('static', filename='images/' + image.filename) }}"
+        alt="{{ image.name }}">
+          <div class="image-info">
+            <h3>{{ image.name }}</h3>
+              <div class="tags">{{ image.tags }}</div>
+          </div>
+    </div>
+        {% endfor %}
+   </div>
+</div>
 
+<script>
+  async function searchImages() {
+    const query = document.getElementById('searchInput').value.trim();
+    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
 
-<!--UPDATE BODY ĐỂ HIỆN RA TÌM KIẾM BẰNG HÌNH ẢNH--> 
-<body>
-    <h1>Thư viện ảnh</h1>
+    const container = document.getElementById('results');
+    if (!container) return;
 
-    <!-- nút chuyển đến trang tìm kiếm bằng ảnh -->
-  
-    <p>
-        <a href="/search_image" style="
-      display: inline-block;
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 6px;
-      text-decoration: none;
-      margin-bottom: 20px;
-    ">🔍 Tìm kiếm bằng hình ảnh</a>
-    </p>
+    if (data.length === 0) {
+      container.innerHTML = `<div class="no-results">Không tìm thấy ảnh nào cho "<b>${query}</b>"</div>`;
+      return;
+    }
 
-    <!-- ô tìm kiếm -->
-    <input id="search" placeholder="Nhập từ khóa..." oninput="searchImages()">
-    <!-- nơi hiển thị kết quả -->
-    <<div id="results" class="gallery"></div>>
+    container.innerHTML = data.map(img => `
+      <div class="image-card" onclick="viewDetail(${img.id})">
+        <img src="/static/images/${img.filename}" alt="${img.name}">
+        <div class="image-info">
+          <h3>${img.name}</h3>
+          <div class="tags">${img.tags || ''}</div>
+        </div>
+      </div>
+    `).join('');
+  }
 
+  document.getElementById('searchInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') searchImages();
+  });
 
-    <script>
-        // Hàm tìm kiếm
-        async function searchImages() {
-            const query = document.getElementById('search').value;
-            const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-            const data = await res.json();
+  function viewDetail(imageId) {
+    window.location.href = '/image/' + imageId;
+  }
 
-            const container = document.getElementById('results');
-            container.innerHTML = data.map(img => `
-            <a href="/image/${img.id}">
-              <img src="/static/images/${img.filename}" alt="${img.name}">
-            </a>
-          `).join('');
-        }
+  // Tải tất cả ảnh khi mở trang
+  window.onload = () => searchImages();
 
-        // Hiển thị tất cả ảnh khi mở trang
-        window.onload = () => searchImages();
-    </script>
+  // Lọc theo thành phố, thẻ và đánh giá
+async function searchFilter() {
+  const city = document.getElementById('cityInput').value.trim();
+  const tag = document.getElementById('tagInput').value.trim();
+  const rating = document.getElementById('ratingInput').value.trim() || 0;
+
+  const url = `/search_filter?city=${encodeURIComponent(city)}&tag=${encodeURIComponent(tag)}&rating=${rating}`;
+  const res = await fetch(url);
+  const data = await res.json();
+
+  const container = document.getElementById('results');
+  if (!container) return;
+
+  if (data.length === 0) {
+    container.innerHTML = `<div class="no-results">Không tìm thấy địa điểm phù hợp</div>`;
+    return;
+  }
+
+  container.innerHTML = data.map(place => `
+    <div class="image-card" onclick="viewDetail(${place.id})">
+      <img src="/static/images/${place.image || 'default.jpg'}" alt="${place.name}">
+      <div class="image-info">
+        <h3>${place.name}</h3>
+        <div class="tags">${place.city || ''} - ${place.tags || ''}</div>
+        <div class="tags">⭐ ${place.rating || '0'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Tìm bằng AI (Semantic Search)
+async function searchText() {
+  const query = document.getElementById('queryText').value.trim();
+  if (!query) return;
+
+  const res = await fetch(`/search_text?query=${encodeURIComponent(query)}`);
+  const data = await res.json();
+
+  const container = document.getElementById('results');
+  if (!container) return;
+
+  if (data.length === 0) {
+    container.innerHTML = `<div class="no-results">Không tìm thấy kết quả phù hợp cho "${query}"</div>`;
+    return;
+  }
+
+  container.innerHTML = data.map(place => `
+    <div class="image-card" onclick="viewDetail(${place.id})">
+      <img src="/static/images/${place.image || 'default.jpg'}" alt="${place.name}">
+      <div class="image-info">
+        <h3>${place.name}</h3>
+        <div class="tags">${place.city || ''} - ${place.tags || ''}</div>
+        <div class="tags">⭐ ${place.rating || '0'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+</script>
 
 </body>
 </html>

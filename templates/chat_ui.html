@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Chatbot Du Lịch</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 30px;
+    }
+    .chat-box {
+      background: white;
+      color: black;
+      width: 90%;
+      max-width: 600px;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      overflow-y: auto;
+      max-height: 70vh;
+    }
+    .message { margin-bottom: 10px; }
+    .user { text-align: right; color: #4CAF50; }
+    .bot { text-align: left; color: #333; }
+    .input-area { margin-top: 20px; width: 90%; max-width: 600px; display: flex; gap: 10px; }
+    input { flex: 1; padding: 10px; border-radius: 5px; border: none; font-size: 16px; }
+    button { background: #4CAF50; color: white; border: none; border-radius: 5px; padding: 10px 20px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>💬 Chatbot Du Lịch</h1>
+  <div class="chat-box" id="chatBox"></div>
+
+  <div class="input-area">
+    <input id="userInput" placeholder="Nhập tin nhắn..." onkeypress="if(event.key==='Enter') sendMessage()">
+    <button onclick="sendMessage()">Gửi</button>
+  </div>
+
+  <script>
+    async function sendMessage() {
+      const input = document.getElementById('userInput');
+      const chatBox = document.getElementById('chatBox');
+      const message = input.value.trim();
+      if (!message) return;
+
+      chatBox.innerHTML += `<div class="message user">🧍‍♂️ ${message}</div>`;
+      input.value = '';
+
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message})
+      });
+      const data = await res.json();
+
+      if (data.reply) {
+        chatBox.innerHTML += `<div class="message bot"> ${data.reply}</div>`;
+      } else {
+        chatBox.innerHTML += `<div class="message bot"> Lỗi: ${data.error || 'Không phản hồi được'}</div>`;
+      }
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script>
+</body>
+</html>
