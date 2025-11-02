@@ -12,7 +12,7 @@ load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 # ======================================================
-# 2️. Khởi tạo model
+# 2. Khởi tạo model
 # ======================================================
 # Mô hình hiểu ngữ nghĩa cho tiếng Việt
 sem_model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
@@ -21,7 +21,7 @@ sem_model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-M
 gemini_model = genai.GenerativeModel("gemini-2.5-flash")
 
 # ======================================================
-# 3️. Kết nối database
+# 3. Kết nối database
 # ======================================================
 engine = create_engine("sqlite:///places.db")
 
@@ -33,7 +33,7 @@ place_sentences = [f"{r['name']} - {r['description']}" for r in results]
 place_embeddings = sem_model.encode(place_sentences, convert_to_tensor=True)
 
 # ======================================================
-# 4️. Phân loại ý định người dùng
+# 4. Phân loại ý định người dùng
 # ======================================================
 def detect_intent(text: str) -> str:
     """
@@ -53,7 +53,7 @@ def detect_intent(text: str) -> str:
         return "chat"
 
 # ======================================================
-# 5️. Gợi ý địa điểm từ cơ sở dữ liệu
+# 5. Gợi ý địa điểm từ cơ sở dữ liệu
 # ======================================================
 def suggest_place(user_query: str) -> dict:
     """
@@ -65,7 +65,7 @@ def suggest_place(user_query: str) -> dict:
     return dict(results[best_idx])
 
 # ======================================================
-# 6️. Trả lời bằng Gemini
+# 6. Trả lời bằng Gemini
 # ======================================================
 def gemini_reply(user_message: str) -> str:
     """
@@ -76,7 +76,7 @@ def gemini_reply(user_message: str) -> str:
     return response.text.strip()
 
 # ======================================================
-# 7️. Hàm trung tâm: Chatbot trả lời
+# 7. Hàm trung tâm: Chatbot trả lời
 # ======================================================
 def chatbot_reply(user_message: str):
     """
@@ -86,10 +86,16 @@ def chatbot_reply(user_message: str):
 
     if intent == "suggest":
         place = suggest_place(user_message)
-        reply = f"💡 Gợi ý cho bạn: {place['name']} — {place['description']}"
+        raw_info = f" Gợi ý cho bạn: {place['name']} — {place['description']}"
+        prompt = f"""Người dùng hỏi: "{user_message}".
+        Dưới đây là thông tin tôi tìm thấy:
+        {raw_info}
+        Hãy viết lại câu trả lời ngắn gọn, thân thiện, tự nhiên như hướng dẫn viên du lịch đang nói chuyện, bằng tiếng Việt.
+        """
+        reply = gemini_reply(prompt)
     else:
         reply = gemini_reply(user_message)
 
     return reply
 
-print(chatbot_reply("Hello"))
+print("Ai runningnn...")
