@@ -97,34 +97,46 @@ def search_filter():
     response = json.dumps([dict(row) for row in results], ensure_ascii=False)
     return Response(response, content_type="application/json; charset=utf-8")
 
+# Load mô hình Sentence-BERT tiếng Việt
 model = SentenceTransformer("keepitreal/vietnamese-sbert")
-@app.route("/search_text", methods =["GET"])
-def search_text():
-    query_text = request.args.get("query", "")
-    if not query_text:
-        return jsonify([])
 
-    # B1: mã hóa câu người dùng nhập thành vector
-    query_embedding = model.encode(query_text, convert_to_tensor=True)
-
-    # B2: Lấy toàn bộ địa điểm trong DB
+def get_all_places():
+    """Lấy toàn bộ dữ liệu địa điểm từ database"""
     with engine.connect() as conn:
         results = conn.execute(text("SELECT * FROM places")).mappings().all()
+    return results
 
-    # B3: So sánh độ tương đồng giữa query và mô tả từng địa điểm
+def compute_similarity(query_text, places, top_k=5):
+    """So sánh độ tương đồng giữa query và description trong DB"""
+
+    # Encode câu người dùng nhập
+    query_embedding = model.encode(query_text, convert_to_tensor=True)
+
     scored = []
-    for r in results:
-        place_embedding = model.encode(r["description"], convert_to_tensor=True)
+    for place in places:
+        place_embedding = model.encode(place["description"], convert_to_tensor=True)
         similarity = util.cos_sim(query_embedding, place_embedding).item()
-        scored.append((similarity, r))
+        scored.append((similarity, place))
 
-    # B4: Sắp xếp theo độ tương đồng cao nhất
+    # Sắp xếp theo similarity giảm dần
     scored.sort(reverse=True, key=lambda x: x[0])
-    top_results = [dict(x[1]) for x in scored[:2]]
+
+    # Chỉ trả về top_k
+    return [dict(x[1]) for x in scored[:top_k]]
+
+@app.route("/search_text", methods=["GET"])
+def search_text():
+    """Search theo câu nhập từ người dùng"""
+    query_text = request.args.get("query", "")
+    if not query_text.strip():
+        return jsonify([])
+
+    places = get_all_places()
+    top_results = compute_similarity(query_text, places)
 
     response = json.dumps(top_results, ensure_ascii=False)
     return Response(response, content_type="application/json; charset=utf-8")
-
+    
 @app.route("/map")
 def show_map():
     return render_template("map.html")
