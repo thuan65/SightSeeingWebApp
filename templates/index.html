@@ -227,11 +227,11 @@ async function searchFilter() {
 
   container.innerHTML = data.map(place => `
     <div class="image-card" onclick="viewDetail(${place.id})">
-      <img src="/static/images/${place.image || 'default.jpg'}" alt="${place.name}">
+      <img src="/static/images/${place.filename  || 'default.jpg'}" alt="${place.name}">
       <div class="image-info">
         <h3>${place.name}</h3>
         <div class="tags">${place.city || ''} - ${place.tags || ''}</div>
-        <div class="tags">⭐ ${place.rating || '0'}</div>
+        <div class="tags"> ${place.rating || '0'}</div>
       </div>
     </div>
   `).join('');
@@ -255,7 +255,7 @@ async function searchText() {
 
   container.innerHTML = data.map(place => `
     <div class="image-card" onclick="viewDetail(${place.id})">
-      <img src="/static/images/${place.image || 'default.jpg'}" alt="${place.name}">
+      <img src="/static/images/${place.filename  || 'default.jpg'}" alt="${place.name}">
       <div class="image-info">
         <h3>${place.name}</h3>
         <div class="tags">${place.city || ''} - ${place.tags || ''}</div>

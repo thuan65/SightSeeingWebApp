@@ -23,10 +23,10 @@ gemini_model = genai.GenerativeModel("gemini-2.5-flash")
 # ======================================================
 # 3. Kết nối database
 # ======================================================
-engine = create_engine("sqlite:///places.db")
+engine = create_engine("sqlite:///images.db")
 
 with engine.connect() as conn:
-    results = conn.execute(text("SELECT * FROM places")).mappings().all()
+    results = conn.execute(text("SELECT * FROM images")).mappings().all()
 
 # Chuẩn bị embedding cho toàn bộ địa điểm
 place_sentences = [f"{r['name']} - {r['description']}" for r in results]

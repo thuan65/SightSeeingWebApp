@@ -6,7 +6,6 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from chatBot import chatbot_reply
 from createDataBase import Image
-from chatBot import chatbot_reply
 import torch
 
 app = Flask(__name__)
@@ -16,7 +15,7 @@ engine = create_engine("sqlite:///images.db")
 Session = sessionmaker(bind=engine)
 session = Session()
 # Kết nối tới database SQLite
-engine = create_engine("sqlite:///places.db")
+#engine = create_engine("sqlite:///images.db")
 
 @app.route("/")
 def index():
@@ -61,7 +60,6 @@ def search_image():
 
         # Gọi hàm tìm ảnh tương tự
         best_match, score = find_similar(upload_path)
-
         return render_template(
             "search_result.html",
             query=file.filename,
@@ -77,7 +75,7 @@ def search_filter():
     tag = request.args.get("tag", "")
     min_rating = float(request.args.get("rating", 0))
 
-    query = "SELECT * FROM places WHERE 1=1"
+    query = "SELECT * FROM images WHERE 1=1"
     params = {}
 
     if city:
@@ -91,10 +89,18 @@ def search_filter():
     query += " AND rating >= :min_rating"
     params["min_rating"] = min_rating
 
+    print(query)
+
     with engine.connect() as conn:
         results = conn.execute(text(query), params).mappings().all()
 
     response = json.dumps([dict(row) for row in results], ensure_ascii=False)
+
+    for row in results:
+        r = dict(row)
+        print(f"- ID: {r.get('id')}, Name: {r.get('name')}, Image: {r.get('filename') or r.get('image')}, Rating: {r.get('rating')}")
+
+
     return Response(response, content_type="application/json; charset=utf-8")
 
 # Load mô hình Sentence-BERT tiếng Việt
@@ -103,7 +109,7 @@ model = SentenceTransformer("keepitreal/vietnamese-sbert")
 def get_all_places():
     """Lấy toàn bộ dữ liệu địa điểm từ database"""
     with engine.connect() as conn:
-        results = conn.execute(text("SELECT * FROM places")).mappings().all()
+        results = conn.execute(text("SELECT * FROM images")).mappings().all()
     return results
 
 def compute_similarity(query_text, places, top_k=5):
