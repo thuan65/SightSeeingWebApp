@@ -131,14 +131,13 @@ def compute_similarity(query_text, places, top_k=5):
     return [dict(x[1]) for x in scored[:top_k]]
 
 @app.route("/search_text", methods=["GET"])
-def search_text():
+def search_text(user_messange):
     """Search theo câu nhập từ người dùng"""
-    query_text = request.args.get("query", "")
-    if not query_text.strip():
+    if not user_messange.strip():
         return jsonify([])
 
     places = get_all_places()
-    top_results = compute_similarity(query_text, places)
+    top_results = compute_similarity(user_messange, places)
 
     response = json.dumps(top_results, ensure_ascii=False)
     return Response(response, content_type="application/json; charset=utf-8")
