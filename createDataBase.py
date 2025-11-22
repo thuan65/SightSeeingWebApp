@@ -1,5 +1,5 @@
 import csv
-from sqlalchemy import create_engine, Column, Integer, String, Text, Float
+from sqlalchemy import create_engine, Column, Integer, String, Text, Float, DateTime, func
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 Base = declarative_base()
@@ -12,6 +12,15 @@ class Image(Base):
     filename = Column(String)
     description = Column(Text)
     rating = Column(Float)
+    rating_count = Column(Integer, default=1) # So luong nguoi danh gia
+
+class Feedback(Base):
+    __tablename__ = "feedback"
+
+    id = Column(Integer, primary_key=True)
+    rating = Column(Integer, nullable=False)
+    comment = Column(Text)
+    timestamp = Column(DateTime, default=func.now())
 
 engine = create_engine("sqlite:///images.db")
 Session = sessionmaker(bind=engine)
@@ -40,7 +49,8 @@ def addSingle(row, session):
             tags=normalizeTags(row[2]),
             filename=row[3].strip(),
             description=row[4].strip(),
-            rating=float(row[5]) if len(row) > 5 and row[5] else 0.0
+            rating=float(row[5]) if len(row) > 5 and row[5] else 0.0,
+            rating_count=int(row[6]) if len(row) > 6 and row[6].isdigit() else 1
         )
         session.add(img)
         session.commit()
