@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8,7 +8,7 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
-            background: #f4f4f4;
+            background: linear-gradient(135deg, #4ECDC4 0%, #FF6B35 100%);
         }
 
         #chat-container {
@@ -27,13 +27,13 @@
 
         .msg-user {
             text-align: right;
-            color: blue;
+            color: #FF6B35;
             margin-bottom: 5px;
         }
 
         .msg-system {
             text-align: left;
-            color: green;
+            color: #4ECDC4;
             margin-bottom: 10px;
         }
 
@@ -50,7 +50,7 @@
             #chat-input button {
                 padding: 10px;
                 border: none;
-                background: #007bff;
+                background: linear-gradient(135deg, #4ECDC4, #FF6B35);
                 color: white;
                 cursor: pointer;
             }
@@ -69,7 +69,7 @@
     </div>
 
     <script>
-        const CURRENT_USER_ID = { user_id };
+        const CURRENT_USER_ID = {{ user_id }};
         const SESSION_TYPE = '{{ session_type }}';
 
         const historyDiv = document.getElementById('chat-history');
