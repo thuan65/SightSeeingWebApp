@@ -7,8 +7,13 @@ from sqlalchemy.orm import sessionmaker
 from chatBot import chatbot_reply
 from createDataBase import Image
 import torch
+from flask import Flask
+from feedback import feedback_bp   
 
 app = Flask(__name__)
+
+# Đăng ký API feedback
+app.register_blueprint(feedback_bp)
 
 app.config['JSON_AS_ASCII'] = False
 engine = create_engine("sqlite:///images.db")
