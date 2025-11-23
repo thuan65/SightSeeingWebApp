@@ -15,7 +15,8 @@ from flask_login import (
     LoginManager, login_user, logout_user, login_required, UserMixin, current_user
 )
 import torch
-import os
+from flask import Flask
+from feedback import feedback_bp   
 
 # ---------------------------------------------------------
 # CẤU HÌNH ỨNG DỤNG FLASK
@@ -29,6 +30,10 @@ db.init_app(app)
 bcrypt.init_app(app)
 
 # Kết nối SQLite cho phần ảnh
+# Đăng ký API feedback
+app.register_blueprint(feedback_bp)
+
+app.config['JSON_AS_ASCII'] = False
 engine = create_engine("sqlite:///images.db")
 Session = sessionmaker(bind=engine)
 db_session = Session()
