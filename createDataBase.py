@@ -1,5 +1,5 @@
 import csv
-from sqlalchemy import create_engine, Column, Integer, String, Text, Float, DateTime, func
+from sqlalchemy import create_engine, Column, Integer, String, Text, Float, DateTime, func, ForeignKey
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 Base = declarative_base()
@@ -18,9 +18,11 @@ class Feedback(Base):
     __tablename__ = "feedback"
 
     id = Column(Integer, primary_key=True)
+    image_id = Column(Integer, ForeignKey("images.id"), nullable=False)
     rating = Column(Integer, nullable=False)
     comment = Column(Text)
     timestamp = Column(DateTime, default=func.now())
+
 
 engine = create_engine("sqlite:///images.db")
 Session = sessionmaker(bind=engine)
