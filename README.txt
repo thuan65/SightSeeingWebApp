@@ -16,6 +16,9 @@ python app.y
 link để vào web:
 http://localhost:5000/
 
+account 
+PhucLaiz
+laingan123
 
 để chạy được Ai 
 đầu tiên tạo một file tên là ".env"
