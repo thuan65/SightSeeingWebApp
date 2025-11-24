@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LocaGo! - Khám phá điểm đến</title>
+  <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Poppins', 'Segoe UI', sans-serif;
+          background: #f5f5f5;
+          min-height: 100vh;
+      }
+
+      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+      /* Header */
+      header {
+          background: white;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          padding: 15px 30px;
+          position: sticky;
+          top: 0;
+          z-index: 1000;
+      }
+
+      .header-container {
+          max-width: 1400px;
+          margin: 0 auto;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+
+      .logo {
+          font-size: 32px;
+          font-weight: 700;
+          color: #FF6B35;
+          text-decoration: none;
+          font-family: 'Poppins', sans-serif;
+      }
+
+      .logo span {
+          color: #4ECDC4;
+      }
+
+      .nav-links {
+          display: flex;
+          gap: 20px;
+          align-items: center;
+      }
+
+      .nav-links a, .nav-links select {
+          text-decoration: none;
+          color: #333;
+          padding: 10px 18px;
+          border-radius: 8px;
+          transition: 0.3s;
+          border: none;
+          background: transparent;
+          cursor: pointer;
+          font-size: 15px;
+          font-weight: 500;
+          font-family: 'Poppins', sans-serif;
+      }
+
+      .nav-links a:hover {
+          background: #f0f0f0;
+      }
+
+      .btn-primary {
+          background: linear-gradient(135deg, #FF6B35, #FF8C42) !important;
+          color: white !important;
+          font-weight: 600;
+      }
+
+      .btn-secondary {
+          border: 2px solid #FF6B35 !important;
+          color: #FF6B35 !important;
+          font-weight: 600;
+      }
+
+      /* Phần Hero */
+      .hero {
+          background: linear-gradient(135deg, #4ECDC4 0%, #FF6B35 100%);
+          padding: 60px 20px;
+          text-align: center;
+          color: white;
+      }
+
+      .hero h1 {
+          font-size: 3em;
+          margin-bottom: 15px;
+          font-weight: 700;
+          font-family: 'Poppins', sans-serif;
+      }
+
+      .hero p {
+          font-size: 1.2em;
+          margin-bottom: 40px;
+          opacity: 0.95;
+          font-weight: 400;
+      }
+
+      /* Khung tìm kiếm */
+      .search-container {
+          max-width: 900px;
+          margin: 0 auto;
+          background: rgba(255, 255, 255, 0.95);
+          border-radius: 20px;
+          padding: 35px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      }
+
+      .search-tabs {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 25px;
+          flex-wrap: wrap;
+      }
+
+      .tab {
+          padding: 12px 24px;
+          border: 2px solid #e0e0e0;
+          border-radius: 50px;
+          background: white;
+          cursor: pointer;
+          transition: 0.3s;
+          font-size: 15px;
+          font-weight: 500;
+          color: #555;
+      }
+
+      .tab.active {
+          background: linear-gradient(135deg, #4ECDC4, #FF6B35);
+          color: white;
+          border-color: transparent;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      }
+
+      .tab:hover {
+          border-color: #4ECDC4;
+      }
+
+      .search-form {
+          display: none;
+      }
+
+      .search-form.active {
+          display: block;
+      }
+
+      .search-row {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 15px;
+          flex-wrap: wrap;
+      }
+
+      .search-row input, .search-row select {
+          flex: 1;
+          min-width: 200px;
+          padding: 15px 20px;
+          border: 2px solid #e0e0e0;
+          border-radius: 50px;
+          font-size: 15px;
+          font-weight: 500;
+          outline: none;
+          transition: 0.3s;
+          background: white;
+      }
+
+      .search-row input:focus, .search-row select:focus {
+          border-color: #4ECDC4;
+          box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+      }
+
+      .search-button {
+          padding: 15px 40px;
+          background: linear-gradient(135deg, #4ECDC4, #FF6B35);
+          color: white;
+          border: none;
+          border-radius: 50px;
+          cursor: pointer;
+          font-size: 16px;
+          font-weight: 600;
+          transition: 0.3s;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      }
+
+      .search-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+      }
+
+      /* Gợi ý tìm kiếm */
+      .suggestion-tags {
+          margin-top: 20px;
+          padding-top: 20px;
+          border-top: 2px solid #e0e0e0;
+      }
+
+      .suggestion-tags p {
+          color: #555;
+          margin-bottom: 12px;
+          font-size: 15px;
+          font-weight: 500;
+      }
+
+      .tags-container {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+      }
+
+      .tag-item {
+          padding: 10px 20px;
+          background: #f5f5f5;
+          border-radius: 25px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: 0.3s;
+          color: #555;
+      }
+
+      .tag-item:hover {
+          background: linear-gradient(135deg, #4ECDC4, #FF6B35);
+          color: white;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      }
+
+      /* Nội dung chính */
+      .container {
+          max-width: 1400px;
+          margin: 40px auto;
+          padding: 0 20px;
+      }
+
+      .section-title {
+          text-align: center;
+          font-size: 2.2em;
+          font-weight: 700;
+          color: #333;
+          margin-bottom: 35px;
+          font-family: 'Poppins', sans-serif;
+      }
+
+      .image-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 25px;
+          margin-bottom: 60px;
+      }
+
+      .image-card {
+          background: white;
+          border-radius: 15px;
+          overflow: hidden;
+          box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+          cursor: pointer;
+          transition: 0.3s;
+      }
+
+      .image-card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+      }
+
+      .image-card img {
+          width: 100%;
+          height: 220px;
+          object-fit: cover;
+      }
+
+      .image-info { 
+          padding: 18px; 
+      }
+
+      .image-info h3 { 
+          margin-bottom: 8px;
+          color: #333;
+          font-size: 18px;
+          font-weight: 600;
+          font-family: 'Poppins', sans-serif;
+      }
+
+      .tags { 
+          color: #667eea; 
+          font-size: 13px;
+          margin-bottom: 5px;
+          font-weight: 500;
+      }
+
+      .rating {
+          color: #FFB800;
+          font-size: 14px;
+          font-weight: 600;
+      }
+
+      .no-results { 
+          text-align: center; 
+          padding: 60px 20px; 
+          color: #999;
+          font-size: 18px;
+      }
+
+      /* Footer */
+      footer {
+          background: #2C3E50;
+          color: white;
+          padding: 50px 20px 20px;
+          margin-top: 80px;
+      }
+
+      .footer-container {
+          max-width: 1400px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 40px;
+          margin-bottom: 30px;
+      }
+
+      .footer-section h3 {
+          margin-bottom: 20px;
+          color: #4ECDC4;
+          font-weight: 600;
+          font-size: 18px;
+      }
+
+      .footer-section p, .footer-section li {
+          line-height: 1.8;
+          color: #bbb;
+          margin-bottom: 10px;
+          font-size: 14px;
+      }
+
+      .footer-bottom {
+          text-align: center;
+          padding-top: 30px;
+          border-top: 1px solid #444;
+          color: #888;
+      }
+
+      /* Nút cuộn lên đầu trang */
+      #scrollTop {
+          position: fixed;
+          bottom: 30px;
+          right: 30px;
+          background: linear-gradient(135deg, #FF6B35, #FF8C42);
+          color: white;
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          border: none;
+          cursor: pointer;
+          font-size: 20px;
+          display: none;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+          transition: 0.3s;
+          z-index: 999;
+      }
+
+      #scrollTop:hover {
+          transform: translateY(-5px);
+      }
+
+      #scrollTop.show {
+          display: block;
+      }
+
+      /* Responsive - Giao diện mobile */
+      @media (max-width: 768px) {
+          .hero h1 {
+              font-size: 2em;
+          }
+
+          .search-row {
+              flex-direction: column;
+          }
+
+          .search-row input {
+              min-width: 100%;
+          }
+
+          .nav-links {
+              flex-wrap: wrap;
+              gap: 10px;
+          }
+      }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+      <div class="header-container">
+          <a href="/" class="logo">Loca<span>Go!</span></a>
+          <div class="nav-links">
+              <select id="languageSelect">
+                  <option value="vi">🇻🇳 Tiếng Việt</option>
+                  <option value="en">🇬🇧 English</option>
+              </select>
+              <a href="/map">🗺️ Bản đồ</a>
+              <a href="/chat_ui">💬 Chatbot du lịch</a>
+              <a href="/register" class="btn-secondary">Đăng ký</a>
+              <a href="/login" class="btn-primary">Đăng nhập</a>
+          </div>
+      </div>
+  </header>
+
+  <!-- Phần Hero với form tìm kiếm -->
+  <section class="hero">
+      <h1>Khám phá phiên bản tuyệt nhất của bạn!</h1>
+      <p>Mở ra chân trời mới, đam mê mới và đánh thức phiên bản rực rỡ của bạn cùng LocaGo!</p>
+
+      <div class="search-container">
+          <!-- Các tab tìm kiếm -->
+          <div class="search-tabs">
+              <div class="tab active" onclick="switchTab('keyword')">🔍 Từ khóa</div>
+              <div class="tab" onclick="switchTab('filter')">🏙️ Thành phố & Thẻ</div>
+              <div class="tab" onclick="switchTab('ai')">🤖 Tìm bằng AI</div>
+              <div class="tab" onclick="switchTab('image')">🖼️ Tìm bằng hình ảnh</div>
+          </div>
+
+          <!-- Tìm kiếm theo từ khóa -->
+          <div id="keyword" class="search-form active">
+              <div class="search-row">
+                  <input type="text" id="searchInput" placeholder="Nhập từ khóa: cat, dog, mountain...">
+                  <button class="search-button" onclick="searchImages()">Tìm kiếm</button>
+              </div>
+          </div>
+
+          <!-- Tìm kiếm theo bộ lọc -->
+          <div id="filter" class="search-form">
+              <div class="search-row">
+                  <input type="text" id="cityInput" placeholder="Thành phố (VD: Hà Nội)">
+                  <input type="text" id="tagInput" placeholder="Thẻ (VD: lịch sử, biển)">
+                  <input type="number" id="ratingInput" min="0" max="5" step="0.5" placeholder="Điểm đánh giá">
+                  <button class="search-button" onclick="searchFilter()">Lọc</button>
+              </div>
+          </div>
+
+          <!-- Tìm kiếm bằng AI -->
+          <div id="ai" class="search-form">
+              <div class="search-row">
+                  <input type="text" id="queryText" placeholder="VD: địa điểm có nhiều cây xanh, gần biển...">
+                  <button class="search-button" onclick="searchText()">Tìm bằng AI</button>
+              </div>
+          </div>
+
+          <!-- Tìm kiếm bằng hình ảnh -->
+          <div id="image" class="search-form">
+              <div class="search-row">
+                  <input type="file" id="imageUpload" accept="image/*" style="padding: 12px;">
+                  <button class="search-button" onclick="searchByImage()">Tìm bằng ảnh</button>
+              </div>
+          </div>
+
+          <!-- Gợi ý tag -->
+          <div class="suggestion-tags">
+              <p>💡 Gợi ý tìm kiếm phổ biến:</p>
+              <div class="tags-container">
+                  <span class="tag-item" onclick="quickSearch('nghỉ dưỡng')">nghỉ dưỡng</span>
+                  <span class="tag-item" onclick="quickSearch('miền Tây')">miền Tây</span>
+                  <span class="tag-item" onclick="quickSearch('thiên nhiên')">thiên nhiên</span>
+                  <span class="tag-item" onclick="quickSearch('biển')">biển</span>
+                  <span class="tag-item" onclick="quickSearch('núi')">núi</span>
+                  <span class="tag-item" onclick="quickSearch('văn hóa')">văn hóa</span>
+                  <span class="tag-item" onclick="quickSearch('ẩm thực')">ẩm thực</span>
+                  <span class="tag-item" onclick="quickSearch('lịch sử')">lịch sử</span>
+              </div>
+          </div>
+      </div>
+  </section>
+
+  <!-- Nội dung chính -->
+  <div class="container">
+      <h2 class="section-title">Khám phá điểm đến</h2>
+      
+      <div id="results" class="image-grid">
+          <!-- Các card mẫu - thay bằng dữ liệu thật từ backend -->
+          <div class="image-card" onclick="viewDetail(1)">
+              <img src="https://images.unsplash.com/photo-1552832230-c0197dd311b5" alt="Hội An">
+              <div class="image-info">
+                  <h3>Phố cổ Hội An</h3>
+                  <div class="tags">Quảng Nam - lịch sử, văn hóa</div>
+                  <div class="rating">⭐ 4.8</div>
+              </div>
+          </div>
+
+          <div class="image-card" onclick="viewDetail(2)">
+              <img src="https://images.unsplash.com/photo-1583417319070-4a69db38a482" alt="Hạ Long">
+              <div class="image-info">
+                  <h3>Vịnh Hạ Long</h3>
+                  <div class="tags">Quảng Ninh - biển, thiên nhiên</div>
+                  <div class="rating">⭐ 4.9</div>
+              </div>
+          </div>
+
+          <div class="image-card" onclick="viewDetail(3)">
+              <img src="https://images.unsplash.com/photo-1528127269322-539801943592" alt="Phú Quốc">
+              <div class="image-info">
+                  <h3>Đảo Phú Quốc</h3>
+                  <div class="tags">Kiên Giang - biển, nghỉ dưỡng</div>
+                  <div class="rating">⭐ 4.7</div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+      <div class="footer-container">
+          <div class="footer-section">
+              <h3>Về LocaGo!</h3>
+              <p>24127552 - Nguyễn Võ Nhật Thuận </p>
+              <p>24127386 - Vũ Đỗ Mạnh Hùng </p>
+              <p>24127248 - Nguyễn Trần Phương Thúy </p>
+              <p>24127086 - Trần Hoàng Khánh My </p>
+              <p>24127302 - Nguyễn Xuân Quyên </p>
+              <p>24127106 - Lai Phạm Như Phúc  </p>
+              <p>24127207 - Nguyễn Thục Nghi  </p>
+              <p style="margin-top: 15px;">Hãy để chúng tôi đồng hành cùng bạn trong mọi hành trình!</p>
+          </div>
+
+          <div class="footer-section">
+              <h3>Thông tin môn học</h3>
+              <p><strong>Môn:</strong> Tư duy tính toán</p>
+              <p><strong>Mã môn:</strong> CSC10014</p>
+              <p><strong>Giảng viên:</strong> TS. Lê Ngọc Thành</p>
+              <p><strong>Trường:</strong> Đại học Khoa học Tự nhiên, ĐHQG-HCM</p>
+          </div>
+
+          <div class="footer-section">
+              <h3>Liên hệ</h3>
+              <p>📧 Email: locago@hcmus.edu.vn</p>
+              <p>📱 Hotline: 1900 xxxx</p>
+              <p>🏢 Địa chỉ: 227, Nguyễn Văn Cừ, P.Chợ Quán, TP.HCM</p>
+          </div>
+      </div>
+
+      <div class="footer-bottom">
+          <p>© 2025 LocaGo! - All Rights Reserved | Designed with ❤️ for travelers</p>
+      </div>
+  </footer>
+
+  <!-- Nút cuộn lên đầu trang -->
+  <button id="scrollTop" onclick="scrollToTop()">↑</button>
+
+  <script>
+      // Chuyển đổi giữa các tab tìm kiếm
+      function switchTab(tabName) {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.search-form').forEach(f => f.classList.remove('active'));
+          
+          event.target.classList.add('active');
+          document.getElementById(tabName).classList.add('active');
+      }
+
+      // Tìm kiếm nhanh từ các tag gợi ý
+      function quickSearch(keyword) {
+          document.getElementById('searchInput').value = keyword;
+          switchTab('keyword');
+          document.querySelector('.tab').click();
+          searchImages();
+      }
+
+      // Các hàm tìm kiếm
+      async function searchImages() {
+          const query = document.getElementById('searchInput').value.trim();
+          const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+          const data = await res.json();
+          displayResults(data, query);
+      }
+
+      async function searchFilter() {
+          const city = document.getElementById('cityInput').value.trim();
+          const tag = document.getElementById('tagInput').value.trim();
+          const rating = document.getElementById('ratingInput').value.trim() || 0;
+
+          const url = `/search_filter?city=${encodeURIComponent(city)}&tag=${encodeURIComponent(tag)}&rating=${rating}`;
+          const res = await fetch(url);
+          const data = await res.json();
+          displayResults(data);
+      }
+
+      async function searchText() {
+          const query = document.getElementById('queryText').value.trim();
+          if (!query) return;
+
+          const res = await fetch(`/search_text?query=${encodeURIComponent(query)}`);
+          const data = await res.json();
+          displayResults(data);
+      }
+
+      async function searchByImage() {
+          const fileInput = document.getElementById('imageUpload');
+          const file = fileInput.files[0];
+          
+          if (!file) {
+              alert('Vui lòng chọn một hình ảnh!');
+              return;
+          }
+
+          const formData = new FormData();
+          formData.append('image', file);
+
+          const res = await fetch('/search_image', {
+              method: 'POST',
+              body: formData
+          });
+          const data = await res.json();
+          displayResults(data);
+      }
+
+      // Hiển thị kết quả tìm kiếm
+      function displayResults(data, query = '') {
+          const container = document.getElementById('results');
+          if (!container) return;
+
+          if (data.length === 0) {
+              container.innerHTML = `<div class="no-results">Không tìm thấy kết quả ${query ? 'cho "' + query + '"' : ''}</div>`;
+              return;
+          }
+
+          container.innerHTML = data.map(place => `
+              <div class="image-card" onclick="viewDetail(${place.id})">
+                  <img src="/static/images/${place.filename || 'default.jpg'}" alt="${place.name}">
+                  <div class="image-info">
+                      <h3>${place.name}</h3>
+                      <div class="tags">${place.city || ''} - ${place.tags || ''}</div>
+                      <div class="rating">⭐ ${place.rating || '0'}</div>
+                  </div>
+              </div>
+          `).join('');
+      }
+
+      // Xem chi tiết địa điểm
+      function viewDetail(imageId) {
+          window.location.href = '/image/' + imageId;
+      }
+
+      // Xử lý hiển thị nút cuộn lên
+      window.onscroll = function() {
+          const scrollBtn = document.getElementById('scrollTop');
+          if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+              scrollBtn.classList.add('show');
+          } else {
+              scrollBtn.classList.remove('show');
+          }
+      };
+
+      // Cuộn lên đầu trang
+      function scrollToTop() {
+          window.scrollTo({
+              top: 0,
+              behavior: 'smooth'
+          });
+      }
+
+      // Hỗ trợ phím Enter để tìm kiếm
+      document.getElementById('searchInput').addEventListener('keypress', e => {
+          if (e.key === 'Enter') searchImages();
+      });
+
+      document.getElementById('queryText').addEventListener('keypress', e => {
+          if (e.key === 'Enter') searchText();
+      });
+
+      // Tải dữ liệu ban đầu khi mở trang
+      window.onload = () => searchImages();
+  </script>
+
+</body>
+</html>
