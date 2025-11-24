@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ image.name }}</title>
+
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 40px auto; line-height: 1.6; }
+    img { width: 100%; height: auto; border-radius: 10px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3); margin-bottom: 20px; }
+    .desc { text-align: left; white-space: pre-line; }
+
+    .feedback-box { margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px; }
+    .feedback-item { background: #f3f3f3; padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+    .rating-stars { color: #ffb400; font-size: 20px; margin-bottom: 5px; }
+
+    .rating-select span {
+      font-size: 28px;
+      cursor: pointer;
+      color: #ccc;
+    }
+    .rating-select span.active {
+      color: gold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>{{ image.name }}</h1>
+
+  <img src="/static/images/{{ image.filename }}" alt="{{ image.name }}">
+
+  <p><b>Tags:</b> {{ image.tags }}</p>
+  <div class="desc">{{ image.description }}</div>
+
+  <p><a href="/">⬅ Quay lại thư viện</a></p>
+
+    <div class="feedback-box">
+    <h2>Đánh giá & Bình luận</h2>
+
+        <p id="ratingStats">
+      ⭐ <b>{{ "%.1f"|format(image.rating or 0) }}</b>
+      ({{ image.rating_count or 0 }} đánh giá)
+    </p>
+
+        <div class="rating-select" id="ratingSelect">
+      <span data-value="1">★</span>
+      <span data-value="2">★</span>
+      <span data-value="3">★</span>
+      <span data-value="4">★</span>
+      <span data-value="5">★</span>
+    </div>
+
+        <textarea id="comment" placeholder="Viết cảm nhận..."
+              rows="3" style="width:100%; margin-top:10px; padding:10px"></textarea>
+
+    <button id="sendBtn"
+            style="margin-top:10px; padding:10px 16px; font-size:16px; cursor:pointer;">
+      Gửi đánh giá
+    </button>
+
+    <h3 style="margin-top:30px">Các bình luận gần đây</h3>
+    <div id="feedbackList">Đang tải...</div>
+  </div>
+
+  <script>
+    // ===== SELECT RATING =====
+    let currentRating = 0;
+    const stars = document.querySelectorAll("#ratingSelect span");
+
+    stars.forEach(s => {
+      s.addEventListener("click", () => {
+        currentRating = parseInt(s.dataset.value);
+        stars.forEach(x => x.classList.remove("active"));
+        for (let i = 0; i < currentRating; i++) stars[i].classList.add("active");
+      });
+    });
+
+
+    // ===== SUBMIT FEEDBACK (ĐÃ SỬA) =====
+    document.getElementById("sendBtn").addEventListener("click", async () => {
+      if (currentRating === 0) {
+        alert("Bạn chưa chọn số sao!");
+        return;
+      }
+
+      const comment = document.getElementById("comment").value;
+      const imageId = Number("{{ image.id }}");  /* FIXED */
+
+      const res = await fetch(`/feedback/${imageId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rating: currentRating,
+          comment: comment
+        })
+      });
+
+      const result = await res.json();   /* FIXED */
+
+      if (res.ok) {
+        alert("Gửi đánh giá thành công!");
+        
+        // 1. Tải lại danh sách feedback mới nhất
+        loadFeedback(); 
+        
+        // 2. Cập nhật chỉ số rating tổng thể
+        updateRatingStats(result.new_rating, result.rating_count);
+        
+        // 3. Dọn dẹp giao diện
+        document.getElementById("comment").value = "";
+        stars.forEach(x => x.classList.remove("active"));
+        currentRating = 0;
+      } else {
+        alert("Lỗi: " + result.error);
+      }
+    });
+
+    // ===== HÀM MỚI: CẬP NHẬT CHỈ SỐ RATING TỔNG =====
+    function updateRatingStats(rating, count) {
+      const statsElement = document.getElementById("ratingStats");
+      const formattedRating = rating.toFixed(1);
+      statsElement.innerHTML = `
+        ⭐ <b>${formattedRating}</b>
+        (${count} đánh giá)
+      `;
+    }
+
+
+    // ===== LOAD FEEDBACK LIST (GIỮ NGUYÊN) =====
+    async function loadFeedback() {
+      const imageId = Number("{{ image.id }}");  /* FIXED */
+      const res = await fetch(`/feedback/${imageId}`);
+      const feedbackData = await res.json();     /* FIXED */
+
+      let html = "";
+      feedbackData.feedback.forEach(fb => {
+        html += `
+          <div class="feedback-item">
+            <div class="rating-stars">${"★".repeat(fb.rating)}</div>
+            <div>${fb.comment}</div>
+            <div style="font-size:13px; color:#666;">${fb.timestamp}</div>
+          </div>
+        `;
+      });
+
+      document.getElementById("feedbackList").innerHTML =
+        html || "Chưa có đánh giá nào.";
+    }
+
+    loadFeedback();
+  </script>
+
+</body>
+</html>

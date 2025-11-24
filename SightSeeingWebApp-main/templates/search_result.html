@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Kết quả tìm kiếm</title>
+</head>
+<body>
+    <h2>Ảnh bạn tải lên:</h2>
+    <img src="{{ url_for('static', filename='uploads/' + query) }}" width="300">
+
+    <h2>Ảnh địa điểm giống nhất:</h2>
+    <img src="{{ url_for('static', filename='images/' + match) }}" width="300">
+
+    <p>Độ tương đồng: {{ score }}</p>
+
+    <a href="/search_image">Tải ảnh khác</a>
+</body>
+</html>

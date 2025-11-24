@@ -1,0 +1,182 @@
+🗺️ Sonna Guide - Vietnam Routing System
+A smart routing system designed specifically for Vietnam, featuring accurate route calculation and multi-point optimization.
+
+✨ Features
+Single Route Navigation: Find the optimal route from point A to point B
+Multi-Point Optimization: Calculate the shortest route through multiple destinations (1-3 points)
+Vehicle Support: Routes optimized for cars, bicycles, and pedestrians
+Vietnam Boundary Detection: Ensures routes stay within Vietnam's territory
+Geocoding: Convert addresses to coordinates and vice versa
+Interactive Map: Beautiful Leaflet-based map interface
+Console Mode: Terminal-style interface for power users
+🚀 Quick Start
+Prerequisites
+Python 3.7+
+pip
+Installation
+Clone the repository:
+bash
+git clone <your-repo-url>
+cd sonna-guide
+Install dependencies:
+bash
+pip install -r requirements.txt
+Place the GeoJSON boundary file:
+Download geoBoundaries-VNM-ADM0_simplified.geojson
+Place it in the templates/ directory
+Run the application:
+bash
+python app.py
+Open your browser and navigate to:
+Main interface: http://localhost:5000/
+Console mode: http://localhost:5000/console
+📁 Project Structure
+sonna-guide/
+├── app.py                    # Flask application
+├── routing.py                # Single route calculation
+├── multi_point_routing.py    # Multi-point optimization
+├── geocoding.py              # Address to coordinates conversion
+├── vietnam_boundary.py       # Vietnam boundary checking
+├── config.py                 # Configuration settings
+├── custom_icons.py           # Custom map markers
+├── templates/
+│   ├── index.html           # Main web interface
+│   ├── console.html         # Console interface
+│   └── geoBoundaries-VNM-ADM0_simplified.geojson
+├── requirements.txt         # Python dependencies
+└── README.md               # This file
+🛠️ Configuration
+Edit config.py to customize:
+
+API Settings: GraphHopper API key and timeout
+Route Thresholds: Warning and danger thresholds for routes leaving Vietnam
+Waypoints: Strategic waypoints for long-distance routes
+Regional Settings: Boundary definitions for North, Central, and South Vietnam
+🎯 Usage
+Single Route
+Select "Single Route" mode
+Enter start and destination addresses
+Choose vehicle type (car/bike/foot)
+Click "Find Route"
+Multi-Point Route
+Select "Optimized Route" mode
+Enter starting point
+Add 1-3 destination points
+System automatically calculates the optimal order
+Click "Find Optimal Route"
+Console Mode
+Access console mode for a terminal-style experience with command-line interface:
+
+Commands:
+- help                    : Show help
+- clear                   : Clear console
+- geocode [address]       : Find coordinates
+- route [addr1] to [addr2]: Find route
+- multi [a1] to [a2] [a3] : Optimize route
+- location                : Get current location
+🔧 API Endpoints
+POST /api/geocode
+Convert address to coordinates
+
+json
+{
+  "address": "Ben Thanh Market, District 1, HCMC"
+}
+POST /api/reverse-geocode
+Convert coordinates to address
+
+json
+{
+  "lat": 10.7769,
+  "lon": 106.7009
+}
+POST /api/route
+Calculate single route
+
+json
+{
+  "start_lat": 21.0285,
+  "start_lon": 105.8542,
+  "end_lat": 10.7769,
+  "end_lon": 106.7009,
+  "vehicle": "car"
+}
+POST /api/multi-route
+Calculate optimized multi-point route
+
+json
+{
+  "start_lat": 10.7769,
+  "start_lon": 106.7009,
+  "destinations": [
+    {"lat": 10.7624, "lon": 106.6822},
+    {"lat": 10.7721, "lon": 106.6988}
+  ],
+  "vehicle": "car"
+}
+🌍 Vietnam Boundary Detection
+The system uses precise GeoJSON data to:
+
+Detect when routes go outside Vietnam
+Add strategic waypoints to keep routes within borders
+Warn users when routes significantly leave Vietnam (>3%)
+Mark dangerous routes that extensively go outside (>10%)
+🎨 Customization
+Custom Map Markers
+Edit custom_icons.py to customize marker styles:
+
+Start point (green with plus icon)
+End point (red with flag icon)
+Waypoints (numbered with different colors)
+Route Colors
+Multiple route segments use different colors for clarity:
+
+Segment 1: Red-orange (
+#FF6B6B)
+Segment 2: Turquoise (
+#4ECDC4)
+Segment 3: Sky blue (
+#45B7D1)
+📊 Performance
+API timeout: 15 seconds
+Maximum waypoints: 10
+Maximum destinations: 3 (for optimization)
+Route calculation: < 5 seconds (typical)
+Multi-point optimization: < 30 seconds (for 3 destinations)
+🐛 Troubleshooting
+GeoJSON file not found
+bash
+# Make sure the file is in the correct location:
+templates/geoBoundaries-VNM-ADM0_simplified.geojson
+API errors
+Check GraphHopper API key in config.py
+Verify internet connection
+Check API rate limits
+Route goes outside Vietnam
+System will automatically try to add waypoints
+Warning displayed if >3% of route is outside
+This is normal for border areas
+🤝 Contributing
+Contributions are welcome! Please:
+
+Fork the repository
+Create a feature branch
+Commit your changes
+Push to the branch
+Open a Pull Request
+📝 License
+This project is open source and available under the MIT License.
+
+👥 Authors
+Your Name - Initial work
+🙏 Acknowledgments
+OpenStreetMap for map tiles
+GraphHopper for routing API
+Nominatim for geocoding
+Leaflet.js for map rendering
+GeoBoundaries for Vietnam boundary data
+📧 Contact
+For questions or support, please open an issue on GitHub.
+
+Made with ❤️ for Vietnam
+

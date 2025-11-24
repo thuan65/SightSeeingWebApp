@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Bản đồ chỉ đường thông minh</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+
+    .input-container {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 1000;
+      background: white;
+      border-radius: 50px;
+      padding: 10px 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      align-items: center;
+    }
+
+    input, select {
+      padding: 8px 15px;
+      border: 2px solid #7a5af8;
+      border-radius: 50px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(90deg,#7a5af8,#9b79ff);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+      transform: scale(1.05);
+    }
+
+    #info {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.95);
+      border-radius: 12px;
+      padding: 18px 28px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      font-size: 16px;
+      z-index: 1000;
+      min-width: 350px;
+      text-align: center;
+    }
+
+    #info b {
+      font-size: 17px;
+      color: #7a5af8;
+    }
+
+    .route-info {
+      margin: 8px 0;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .route-info:last-child {
+      border-bottom: none;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="input-container">
+    <input id="start" type="text" placeholder="Điểm bắt đầu (VD: TP. Hồ Chí Minh)">
+    <input id="end" type="text" placeholder="Điểm kết thúc (VD: Hà Nội)">
+    
+    <select id="mode">
+      <option value="car">🚗 Xe hơi</option>
+      <option value="motorcycle">🏍️ Xe máy</option>
+      <option value="foot">🚶 Đi bộ</option>
+    </select>
+
+    <button onclick="findRoute()">Chỉ đường</button>
+  </div>
+
+  <div id="map"></div>
+  <div id="info"></div>
+
+  <script>
+    // Khởi tạo bản đồ
+    const map = L.map('map').setView([10.762622, 106.660172], 13);
+
+    // Thêm nền bản đồ
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let routeLayers = [];
+    let startMarker, endMarker;
+
+    // Hàm lấy tọa độ từ địa chỉ
+    async function getCoordinates(address) {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}, Vietnam&format=json&limit=1`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.length === 0) return null;
+      const { lat, lon, display_name } = data[0];
+      if (!display_name.includes("Vietnam") && !display_name.includes("Việt Nam")) {
+        alert(`⚠️ Địa chỉ "${address}" không nằm trong Việt Nam!`);
+        return null;
+      }
+      return [parseFloat(lat), parseFloat(lon)];
+    }
+
+    // Hàm tìm đường
+    async function findRoute() {
+      const start = document.getElementById("start").value.trim();
+      const end = document.getElementById("end").value.trim();
+      const mode = document.getElementById("mode").value;
+      const apiKey = "510b2242-84d4-45c2-97fa-baa242e6a4b7";
+
+      if (!start || !end) {
+        alert("Vui lòng nhập đủ điểm bắt đầu và kết thúc!");
+        return;
+      }
+
+      const startCoords = await getCoordinates(start);
+      const endCoords = await getCoordinates(end);
+
+      if (!startCoords || !endCoords) {
+        alert("Không thể lấy tọa độ cho địa chỉ nhập vào.");
+        return;
+      }
+
+      // Xóa các marker và tuyến cũ
+      routeLayers.forEach(layer => map.removeLayer(layer));
+      routeLayers = [];
+
+      if (startMarker) map.removeLayer(startMarker);
+      if (endMarker) map.removeLayer(endMarker);
+
+      // Ghim điểm bắt đầu & kết thúc
+      startMarker = L.marker(startCoords).addTo(map).bindPopup("📍 Điểm bắt đầu").openPopup();
+      endMarker = L.marker(endCoords).addTo(map).bindPopup("🎯 Điểm kết thúc");
+
+      // Chọn profile phù hợp với phương tiện
+      let profile = mode;
+      if (mode === "motorcycle") profile = "motorcycle"; // GraphHopper hỗ trợ motorcycle
+
+      // Gọi GraphHopper với algorithm=alternative_route để có nhiều lộ trình
+      const url = `https://graphhopper.com/api/1/route?point=${startCoords[0]},${startCoords[1]}&point=${endCoords[0]},${endCoords[1]}&vehicle=${profile}&locale=vi&points_encoded=false&algorithm=alternative_route&alternative_route.max_paths=3&key=${apiKey}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!data.paths || data.paths.length === 0) {
+          alert("Không tìm thấy tuyến đường hợp lệ!");
+          return;
+        }
+
+        const modeText = mode === "car" ? "🚗 Xe hơi" : mode === "motorcycle" ? "🏍️ Xe máy" : "🚶 Đi bộ";
+        let infoHtml = `<b>Phương tiện: ${modeText}</b><br><br>`;
+
+        data.paths.forEach((path, idx) => {
+          const coords = path.points.coordinates;
+          const color = idx === 0 ? "#0066ff" : "#6b6a6a";
+          const weight = idx === 0 ? 6 : 5;
+          const dashArray = idx === 0 ? "" : "8,6";
+          
+          const timeMin = (path.time / 60000).toFixed(0);
+          const distKm = (path.distance / 1000).toFixed(1);
+
+          const layer = L.geoJSON({
+            type: "LineString",
+            coordinates: coords
+          }, {
+            style: { color, weight, dashArray, opacity: idx === 0 ? 0.9 : 0.6 }
+          }).addTo(map);
+
+          routeLayers.push(layer);
+
+          const routeLabel = idx === 0 ? "🟦 Tuyến đường tối ưu" : `⬜ Tuyến phụ ${idx}`;
+          infoHtml += `<div class="route-info">${routeLabel}: <b>${distKm} km</b> - ⏱️ <b>${timeMin} phút</b></div>`;
+        });
+
+        document.getElementById("info").innerHTML = infoHtml;
+        map.fitBounds(routeLayers[0].getBounds(), { padding: [50, 50] });
+
+      } catch (err) {
+        console.error(err);
+        alert("Lỗi khi lấy dữ liệu từ GraphHopper!");
+      }
+    }
+  </script>
+</body>
+</html>
