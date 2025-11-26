@@ -11,13 +11,15 @@ from createDataBase import Image
 from Search_Imagine import find_similar
 from models import db, bcrypt, User
 from forms import RegisterForm, LoginForm
+from Forum.forum import forum
 from flask_login import (
     LoginManager, login_user, logout_user, login_required, UserMixin, current_user
 )
 import torch
-from flask import Flask
 from feedback import feedback_bp   
-
+# NEW CODE: để người dùng upload ảnh 
+import os
+from Search_Imagine import find_similar  # import hàm AI tìm ảnh tương tự
 # ---------------------------------------------------------
 # CẤU HÌNH ỨNG DỤNG FLASK
 # ---------------------------------------------------------
@@ -32,6 +34,7 @@ bcrypt.init_app(app)
 # Kết nối SQLite cho phần ảnh
 # Đăng ký API feedback
 app.register_blueprint(feedback_bp)
+app.register_blueprint(forum)
 
 app.config['JSON_AS_ASCII'] = False
 engine = create_engine("sqlite:///images.db")
@@ -211,6 +214,7 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             session['username'] = user.username
+            session['user_id'] = user.id
             return redirect(url_for('index'))  # ⬅️ Sau khi login -> index.html
         else:
             flash("Tên đăng nhập hoặc mật khẩu sai!", "danger")

@@ -16,17 +16,27 @@ class Image(Base):
 
 class Feedback(Base):
     __tablename__ = "feedback"
-
     id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, nullable=False)
     image_id = Column(Integer, ForeignKey("images.id"), nullable=False)
     rating = Column(Integer, nullable=False)
     comment = Column(Text)
-    timestamp = Column(DateTime, default=func.now())
-
+    timestamp = Column(DateTime, default=func.datetime("now", "localtime"))
 
 engine = create_engine("sqlite:///images.db")
 Session = sessionmaker(bind=engine)
 Base.metadata.create_all(engine)
+
+UserBase = declarative_base()
+
+class User(UserBase):
+    __tablename__ = "user"
+    id = Column(Integer, primary_key=True)
+    username = Column(String, nullable=False)
+
+# Kết nối tới DB user trong instance
+engine_users = create_engine("sqlite:///instance/users.db")
+UserSession = sessionmaker(bind=engine_users)
 
 def readCsv(path):
     data = []
