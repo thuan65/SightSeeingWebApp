@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Diễn đàn Du lịch</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <div class="d-flex align-items-center">
+                <a href="/dashboard" class="btn btn-outline-secondary btn-sm me-2" title="Trang chủ">Trang chủ</a>
+                <a class="navbar-brand fw-bold" href="/">Diễn đàn Du lịch</a>
+            </div>
+            <div class="d-flex">
+                {% if session.get('questioner_id') %}
+                    <a href="/post/new" class="btn btn-success me-2">+ Đặt câu hỏi mới</a>
+                    <a href="/logout" class="btn btn-outline-danger">Đăng xuất</a>
+                {% else %}
+                    <a href="/login" class="btn btn-outline-primary me-2" title="Đăng nhập">Đăng nhập</a>
+                    <a href="/register" class="btn btn-primary" title="Đăng ký">Đăng ký</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+
+        <!-- Banner giới thiệu -->
+        <div class="card shadow-sm mb-4 bg-gradient text-white" style="background: linear-gradient(135deg, #4ECDC4, #FF6B35);">
+            <div class="card-body text-center py-4">
+                <h4 class="card-title fw-bold">Cộng đồng Du lịch Việt Nam</h4>
+                <p class="card-text mb-0">Chia sẻ kinh nghiệm, hỏi đáp về địa điểm, ẩm thực, lịch trình và mọi thứ về du lịch!</p>
+            </div>
+        </div>
+
+        <h3 class="text-center mb-4">Diễn đàn Hỏi & Đáp</h3>
+
+        <!-- Thanh tìm kiếm -->
+        <form action="{{ url_for('forum.search_forum') }}" method="get" class="mb-4">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text" name="q" placeholder="Tìm kiếm câu hỏi, địa điểm, kinh nghiệm..." value="{{ query or '' }}" class="form-control">
+                        <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        {% if posts %}
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                {% for post in posts %}
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ post['title'] }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            Đăng bởi <b>{{ post['username'] }}</b>
+                            {% if post['tag'] == 'answered' %}
+                            <span class="badge bg-success ms-2">Đã có câu trả lời</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark ms-2">Chờ trả lời</span>
+                            {% endif %}
+                        </h6>
+                        <p class="card-text mt-3">
+                            {{ post['content'] }}
+                        </p>
+
+                        {% if session.get('questioner_id') %}
+                        <a href="/post/{{ post['id'] }}/reply" class="btn btn-sm btn-outline-primary">Trả lời</a>
+                        {% endif %}
+
+                        {% if post.get('answers') and post['answers']|length > 0 %}
+                        <div class="mt-4">
+                            <h6 class="fw-bold text-success">Câu trả lời từ cộng đồng:</h6>
+                            <ul class="list-group list-group-flush">
+                                {% for ans in post['answers'] %}
+                                <li class="list-group-item">
+                                    <p class="mb-1">{{ ans['content'] }}</p>
+                                    <small class="text-muted">— <b>{{ ans['answerer_username'] }}</b></small>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center text-muted">
+            <p class="fs-5">Chưa có câu hỏi nào.</p>
+            {% if session.get('questioner_id') %}
+            <p>Hãy là người đầu tiên đặt câu hỏi về du lịch!</p>
+            <a href="/post/new" class="btn btn-primary">Đặt câu hỏi ngay</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
