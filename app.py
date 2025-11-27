@@ -3,10 +3,10 @@ from flask import (
     Flask, render_template, request, jsonify, Response, json,
     redirect, url_for, flash, session
 )
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import util
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from chatBot import chatbot_reply
+from ChatBot.chatBot import chatbot_reply
 from createDataBase import Image
 from Search_Imagine import find_similar
 from models import db, bcrypt, User
@@ -15,6 +15,9 @@ from Forum.forum import forum
 from flask_login import (
     LoginManager, login_user, logout_user, login_required, UserMixin, current_user
 )
+
+from models_loader import sbert_model
+
 import torch
 from feedback import feedback_bp   
 # NEW CODE: để người dùng upload ảnh 
@@ -129,7 +132,7 @@ def search_filter():
 # ---------------------------------------------------------
 # TÌM KIẾM THEO VĂN BẢN (AI - Sentence-BERT)
 # ---------------------------------------------------------
-model = SentenceTransformer("keepitreal/vietnamese-sbert")
+
 
 def get_all_places():
     with engine.connect() as conn:
@@ -137,10 +140,10 @@ def get_all_places():
     return results
 
 def compute_similarity(query_text, places, top_k=5):
-    query_embedding = model.encode(query_text, convert_to_tensor=True)
+    query_embedding = sbert_model.encode(query_text, convert_to_tensor=True)
     scored = []
     for place in places:
-        place_embedding = model.encode(place["description"], convert_to_tensor=True)
+        place_embedding = sbert_model.encode(place["description"], convert_to_tensor=True)
         similarity = util.cos_sim(query_embedding, place_embedding).item()
         scored.append((similarity, place))
     scored.sort(reverse=True, key=lambda x: x[0])

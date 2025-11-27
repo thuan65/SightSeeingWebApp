@@ -3,10 +3,12 @@ from flask import (
     Flask, render_template, request, jsonify, Response, json,
     redirect, url_for, flash, session
 )
+import os
+
 from sentence_transformers import SentenceTransformer, util
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from chatBot import chatbot_reply
+from ChatBot.chatBot import chatbot_reply
 from createDataBase import Image
 from Search_Imagine import find_similar
 from models import db, bcrypt, User
