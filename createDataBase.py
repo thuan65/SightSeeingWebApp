@@ -1,6 +1,7 @@
 import csv
-from sqlalchemy import create_engine, Column, Integer, String, Text, Float, DateTime, func, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Text, Float, DateTime, func, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import declarative_base, sessionmaker
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -30,28 +31,56 @@ Base.metadata.create_all(engine)
 UserBase = declarative_base()
 
 class User(UserBase):
-    __tablename__ = "user"
+    __tablename__ = "user"  
     id = Column(Integer, primary_key=True)
     username = Column(String, nullable=False)
+    # nếu có thêm cột password, email... giữ nguyên
 
-# Kết nối tới DB user trong instance
-engine_users = create_engine("sqlite:///instance/users.db")
+# Bảng lưu lời mời (pending / accepted / rejected / cancelled)
+class FriendRequest(UserBase):
+    __tablename__ = "friend_requests"
+    id = Column(Integer, primary_key=True)
+    from_user = Column(Integer, ForeignKey("user.id"), nullable=False)
+    to_user = Column(Integer, ForeignKey("user.id"), nullable=False)
+    status = Column(String, nullable=False, default="pending")  # pending|accepted|rejected|cancelled
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # tránh duplicate pending requests
+    __table_args__ = (UniqueConstraint("from_user", "to_user", name="uq_from_to"),)
+
+# Bảng lưu quan hệ bạn bè (một dòng thể hiện 1 kết bạn)
+class Friendship(UserBase):
+    __tablename__ = "friendships"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    friend_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (UniqueConstraint("user_id", "friend_id", name="uq_user_friend"),)
+
+# Kết nối tới users.db (instance)
+engine_users = create_engine("sqlite:///instance/users.db", echo=False)
 UserSession = sessionmaker(bind=engine_users)
+
+# Tạo tables (chạy 1 lần)
+UserBase.metadata.create_all(engine_users)
 
 def readCsv(path):
     data = []
     with open(path, "r", encoding="utf-8") as f:
         reader = csv.reader(f, delimiter=';')
-        next(reader, None)
+        next(reader, None)  # Bỏ header
         for row in reader:
             data.append(row)
     return data
+
 
 def normalizeTags(tagStr):
     if not tagStr:
         return ""
     tags = [t.strip() for t in tagStr.replace(";", ",").split(",") if t.strip()]
     return ", ".join(tags)
+
 
 def addSingle(row, session):
     try:
@@ -71,6 +100,7 @@ def addSingle(row, session):
         session.rollback()
         print(f"Loi khi them {row}: {e}")
 
+
 def addData(csvPath):
     session = Session()
     rows = readCsv(csvPath)
@@ -78,6 +108,7 @@ def addData(csvPath):
         addSingle(row, session)
     session.close()
     print("Database done.")
+
 
 if __name__ == "__main__":
     csvPath = "data.csv"

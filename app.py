@@ -19,7 +19,7 @@ import torch
 from feedback import feedback_bp   
 # NEW CODE: để người dùng upload ảnh 
 import os
-from Search_Imagine import find_similar  # import hàm AI tìm ảnh tương tự
+from friends import friends_bp
 # ---------------------------------------------------------
 # CẤU HÌNH ỨNG DỤNG FLASK
 # ---------------------------------------------------------
@@ -36,19 +36,17 @@ bcrypt.init_app(app)
 app.register_blueprint(feedback_bp)
 app.register_blueprint(forum)
 
+app.register_blueprint(friends_bp)
+
 app.config['JSON_AS_ASCII'] = False
 engine = create_engine("sqlite:///images.db")
 Session = sessionmaker(bind=engine)
 db_session = Session()
 
-@app.route('/')
-def home():
-    return redirect(url_for('login'))
-
 # ---------------------------------------------------------
 # TRANG CHÍNH
 # ---------------------------------------------------------
-@app.route("/index")
+@app.route("/")
 def index():
     keyword = request.args.get("q", "")
     if keyword:
@@ -228,6 +226,15 @@ def logout():
     session.pop('username', None)
     flash("Đã đăng xuất!", "info")
     return redirect(url_for('login'))
+# ---------------------------------------------------------
+# KẾT BẠN
+# ---------------------------------------------------------
+@app.route("/friends")
+def friends_page():
+    if "user_id" not in session:  
+        return redirect("/login")  # chưa login thì không xem friend list
+    
+    return render_template("friends.html")  # session tự truyền vào file
 # ---------------------------------------------------------
 # CHẠY ỨNG DỤNG
 # ---------------------------------------------------------
