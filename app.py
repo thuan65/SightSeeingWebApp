@@ -6,12 +6,12 @@ from flask import (
 from sentence_transformers import util
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from ChatBot.chatBot import chatbot_reply
 from createDataBase import Image
-from Search_Imagine import find_similar
+
 from models import db, bcrypt, User
 from forms import RegisterForm, LoginForm
 from Forum.forum import forum
+from ChatBot.ChatBotRoute import chatBot_bp
 from flask_login import (
     LoginManager, login_user, logout_user, login_required, UserMixin, current_user
 )
@@ -37,6 +37,7 @@ bcrypt.init_app(app)
 # Kết nối SQLite cho phần ảnh
 # Đăng ký API feedback
 app.register_blueprint(feedback_bp)
+app.register_blueprint(chatBot_bp)
 app.register_blueprint(forum)
 
 app.register_blueprint(friends_bp)
@@ -78,29 +79,7 @@ def search():
     data = [{"id": img.id, "name": img.name, "filename": img.filename} for img in results]
     return jsonify(data)
 
-# ---------------------------------------------------------
-# TÌM KIẾM ẢNH BẰNG ẢNH (UPLOAD)
-# ---------------------------------------------------------
-@app.route("/search_image", methods=["GET", "POST"])
-def search_image():
-    if request.method == "POST":
-        file = request.files.get("file")
-        if not file:
-            return "Không có ảnh nào được tải lên", 400
 
-        upload_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-        file.save(upload_path)
-
-        # Gọi hàm tìm ảnh tương tự
-        best_match, score = find_similar(upload_path)
-        return render_template(
-            "search_result.html",
-            query=file.filename,
-            match=best_match,
-            score=round(score, 3)
-        )
-
-    return render_template("search_image.html")
 
 # ---------------------------------------------------------
 # LỌC TÌM KIẾM
@@ -167,24 +146,6 @@ def search_text():
 def show_map():
     return render_template("map.html")
 
-# ---------------------------------------------------------
-# CHATBOT
-# ---------------------------------------------------------
-@app.route("/chat", methods=["POST"])
-def chat():
-    data = request.get_json()
-    if not data or "message" not in data:
-        return jsonify({"error": "Missing 'message' in request"}), 400
-
-    user_message = data["message"].strip()
-    if not user_message:
-        return jsonify({"error": "Empty message"}), 400
-
-    try:
-        bot_response = chatbot_reply(user_message)
-        return jsonify({"reply": bot_response})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 @app.route("/chat_ui")
 def chat_ui():
