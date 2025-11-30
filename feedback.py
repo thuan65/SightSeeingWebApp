@@ -1,6 +1,6 @@
 # SuggestionsFeedback/feedback.py
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session as flask_session
 from datetime import datetime
 
 # Import từ DB
@@ -13,11 +13,15 @@ feedback_bp = Blueprint("feedback", __name__)
 # ---------------------------------------------------------
 @feedback_bp.route("/feedback/<int:image_id>", methods=["POST"])
 def submit_feedback(image_id):
+    
     data = request.json
+
+    print("DATA:", data)
+    print("USER_ID:", data.get("user_id"))
 
     rating = data.get("rating")
     comment = data.get("comment", "")
-    user_id = data.get("user_id")
+    user_id = data.get("user_id") or flask_session.get("user_id")
     
     if not user_id:
         return jsonify({"error": "User not logged in"}), 401

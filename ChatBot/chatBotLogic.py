@@ -1,0 +1,113 @@
+from sentence_transformers import SentenceTransformer, util
+from sqlalchemy import create_engine, text
+import google.generativeai as genai
+import torch
+import os
+from dotenv import load_dotenv
+
+# ======================================================
+#Load môi trường & cấu hình API key
+# ======================================================
+load_dotenv()
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
+# ======================================================
+#Khởi tạo model
+# ======================================================
+# Mô hình hiểu ngữ nghĩa cho tiếng Việt
+sem_model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+
+# Mô hình hội thoại Gemini
+gemini_model = genai.GenerativeModel("gemini-2.5-flash")
+
+# ======================================================
+#Kết nối database
+# ======================================================
+engine = create_engine("sqlite:///images.db")
+
+with engine.connect() as conn:
+    results = conn.execute(text("SELECT * FROM images")).mappings().all()
+
+# Chuẩn bị embedding cho toàn bộ địa điểm
+place_sentences = [f"{r['name']} - {r['description']}" for r in results]
+place_embeddings = sem_model.encode(place_sentences, convert_to_tensor=True)
+
+# ======================================================
+# Phân loại ý định người dùng
+# ======================================================
+def detect_intent(text: str) -> str:
+    """
+    Phân loại ý định người dùng:
+    - suggest: muốn gợi ý địa điểm
+    - info: hỏi thông tin cụ thể
+    - chat: trò chuyện tự nhiên
+    """
+    text_lower = text.lower()
+    keywords = ["đi", "du lịch", "địa điểm", "ở đâu", "biển", "núi", "tham quan", "đến"]
+
+    if any(k in text_lower for k in keywords):
+        return "suggest"
+    elif "ở" in text_lower and "gì" in text_lower:
+        return "info"
+    else:
+        return "chat"
+
+# ======================================================
+#Gợi ý địa điểm từ cơ sở dữ liệu
+# ======================================================
+def suggest_place(user_query: str) -> dict:
+    """
+    Trả về địa điểm có mô tả gần nhất với truy vấn người dùng.
+    """
+    query_embedding = sem_model.encode(user_query, convert_to_tensor=True)
+    scores = util.cos_sim(query_embedding, place_embeddings)[0]
+    best_idx = scores.argmax().item()
+    return dict(results[best_idx])
+
+# ======================================================
+#Kiểm tra câu hỏi có nằm trong phạm vi sightseeing
+# ======================================================
+def is_sightseeing_question(user_message: str) -> bool:
+    keywords = [
+        "đi đâu", "chơi gì", "du lịch", "tham quan", "địa điểm",
+        "quán", "chỗ nào", "review", "gần đây có gì",
+        "đi chơi", "khám phá", "landmark", "điểm đến"
+    ]
+    msg = user_message.lower()
+    return any(k in msg for k in keywords)
+
+
+# ======================================================
+# 6. Trả lời bằng Gemini
+# ======================================================
+def gemini_reply(user_message: str) -> str:
+    #Sinh phản hồi bằng Gemini.
+
+    chat = gemini_model.start_chat()
+    response = chat.send_message(user_message)
+    return response.text.strip()
+
+
+
+# ======================================================
+# 7. Hàm trung tâm: Chatbot trả lời
+# ======================================================
+def chatbot_reply(user_message: str):
+# Sinh phản hồi dựa trên intent.
+    intent = detect_intent(user_message)
+
+    if intent == "suggest":
+        place = suggest_place(user_message)
+        raw_info = f" Gợi ý cho bạn: {place['name']} — {place['description']}"
+        prompt = f"""Người dùng hỏi: "{user_message}".
+        Dưới đây là thông tin tôi tìm thấy:
+        {raw_info}
+        Hãy viết lại câu trả lời ngắn gọn, thân thiện, tự nhiên như hướng dẫn viên du lịch đang nói chuyện, bằng tiếng Việt.
+        """
+        reply = gemini_reply(prompt)
+    else:
+        reply = gemini_reply(user_message)
+
+    return reply
+
+print("Ai runningnn...")
