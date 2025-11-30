@@ -4,10 +4,10 @@ import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from models_loader import EN_MODEL, VI_MODEL
 import torch
 
 # — Model tiếng Anh (optionnal) —
-EN_MODEL = "unitary/toxic-bert"
 en_tokenizer = AutoTokenizer.from_pretrained(EN_MODEL)
 en_model = AutoModelForSequenceClassification.from_pretrained(EN_MODEL)
 EN_THRESHOLD = 0.5
@@ -21,7 +21,6 @@ def is_toxic_en(text: str, threshold: float = EN_THRESHOLD) -> bool:
 
 
 # — Model tiếng Việt: PhoBERT‑HSD —
-VI_MODEL = "visolex/phobert-hsd"
 vi_tokenizer = AutoTokenizer.from_pretrained(VI_MODEL)
 vi_model = AutoModelForSequenceClassification.from_pretrained(VI_MODEL)
 VI_THRESHOLD = 0.5
