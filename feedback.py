@@ -1,6 +1,7 @@
 # SuggestionsFeedback/feedback.py
 
 from flask import Blueprint, request, jsonify, session as flask_session
+from Forum.toxic_filter import is_toxic
 from datetime import datetime
 
 # Import từ DB
@@ -22,7 +23,9 @@ def submit_feedback(image_id):
     rating = data.get("rating")
     comment = data.get("comment", "")
     user_id = data.get("user_id") or flask_session.get("user_id")
-    
+
+    #if is_toxic(comment):
+        #return render_template("new_post.html", error="Nội dung bình luận không phù hợp. Vui lòng viết lại.") 
     if not user_id:
         return jsonify({"error": "User not logged in"}), 401
     if rating is None:

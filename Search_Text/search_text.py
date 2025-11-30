@@ -1,6 +1,7 @@
 from flask import Blueprint, request, Response, jsonify
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import util
 from sqlalchemy import create_engine, text
+from models_loader import sbert_model
 import json
 import os
 
@@ -11,15 +12,6 @@ search_text = Blueprint("search_text", __name__)
 
 # 2. Khởi tạo SentenceTransformer Model
 # Sử dụng mô hình tiếng Việt đã được nhắc đến
-try:
-    sbert_model = SentenceTransformer("keepitreal/vietnamese-sbert")
-except Exception as e:
-    # Trường hợp không tải được model (ví dụ: mất mạng), sử dụng một placeholder
-    print(f"Warning: Failed to load SBERT model: {e}. Using dummy model.")
-    class DummyModel:
-        def encode(self, *args, **kwargs): return []
-    sbert_model = DummyModel()
-
 
 # 3. Kết nối Database Engine
 def get_db_engine():
