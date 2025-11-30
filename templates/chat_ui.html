@@ -5,105 +5,148 @@
     <title>Chatbot Du Lịch</title>
     <style>
         body {
-            font-family: sans-serif;
-            background: linear-gradient(135deg, #4ECDC4 0%, #FF6B35 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1C6758 0%, #8EB486 100%); 
             color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
             margin: 0;
-            padding: 30px;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
         }
 
         .chat-box {
             background: white;
-            color: black;
-            width: 90%;
-            max-width: 600px;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            color: #333;
+            width: 100%;
+            border-radius: 15px;
+            padding: 15px;
+            box-sizing: border-box; 
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
             overflow-y: auto;
             height: 350px;
+            scroll-behavior: smooth;
         }
+
+            .chat-box::-webkit-scrollbar {
+                width: 8px;
+            }
+
+            .chat-box::-webkit-scrollbar-thumb {
+                background: #ccc;
+                border-radius: 4px;
+            }
 
         .message {
-            margin-bottom: 10px;
-            padding: 8px 12px;
-            border-radius: 15px;
-            max-width: 70%;
-            line-height: 1.4;
+            margin-bottom: 12px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 75%;
+            word-wrap: break-word;
+            line-height: 1.5;
+            font-size: 15px;
+            position: relative;
         }
 
-        /* Tin nhắn User */
         .user-container {
             display: flex;
             justify-content: flex-end;
         }
 
         .user {
-            background-color: #FF6B35;
+            background: linear-gradient(135deg, #FF6B35, #FF8E53);
             color: white;
-            text-align: right;
-            border-bottom-right-radius: 2px;
+            border-bottom-right-radius: 4px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
         }
 
-        /* Tin nhắn Bot */
         .bot-container {
             display: flex;
             justify-content: flex-start;
         }
 
         .bot {
-            background-color: #f1f1f1;
-            color: black;
-            text-align: left;
-            border-bottom-left-radius: 2px;
+            background-color: #f1f2f6;
+            color: #2c3e50;
+            border-bottom-left-radius: 4px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
         }
 
         .input-area {
-            margin-top: 20px;
-            width: 90%;
-            max-width: 600px;
+            margin-top: 15px;
             display: flex;
             gap: 10px;
         }
 
         input {
             flex: 1;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 12px 15px;
+            border-radius: 25px;
             border: none;
             font-size: 16px;
             outline: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         button {
-            background: linear-gradient(135deg, #4ECDC4, #FF6B35);
+            background: linear-gradient(135deg, #FF6B35, #D94625);
             color: white;
             border: none;
-            border-radius: 5px;
-            padding: 10px 20px;
+            border-radius: 25px;
+            padding: 10px 25px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
             button:hover {
-                opacity: 0.9;
+                transform: translateY(-2px);
+                box-shadow: 0 6px 12px rgba(0,0,0,0.3);
             }
+
+            button:active {
+                transform: translateY(0);
+            }
+
+        #loadingMsg {
+            text-align: center;
+            color: gray;
+            font-style: italic;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>💬 Chatbot Du Lịch</h1>
+    <h1>💬 Trợ lý Du Lịch</h1>
 
-    <div class="chat-box" id="chatBox">
-        <div style="text-align: center; color: gray; font-style: italic;" id="loadingMsg">Đang tải lịch sử chat...</div>
-    </div>
+    <div class="chat-container">
+        <div class="chat-box" id="chatBox">
+            <div id="loadingMsg">Đang tải cuộc trò chuyện cũ...</div>
+        </div>
 
-    <div class="input-area">
-        <input id="userInput" placeholder="Nhập tin nhắn..." autocomplete="off">
-        <button onclick="sendMessage()">Gửi</button>
+        <div class="input-area">
+            <input id="userInput" placeholder="Hỏi gì đó về du lịch đi..." autocomplete="off">
+            <button onclick="sendMessage()">Gửi ➤</button>
+        </div>
     </div>
 
     <script>
@@ -111,89 +154,79 @@
         const userInput = document.getElementById('userInput');
         const loadingMsg = document.getElementById('loadingMsg');
 
-        // --- 1. Hàm hiển thị tin nhắn lên màn hình ---
+        // Hàm vẽ tin nhắn lên màn hình
         function appendMessage(text, sender) {
             if (!text) return;
-            const msgDiv = document.createElement('div');
-            // sender là 'user' hoặc 'bot'
-            msgDiv.className = sender === 'user' ? 'user-container' : 'bot-container';
+            const msgContainer = document.createElement('div');
+            msgContainer.className = sender === 'user' ? 'user-container' : 'bot-container';
 
-            const contentDiv = document.createElement('div');
-            contentDiv.className = `message ${sender}`;
-            contentDiv.innerText = text; // Dùng innerText để tránh lỗi XSS
+            const bubble = document.createElement('div');
+            bubble.className = `message ${sender}`;
+            bubble.innerText = text;
 
-            msgDiv.appendChild(contentDiv);
-            chatBox.appendChild(msgDiv);
+            msgContainer.appendChild(bubble);
+            chatBox.appendChild(msgContainer);
 
-            // Tự động cuộn xuống dưới cùng
-            chatBox.scrollTop = chatBox.scrollHeight;
+            chatBox.scrollTop = chatBox.scrollHeight; 
         }
 
-        // --- 2. Hàm tải lịch sử cũ từ API ---
         async function loadHistory() {
             try {
                 const res = await fetch('/api/history');
                 const data = await res.json();
 
-                // Xóa dòng chữ "Đang tải..."
-                loadingMsg.style.display = 'none';
+                if (loadingMsg) loadingMsg.style.display = 'none';
 
-                if (data.error) {
-                    console.error("Lỗi tải lịch sử:", data.error);
-                    return;
+                if (Array.isArray(data)) {
+                    data.forEach(msg => {
+                        appendMessage(msg.user_message, 'user');
+                        appendMessage(msg.system_response, 'bot');
+                    });
                 }
-
-                // Duyệt qua từng tin nhắn cũ và hiện lên
-                data.forEach(msg => {
-                    appendMessage(msg.user_message, 'user');
-                    appendMessage(msg.system_response, 'bot');
-                });
-
             } catch (err) {
-                console.error("Lỗi mạng:", err);
-                loadingMsg.innerText = "Không thể tải lịch sử chat.";
+                console.error("Lỗi tải lịch sử:", err);
+                if (loadingMsg) loadingMsg.innerText = "Chưa có lịch sử chat nào.";
             }
         }
 
-        // --- 3. Hàm gửi tin nhắn mới ---
+        // Gửi tin nhắn mới 
         async function sendMessage() {
             const message = userInput.value.trim();
             if (!message) return;
 
-            // Hiện tin nhắn của mình ngay lập tức
+            // 1. Hiện tin nhắn của mình ngay
             appendMessage(message, 'user');
             userInput.value = '';
 
             try {
+                // 2. Gửi lên Backend
                 const res = await fetch('/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    credentials: "include", // <--- QUAN TRỌNG: Để server biết là ai đang chat
+                    credentials: "include",
                     body: JSON.stringify({ message })
                 });
 
                 const data = await res.json();
 
+                // 3. Hiện câu trả lời từ Backend
                 if (data.reply) {
                     appendMessage(data.reply, 'bot');
                 } else {
-                    appendMessage("⚠️ Lỗi: " + (data.error || 'Server không phản hồi'), 'bot');
+                    appendMessage("⚠️ Lỗi: " + (data.error || 'Server không trả lời'), 'bot');
                 }
             } catch (err) {
-                appendMessage("⚠️ Lỗi kết nối server!", 'bot');
+                appendMessage("⚠️ Mất kết nối server!", 'bot');
             }
         }
 
-        // --- 4. Sự kiện nhấn Enter ---
+        // Nhấn Enter để gửi
         userInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
+            if (e.key === 'Enter') sendMessage();
         });
 
-        // --- 5. Tự động tải lịch sử khi mở trang ---
+        // Tự động tải lịch sử khi mở trang
         window.onload = loadHistory;
-
     </script>
 </body>
 </html>

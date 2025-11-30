@@ -36,13 +36,13 @@
       .logo {
           font-size: 32px;
           font-weight: 700;
-          color: #FF6B35;
+          color: #1C6758;
           text-decoration: none;
           font-family: 'Poppins', sans-serif;
       }
 
       .logo span {
-          color: #4ECDC4;
+          color: #8EB486;
       }
 
       .nav-links {
@@ -70,20 +70,20 @@
       }
 
       .btn-primary {
-          background: linear-gradient(135deg, #FF6B35, #FF8C42) !important;
+          background: linear-gradient(135deg, #1C6758, #8EB486) !important;
           color: white !important;
           font-weight: 600;
       }
 
       .btn-secondary {
-          border: 2px solid #FF6B35 !important;
-          color: #FF6B35 !important;
+          border: 2px solid #1C6758 !important;
+          color: #1C6758 !important;
           font-weight: 600;
       }
 
       /* Phần Hero */
       .hero {
-          background: linear-gradient(135deg, #4ECDC4 0%, #FF6B35 100%);
+          background: linear-gradient(135deg, #8EB486 0%, #1C6758 100%);
           padding: 60px 20px;
           text-align: center;
           color: white;
@@ -133,14 +133,14 @@
       }
 
       .tab.active {
-          background: linear-gradient(135deg, #4ECDC4, #FF6B35);
+          background: linear-gradient(135deg, #8EB486, #1C6758);
           color: white;
           border-color: transparent;
           box-shadow: 0 4px 15px rgba(0,0,0,0.15);
       }
 
       .tab:hover {
-          border-color: #4ECDC4;
+          border-color: #8EB486;
       }
 
       .search-form {
@@ -172,13 +172,13 @@
       }
 
       .search-row input:focus, .search-row select:focus {
-          border-color: #4ECDC4;
+          border-color: #8EB486;
           box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
       }
 
       .search-button {
           padding: 15px 40px;
-          background: linear-gradient(135deg, #4ECDC4, #FF6B35);
+          background: linear-gradient(135deg, #8EB486, #1C6758);
           color: white;
           border: none;
           border-radius: 50px;
@@ -226,7 +226,7 @@
       }
 
       .tag-item:hover {
-          background: linear-gradient(135deg, #4ECDC4, #FF6B35);
+          background: linear-gradient(135deg, #8EB486, #1C6758);
           color: white;
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -288,7 +288,7 @@
       }
 
       .tags { 
-          color: #667eea; 
+          color: #8EB486; 
           font-size: 13px;
           margin-bottom: 5px;
           font-weight: 500;
@@ -326,7 +326,7 @@
 
       .footer-section h3 {
           margin-bottom: 20px;
-          color: #4ECDC4;
+          color: #8EB486;
           font-weight: 600;
           font-size: 18px;
       }
@@ -350,7 +350,7 @@
           position: fixed;
           bottom: 30px;
           right: 30px;
-          background: linear-gradient(135deg, #FF6B35, #FF8C42);
+          background: linear-gradient(135deg, #1C6758,  #8EB486);
           color: white;
           width: 50px;
           height: 50px;
@@ -406,6 +406,7 @@
               </select>
               <a href="/map">Bản đồ</a>
               <a href="/chat_ui">Chatbot du lịch</a>
+              <a href="/forum">Forum</a>
               <a href="/register" class="btn-secondary">Đăng ký</a>
               <a href="/login" class="btn-primary">Đăng nhập</a>
           </div>
@@ -462,7 +463,7 @@
 
           <!-- Gợi ý tag -->
           <div class="suggestion-tags">
-              <p>Gợi ý tìm kiếm phổ biến:</p>
+              <p>💡 Gợi ý tìm kiếm phổ biến:</p>
               <div class="tags-container">
                   <span class="tag-item" onclick="quickSearch('nghỉ dưỡng')">nghỉ dưỡng</span>
                   <span class="tag-item" onclick="quickSearch('miền Tây')">miền Tây</span>
@@ -482,33 +483,6 @@
       <h2 class="section-title">Khám phá điểm đến</h2>
       
       <div id="results" class="image-grid">
-          <!-- Các card mẫu - thay bằng dữ liệu thật từ backend -->
-          <div class="image-card" onclick="viewDetail(1)">
-              <img src="https://images.unsplash.com/photo-1552832230-c0197dd311b5" alt="Hội An">
-              <div class="image-info">
-                  <h3>Phố cổ Hội An</h3>
-                  <div class="tags">Quảng Nam - lịch sử, văn hóa</div>
-                  <div class="rating">⭐ 4.8</div>
-              </div>
-          </div>
-
-          <div class="image-card" onclick="viewDetail(2)">
-              <img src="https://images.unsplash.com/photo-1583417319070-4a69db38a482" alt="Hạ Long">
-              <div class="image-info">
-                  <h3>Vịnh Hạ Long</h3>
-                  <div class="tags">Quảng Ninh - biển, thiên nhiên</div>
-                  <div class="rating">⭐ 4.9</div>
-              </div>
-          </div>
-
-          <div class="image-card" onclick="viewDetail(3)">
-              <img src="https://images.unsplash.com/photo-1528127269322-539801943592" alt="Phú Quốc">
-              <div class="image-info">
-                  <h3>Đảo Phú Quốc</h3>
-                  <div class="tags">Kiên Giang - biển, nghỉ dưỡng</div>
-                  <div class="rating">⭐ 4.7</div>
-              </div>
-          </div>
       </div>
   </div>
 
@@ -537,9 +511,9 @@
 
           <div class="footer-section">
               <h3>Liên hệ</h3>
-              <p>Email: locago@hcmus.edu.vn</p>
-              <p>Hotline: 1900 xxxx</p>
-              <p>Địa chỉ: 227, Nguyễn Văn Cừ, P.Chợ Quán, TP.HCM</p>
+              <p>📧 Email: locago@hcmus.edu.vn</p>
+              <p>📱 Hotline: 1900 xxxx</p>
+              <p>🏢 Địa chỉ: 227, Nguyễn Văn Cừ, P.Chợ Quán, TP.HCM</p>
           </div>
       </div>
 
@@ -564,17 +538,28 @@
       // Tìm kiếm nhanh từ các tag gợi ý
       function quickSearch(keyword) {
           document.getElementById('searchInput').value = keyword;
-          switchTab('keyword');
-          document.querySelector('.tab').click();
+          // Chuyển sang tab keyword
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.search-form').forEach(f => f.classList.remove('active'));
+          document.querySelector('.tab').classList.add('active');
+          document.getElementById('keyword').classList.add('active');
+          // Thực hiện tìm kiếm
           searchImages();
       }
 
       // Các hàm tìm kiếm
       async function searchImages() {
           const query = document.getElementById('searchInput').value.trim();
-          const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-          const data = await res.json();
-          displayResults(data, query);
+          
+          try {
+              const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+              const data = await res.json();
+              displayResults(data, query);
+          } catch (error) {
+              console.error('Lỗi tìm kiếm:', error);
+              document.getElementById('results').innerHTML = 
+                  '<div class="no-results">Đã xảy ra lỗi khi tìm kiếm. Vui lòng thử lại.</div>';
+          }
       }
 
       async function searchFilter() {
@@ -582,19 +567,34 @@
           const tag = document.getElementById('tagInput').value.trim();
           const rating = document.getElementById('ratingInput').value.trim() || 0;
 
-          const url = `/search_filter?city=${encodeURIComponent(city)}&tag=${encodeURIComponent(tag)}&rating=${rating}`;
-          const res = await fetch(url);
-          const data = await res.json();
-          displayResults(data);
+          try {
+              const url = `/search_filter?city=${encodeURIComponent(city)}&tag=${encodeURIComponent(tag)}&rating=${rating}`;
+              const res = await fetch(url);
+              const data = await res.json();
+              displayResults(data);
+          } catch (error) {
+              console.error('Lỗi lọc:', error);
+              document.getElementById('results').innerHTML = 
+                  '<div class="no-results">Đã xảy ra lỗi khi lọc. Vui lòng thử lại.</div>';
+          }
       }
 
       async function searchText() {
           const query = document.getElementById('queryText').value.trim();
-          if (!query) return;
+          if (!query) {
+              alert('Vui lòng nhập nội dung tìm kiếm!');
+              return;
+          }
 
-          const res = await fetch(`/search_text?query=${encodeURIComponent(query)}`);
-          const data = await res.json();
-          displayResults(data);
+          try {
+              const res = await fetch(`/search_text?query=${encodeURIComponent(query)}`);
+              const data = await res.json();
+              displayResults(data);
+          } catch (error) {
+              console.error('Lỗi tìm kiếm AI:', error);
+              document.getElementById('results').innerHTML = 
+                  '<div class="no-results">Đã xảy ra lỗi khi tìm kiếm. Vui lòng thử lại.</div>';
+          }
       }
 
       async function searchByImage() {
@@ -607,14 +607,26 @@
           }
 
           const formData = new FormData();
-          formData.append('image', file);
+          formData.append('file', file);
 
-          const res = await fetch('/search_image', {
-              method: 'POST',
-              body: formData
-          });
-          const data = await res.json();
-          displayResults(data);
+          try {
+              const res = await fetch('/search_image', {
+                  method: 'POST',
+                  body: formData
+              });
+              
+              if (res.headers.get('content-type').includes('text/html')) {
+                  window.location.href = '/search_image';
+                  return;
+              }
+              
+              const data = await res.json();
+              displayResults(data);
+          } catch (error) {
+              console.error('Lỗi tìm kiếm ảnh:', error);
+              document.getElementById('results').innerHTML = 
+                  '<div class="no-results">Đã xảy ra lỗi khi tìm kiếm. Vui lòng thử lại.</div>';
+          }
       }
 
       // Hiển thị kết quả tìm kiếm
@@ -622,17 +634,19 @@
           const container = document.getElementById('results');
           if (!container) return;
 
-          if (data.length === 0) {
+          if (!data || data.length === 0) {
               container.innerHTML = `<div class="no-results">Không tìm thấy kết quả ${query ? 'cho "' + query + '"' : ''}</div>`;
               return;
           }
 
           container.innerHTML = data.map(place => `
               <div class="image-card" onclick="viewDetail(${place.id})">
-                  <img src="/static/images/${place.filename || 'default.jpg'}" alt="${place.name}">
+                  <img src="/static/images/${place.filename || 'default.jpg'}" 
+                       alt="${place.name || 'Hình ảnh'}"
+                       onerror="this.src='https://via.placeholder.com/280x220?text=No+Image'">
                   <div class="image-info">
-                      <h3>${place.name}</h3>
-                      <div class="tags">${place.city || ''} - ${place.tags || ''}</div>
+                      <h3>${place.name || 'Chưa có tên'}</h3>
+                      <div class="tags">${place.city || ''} ${place.tags ? '- ' + place.tags : ''}</div>
                       <div class="rating">⭐ ${place.rating || '0'}</div>
                   </div>
               </div>
@@ -672,7 +686,17 @@
       });
 
       // Tải dữ liệu ban đầu khi mở trang
-      window.onload = () => searchImages();
+      window.onload = async function() {
+          try {
+              const res = await fetch('/api/search?q=');
+              const data = await res.json();
+              displayResults(data);
+          } catch (error) {
+              console.error('Lỗi tải dữ liệu:', error);
+              document.getElementById('results').innerHTML = 
+                  '<div class="no-results">Đang tải dữ liệu...</div>';
+          }
+      };
   </script>
 
 </body>
