@@ -14,8 +14,11 @@ from Forum.forum import forum
 
 from ChatBot.ChatBotRoute import chatBot_bp
 
+from MapRouting.MapRoute import MapRouting_bp
+
 from Search_Filter.search_filter import search_filter
 from Search_Text.search_text import search_text
+from imageSearch.imageSearchRoute import image_bp
 
 from flask_login import (
     LoginManager, login_user, logout_user, login_required, UserMixin, current_user
@@ -34,6 +37,7 @@ from friends import friends_bp
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mysecretkey'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 # Khởi tạo database, bcrypt và login manager
 db.init_app(app)
@@ -46,8 +50,10 @@ app.register_blueprint(search_text)
 app.register_blueprint(feedback_bp)
 app.register_blueprint(chatBot_bp)
 app.register_blueprint(forum)
+app.register_blueprint(image_bp)
 
 app.register_blueprint(friends_bp)
+#app.register_blueprint(MapRouting_bp, url_prefix='/MapRouting')
 
 app.config['JSON_AS_ASCII'] = False
 engine = create_engine("sqlite:///images.db")
@@ -212,4 +218,5 @@ def friends_page():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    #app.run(debug=True)
+    app.run(debug=False, use_reloader=False) #Chạy khi không cần debug

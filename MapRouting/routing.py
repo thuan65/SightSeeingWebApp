@@ -1,5 +1,5 @@
 import requests
-from vietnam_boundary import check_route_in_vietnam, get_vietnam_waypoints, is_in_vietnam
+from .vietnam_boundary import check_route_in_vietnam, get_vietnam_waypoints, is_in_vietnam
 
 GRAPHHOPPER_API = "https://graphhopper.com/api/1/route"
 API_KEY = "510b2242-84d4-45c2-97fa-baa242e6a4b7"

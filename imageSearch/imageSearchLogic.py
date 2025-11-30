@@ -1,13 +1,7 @@
 from transformers import CLIPProcessor, CLIPModel
+from models_loader import Clip_model, processor, model
 from PIL import Image
 import torch, os, json
-
-# === Load model ===
-model_name = "openai/clip-vit-base-patch32"
-
-
-model = CLIPModel.from_pretrained(model_name)
-processor = CLIPProcessor.from_pretrained(model_name)
 
 # === Load metadata (địa điểm) ===
 with open("metadata.json", "r", encoding="utf-8") as f:

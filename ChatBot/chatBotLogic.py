@@ -1,4 +1,5 @@
 from sentence_transformers import SentenceTransformer, util
+from models_loader import sbert_model
 from sqlalchemy import create_engine, text
 import google.generativeai as genai
 import torch
@@ -15,7 +16,7 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 #Khởi tạo model
 # ======================================================
 # Mô hình hiểu ngữ nghĩa cho tiếng Việt
-sem_model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+# sem_model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 
 # Mô hình hội thoại Gemini
 gemini_model = genai.GenerativeModel("gemini-2.5-flash")
@@ -30,7 +31,7 @@ with engine.connect() as conn:
 
 # Chuẩn bị embedding cho toàn bộ địa điểm
 place_sentences = [f"{r['name']} - {r['description']}" for r in results]
-place_embeddings = sem_model.encode(place_sentences, convert_to_tensor=True)
+place_embeddings = sbert_model.encode(place_sentences, convert_to_tensor=True)
 
 # ======================================================
 # Phân loại ý định người dùng
@@ -59,7 +60,7 @@ def suggest_place(user_query: str) -> dict:
     """
     Trả về địa điểm có mô tả gần nhất với truy vấn người dùng.
     """
-    query_embedding = sem_model.encode(user_query, convert_to_tensor=True)
+    query_embedding = sbert_model.encode(user_query, convert_to_tensor=True)
     scores = util.cos_sim(query_embedding, place_embeddings)[0]
     best_idx = scores.argmax().item()
     return dict(results[best_idx])
