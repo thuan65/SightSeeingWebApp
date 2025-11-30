@@ -1,73 +1,199 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Chatbot Du Lịch</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: linear-gradient(135deg, #4ECDC4 0%, #FF6B35 100%);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 30px;
-    }
-    .chat-box {
-      background: white;
-      color: black;
-      width: 90%;
-      max-width: 600px;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      overflow-y: auto;
-      max-height: 70vh;
-    }
-    .message { margin-bottom: 10px; }
-    .user { text-align: right; color: #FF6B35; }
-    .bot { text-align: left; color: #4ECDC4; }
-    .input-area { margin-top: 20px; width: 90%; max-width: 600px; display: flex; gap: 10px; }
-    input { flex: 1; padding: 10px; border-radius: 5px; border: none; font-size: 16px; }
-    button { background: linear-gradient(135deg, #4ECDC4, #FF6B35); color: white; border: none; border-radius: 5px; padding: 10px 20px; cursor: pointer; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Chatbot Du Lịch</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: linear-gradient(135deg, #4ECDC4 0%, #FF6B35 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .chat-box {
+            background: white;
+            color: black;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow-y: auto;
+            height: 350px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 15px;
+            max-width: 70%;
+            line-height: 1.4;
+        }
+
+        /* Tin nhắn User */
+        .user-container {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .user {
+            background-color: #FF6B35;
+            color: white;
+            text-align: right;
+            border-bottom-right-radius: 2px;
+        }
+
+        /* Tin nhắn Bot */
+        .bot-container {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .bot {
+            background-color: #f1f1f1;
+            color: black;
+            text-align: left;
+            border-bottom-left-radius: 2px;
+        }
+
+        .input-area {
+            margin-top: 20px;
+            width: 90%;
+            max-width: 600px;
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            font-size: 16px;
+            outline: none;
+        }
+
+        button {
+            background: linear-gradient(135deg, #4ECDC4, #FF6B35);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+            button:hover {
+                opacity: 0.9;
+            }
+    </style>
 </head>
 <body>
-  <h1>💬 Chatbot Du Lịch</h1>
-  <div class="chat-box" id="chatBox"></div>
+    <h1>💬 Chatbot Du Lịch</h1>
 
-  <div class="input-area">
-    <input id="userInput" placeholder="Nhập tin nhắn..." onkeypress="if(event.key==='Enter') sendMessage()">
-    <button onclick="sendMessage()">Gửi</button>
-  </div>
+    <div class="chat-box" id="chatBox">
+        <div style="text-align: center; color: gray; font-style: italic;" id="loadingMsg">Đang tải lịch sử chat...</div>
+    </div>
 
-  <script>
-    async function sendMessage() {
-      const input = document.getElementById('userInput');
-      const chatBox = document.getElementById('chatBox');
-      const message = input.value.trim();
-      if (!message) return;
+    <div class="input-area">
+        <input id="userInput" placeholder="Nhập tin nhắn..." autocomplete="off">
+        <button onclick="sendMessage()">Gửi</button>
+    </div>
 
-      chatBox.innerHTML += `<div class="message user">🧍‍♂️ ${message}</div>`;
-      input.value = '';
+    <script>
+        const chatBox = document.getElementById('chatBox');
+        const userInput = document.getElementById('userInput');
+        const loadingMsg = document.getElementById('loadingMsg');
 
-      const res = await fetch('/chat', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({message})
-      });
-      const data = await res.json();
+        // --- 1. Hàm hiển thị tin nhắn lên màn hình ---
+        function appendMessage(text, sender) {
+            if (!text) return;
+            const msgDiv = document.createElement('div');
+            // sender là 'user' hoặc 'bot'
+            msgDiv.className = sender === 'user' ? 'user-container' : 'bot-container';
 
-      if (data.reply) {
-        chatBox.innerHTML += `<div class="message bot"> ${data.reply}</div>`;
-      } else {
-        chatBox.innerHTML += `<div class="message bot"> Lỗi: ${data.error || 'Không phản hồi được'}</div>`;
-      }
+            const contentDiv = document.createElement('div');
+            contentDiv.className = `message ${sender}`;
+            contentDiv.innerText = text; // Dùng innerText để tránh lỗi XSS
 
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-  </script>
+            msgDiv.appendChild(contentDiv);
+            chatBox.appendChild(msgDiv);
+
+            // Tự động cuộn xuống dưới cùng
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // --- 2. Hàm tải lịch sử cũ từ API ---
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/history');
+                const data = await res.json();
+
+                // Xóa dòng chữ "Đang tải..."
+                loadingMsg.style.display = 'none';
+
+                if (data.error) {
+                    console.error("Lỗi tải lịch sử:", data.error);
+                    return;
+                }
+
+                // Duyệt qua từng tin nhắn cũ và hiện lên
+                data.forEach(msg => {
+                    appendMessage(msg.user_message, 'user');
+                    appendMessage(msg.system_response, 'bot');
+                });
+
+            } catch (err) {
+                console.error("Lỗi mạng:", err);
+                loadingMsg.innerText = "Không thể tải lịch sử chat.";
+            }
+        }
+
+        // --- 3. Hàm gửi tin nhắn mới ---
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Hiện tin nhắn của mình ngay lập tức
+            appendMessage(message, 'user');
+            userInput.value = '';
+
+            try {
+                const res = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: "include", // <--- QUAN TRỌNG: Để server biết là ai đang chat
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await res.json();
+
+                if (data.reply) {
+                    appendMessage(data.reply, 'bot');
+                } else {
+                    appendMessage("⚠️ Lỗi: " + (data.error || 'Server không phản hồi'), 'bot');
+                }
+            } catch (err) {
+                appendMessage("⚠️ Lỗi kết nối server!", 'bot');
+            }
+        }
+
+        // --- 4. Sự kiện nhấn Enter ---
+        userInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // --- 5. Tự động tải lịch sử khi mở trang ---
+        window.onload = loadHistory;
+
+    </script>
 </body>
 </html>
