@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Danh sách yêu thích</title>
+    <style>
+    body { font-family: sans-serif; max-width: 900px; margin: 40px auto; }
+
+    .image-card { 
+        display: inline-block; 
+        width: 200px; 
+        margin: 10px; 
+        vertical-align: top; 
+        position: relative;  /* cần để span remove-btn position absolute */
+    }
+
+    .image-card img { width: 100%; border-radius: 8px; }
+
+    .image-card p { text-align: center; margin-top: 5px; }
+
+    a { text-decoration: none; color: #333; }
+
+    /* ẩn nút xóa mặc định */
+    .remove-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        display: none;
+        font-size: 16px;
+        cursor: pointer;
+        color: #888;
+    }
+
+    /* hover image-card hiện nút xóa */
+    .image-card:hover .remove-btn {
+        display: block;
+    }
+    </style>
+
+</head>
+<body>
+  <h1>Danh sách yêu thích của bạn</h1>
+  <p><a href="/">⬅ Quay lại thư viện</a></p>
+
+{% if images %}
+  {% for img in images %}
+    <div class="image-card" data-id="{{ img.id }}">
+      <a href="{{ url_for('image_detail', image_id=img.id) }}">
+        <img src="/static/images/{{ img.filename }}" alt="{{ img.name }}">
+        <p>{{ img.name }}</p>
+      </a>
+      <span class="remove-btn" style="cursor:pointer;color:red;font-weight:bold;">❌</span>
+    </div>
+  {% endfor %}
+{% else %}
+  <p>Bạn chưa có ảnh yêu thích nào.</p>
+{% endif %}
+<script>
+document.querySelectorAll(".remove-btn").forEach(btn => {
+  btn.addEventListener("click", async (e) => {
+    const card = e.target.closest(".image-card");
+    const imageId = card.dataset.id;
+
+    if (!confirm("Bạn có chắc muốn xóa ảnh này khỏi danh sách yêu thích?")) return;
+
+    const res = await fetch(`/favorite/${imageId}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" }
+    });
+
+    const result = await res.json();
+    if (res.ok) {
+      // Xóa thẻ HTML khỏi trang
+      card.remove();
+    } else {
+      alert("Lỗi: " + result.error);
+    }
+  });
+});
+</script>
+
+</body>
+</html>
