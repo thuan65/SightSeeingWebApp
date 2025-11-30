@@ -11,7 +11,12 @@ from createDataBase import Image
 from models import db, bcrypt, User
 from forms import RegisterForm, LoginForm
 from Forum.forum import forum
+
 from ChatBot.ChatBotRoute import chatBot_bp
+
+from Search_Filter.search_filter import search_filter
+from Search_Text.search_text import search_text
+
 from flask_login import (
     LoginManager, login_user, logout_user, login_required, UserMixin, current_user
 )
@@ -36,6 +41,8 @@ bcrypt.init_app(app)
 
 # Kết nối SQLite cho phần ảnh
 # Đăng ký API feedback
+app.register_blueprint(search_filter)
+app.register_blueprint(search_text)
 app.register_blueprint(feedback_bp)
 app.register_blueprint(chatBot_bp)
 app.register_blueprint(forum)
@@ -82,62 +89,62 @@ def search():
 
 
 # ---------------------------------------------------------
-# LỌC TÌM KIẾM
+# LỌC TÌM KIẾM.  CHƯA DÁM XOÁ SỢ SAI
 # ---------------------------------------------------------
-@app.route("/search_filter", methods=["GET"])
-def search_filter():
-    city = request.args.get("city", "")
-    tag = request.args.get("tag", "")
-    min_rating = float(request.args.get("rating", 0))
+# @app.route("/search_filter", methods=["GET"])
+# def search_filter():
+#     city = request.args.get("city", "")
+#     tag = request.args.get("tag", "")
+#     min_rating = float(request.args.get("rating", 0))
 
-    query = "SELECT * FROM images WHERE 1=1"
-    params = {}
+#     query = "SELECT * FROM images WHERE 1=1"
+#     params = {}
 
-    if city:
-        query += " AND city LIKE :city"
-        params["city"] = f"%{city}%"
-    if tag:
-        query += " AND tags LIKE :tag"
-        params["tag"] = f"%{tag}%"
-    query += " AND rating >= :min_rating"
-    params["min_rating"] = min_rating
+#     if city:
+#         query += " AND city LIKE :city"
+#         params["city"] = f"%{city}%"
+#     if tag:
+#         query += " AND tags LIKE :tag"
+#         params["tag"] = f"%{tag}%"
+#     query += " AND rating >= :min_rating"
+#     params["min_rating"] = min_rating
 
-    with engine.connect() as conn:
-        results = conn.execute(text(query), params).mappings().all()
+#     with engine.connect() as conn:
+#         results = conn.execute(text(query), params).mappings().all()
 
-    response = json.dumps([dict(row) for row in results], ensure_ascii=False)
-    return Response(response, content_type="application/json; charset=utf-8")
+#     response = json.dumps([dict(row) for row in results], ensure_ascii=False)
+#     return Response(response, content_type="application/json; charset=utf-8")
 
 # ---------------------------------------------------------
-# TÌM KIẾM THEO VĂN BẢN (AI - Sentence-BERT)
+# TÌM KIẾM THEO VĂN BẢN (AI - Sentence-BERT) Y CHANG T CHƯA DÁM XOÁ
 # ---------------------------------------------------------
 
 
-def get_all_places():
-    with engine.connect() as conn:
-        results = conn.execute(text("SELECT * FROM images")).mappings().all()
-    return results
+# def get_all_places():
+#     with engine.connect() as conn:
+#         results = conn.execute(text("SELECT * FROM images")).mappings().all()
+#     return results
 
-def compute_similarity(query_text, places, top_k=5):
-    query_embedding = sbert_model.encode(query_text, convert_to_tensor=True)
-    scored = []
-    for place in places:
-        place_embedding = sbert_model.encode(place["description"], convert_to_tensor=True)
-        similarity = util.cos_sim(query_embedding, place_embedding).item()
-        scored.append((similarity, place))
-    scored.sort(reverse=True, key=lambda x: x[0])
-    return [dict(x[1]) for x in scored[:top_k]]
+# def compute_similarity(query_text, places, top_k=5):
+#     query_embedding = sbert_model.encode(query_text, convert_to_tensor=True)
+#     scored = []
+#     for place in places:
+#         place_embedding = sbert_model.encode(place["description"], convert_to_tensor=True)
+#         similarity = util.cos_sim(query_embedding, place_embedding).item()
+#         scored.append((similarity, place))
+#     scored.sort(reverse=True, key=lambda x: x[0])
+#     return [dict(x[1]) for x in scored[:top_k]]
 
-@app.route("/search_text", methods=["GET"])
-def search_text():
-    user_message = request.args.get("q", "")
-    if not user_message.strip():
-        return jsonify([])
+# @app.route("/search_text", methods=["GET"])
+# def search_text():
+#     user_message = request.args.get("q", "")
+#     if not user_message.strip():
+#         return jsonify([])
 
-    places = get_all_places()
-    top_results = compute_similarity(user_message, places)
-    response = json.dumps(top_results, ensure_ascii=False)
-    return Response(response, content_type="application/json; charset=utf-8")
+#     places = get_all_places()
+#     top_results = compute_similarity(user_message, places)
+#     response = json.dumps(top_results, ensure_ascii=False)
+#     return Response(response, content_type="application/json; charset=utf-8")
 
 # ---------------------------------------------------------
 # TRANG BẢN ĐỒ
