@@ -6,20 +6,20 @@ from flask import (
 from sentence_transformers import SentenceTransformer, util
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from chatBot import chatbot_reply
-from createDataBase import Image
-from Search_Imagine import find_similar
-from models import db, bcrypt, User
-from forms import RegisterForm, LoginForm
-from Forum.forum import forum
+www
 from flask_login import (
     LoginManager, login_user, logout_user, login_required, UserMixin, current_user
 )
 import torch
-from feedback import feedback_bp   
-# NEW CODE: để người dùng upload ảnh 
 import os
-from Search_Imagine import find_similar  # import hàm AI tìm ảnh tương tự
+
+from chatBot import chatbot_reply
+from createDataBase import Image
+from models import db, bcrypt, User
+from forms import RegisterForm, LoginForm
+from Forum.forum import forum
+from feedback import feedback_bp   
+from Search_Imagine import find_similar #for CLIP Imagine finding
 # ---------------------------------------------------------
 # CẤU HÌNH ỨNG DỤNG FLASK
 # ---------------------------------------------------------
