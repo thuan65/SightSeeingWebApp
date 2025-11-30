@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, Blueprint
 from routing import get_route
 from multi_point_routing import find_shortest_route_multi_points
 from geocoding import geocode_address, reverse_geocode
