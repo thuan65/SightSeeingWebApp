@@ -43,6 +43,17 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 db.init_app(app)
 bcrypt.init_app(app)
 
+# ---------------------------------------------------------
+# LƯU LỊCH SỬ 
+# ---------------------------------------------------------
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login' 
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
 # Kết nối SQLite cho phần ảnh
 # Đăng ký API feedback
 app.register_blueprint(search_filter)
@@ -188,6 +199,9 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
+            
+            login_user(user)
+            
             session['username'] = user.username
             session['user_id'] = user.id
             return redirect(url_for('index'))  # ⬅️ Sau khi login -> index.html
