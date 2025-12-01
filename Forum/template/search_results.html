@@ -1,29 +1,317 @@
-<h2>Kết quả tìm kiếm cho "{{ query }}"</h2>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kết quả tìm kiếm - LocaGo!</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-{% if posts %}
-  <ul>
-    {% for post in posts %}
-      <li>
-        <strong>Đăng bởi: {{ post.username }}</strong><br>
-        <strong>{{ post.title }}</strong><br>
-        {{ post.content[:150] }}{% if post.content|length > 150 %}...{% endif %}
-        <br>Similarity score: {{ post.score | round(3) }}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Poppins', 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
 
-        {% if post.answers %}
-          <div style="margin-left:20px; margin-top:5px;">
-            <strong>💬 Trả lời:</strong>
-            <ul>
-              {% for ans in post.answers %}
-                <li><i>{{ ans.content }}</i> — <small>{{ ans.expert_username }}</small></li>
-              {% endfor %}
-            </ul>
-          </div>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+        /* Header */
+        header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px 30px;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1C6758;
+            text-decoration: none;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .logo span {
+            color: #8EB486;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+
+        /* Search Header */
+        .search-header {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .search-header h1 {
+            font-size: 2em;
+            color: #1C6758;
+            margin-bottom: 10px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .search-query {
+            color: #8EB486;
+            font-weight: 600;
+        }
+
+        .search-stats {
+            color: #666;
+            font-size: 15px;
+            margin-top: 10px;
+        }
+
+        .btn-back {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: transparent;
+            border: 2px solid #8EB486;
+            color: #1C6758;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn-back:hover {
+            background: linear-gradient(135deg, #8EB486, #1C6758);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Post Card */
+        .post-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: 0.3s;
+        }
+
+        .post-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .post-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .post-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .post-author {
+            font-weight: 600;
+            color: #1C6758;
+        }
+
+        .similarity-score {
+            background: linear-gradient(135deg, #8EB486, #1C6758);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .post-content {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        /* Answers Section */
+        .answers-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .answers-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #1C6758;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .answer-item {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #8EB486;
+        }
+
+        .answer-content {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 8px;
+            font-style: italic;
+        }
+
+        .answer-author {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .answer-author strong {
+            color: #1C6758;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .empty-state-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state h2 {
+            font-size: 1.8em;
+            color: #666;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .empty-state p {
+            color: #999;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .search-header {
+                padding: 20px;
+            }
+
+            .search-header h1 {
+                font-size: 1.5em;
+            }
+
+            .post-card {
+                padding: 20px;
+            }
+
+            .post-title {
+                font-size: 1.3em;
+            }
+
+            .post-header {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <a href="/" class="logo">Loca<span>Go!</span></a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Search Header -->
+        <div class="search-header">
+            <h1>Kết quả tìm kiếm cho: <span class="search-query">"{{ query }}"</span></h1>
+            {% if posts %}
+                <p class="search-stats">Tìm thấy {{ posts|length }} kết quả liên quan</p>
+            {% endif %}
+            <a href="{{ url_for('forum.show_forum') }}" class="btn-back">← Quay lại Diễn đàn</a>
+        </div>
+
+        <!-- Results -->
+        {% if posts %}
+            {% for post in posts %}
+            <div class="post-card">
+                <div class="post-header">
+                    <div>
+                        <h3 class="post-title">{{ post.title }}</h3>
+                        <div class="post-meta">
+                            <span>👤 <span class="post-author">{{ post.username }}</span></span>
+                        </div>
+                    </div>
+                    <div class="similarity-score">
+                        {{ (post.score * 100) | round(1) }}% khớp
+                    </div>
+                </div>
+
+                <p class="post-content">
+                    {{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}
+                </p>
+
+                {% if post.answers %}
+                <div class="answers-section">
+                    <div class="answers-title">
+                        Câu trả lời từ cộng đồng ({{ post.answers|length }})
+                    </div>
+                    {% for ans in post.answers %}
+                    <div class="answer-item">
+                        <p class="answer-content">{{ ans.content[:150] }}{% if ans.content|length > 150 %}...{% endif %}</p>
+                        <p class="answer-author">— <strong>{{ ans.answerer_username }}</strong></p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">🔎</div>
+                <h2>Không tìm thấy kết quả</h2>
+                <p>Không có bài viết nào phù hợp với từ khóa "{{ query }}".<br>
+                   Hoặc các bài viết đã bị lọc do chứa nội dung không phù hợp.</p>
+                <a href="{{ url_for('forum.show_forum') }}" class="btn-back">← Quay lại Diễn đàn</a>
+            </div>
         {% endif %}
-      </li>
-    {% endfor %}
-  </ul>
-{% else %}
-  <p>Không tìm thấy bài viết nào hoặc các post bị lọc vì chứa nội dung không phù hợp.</p>
-{% endif %}
+    </div>
 
-<a href="{{ url_for('forum.show_forum') }}" class="btn btn-secondary mt-3">Quay lại Forum</a>
+</body>
+</html>

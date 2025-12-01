@@ -1,73 +1,232 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Chatbot Du Lịch</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: linear-gradient(135deg, #4ECDC4 0%, #FF6B35 100%);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 30px;
-    }
-    .chat-box {
-      background: white;
-      color: black;
-      width: 90%;
-      max-width: 600px;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      overflow-y: auto;
-      max-height: 70vh;
-    }
-    .message { margin-bottom: 10px; }
-    .user { text-align: right; color: #FF6B35; }
-    .bot { text-align: left; color: #4ECDC4; }
-    .input-area { margin-top: 20px; width: 90%; max-width: 600px; display: flex; gap: 10px; }
-    input { flex: 1; padding: 10px; border-radius: 5px; border: none; font-size: 16px; }
-    button { background: linear-gradient(135deg, #4ECDC4, #FF6B35); color: white; border: none; border-radius: 5px; padding: 10px 20px; cursor: pointer; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Chatbot Du Lịch</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1C6758 0%, #8EB486 100%); 
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .chat-box {
+            background: white;
+            color: #333;
+            width: 100%;
+            border-radius: 15px;
+            padding: 15px;
+            box-sizing: border-box; 
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+            overflow-y: auto;
+            height: 350px;
+            scroll-behavior: smooth;
+        }
+
+            .chat-box::-webkit-scrollbar {
+                width: 8px;
+            }
+
+            .chat-box::-webkit-scrollbar-thumb {
+                background: #ccc;
+                border-radius: 4px;
+            }
+
+        .message {
+            margin-bottom: 12px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 75%;
+            word-wrap: break-word;
+            line-height: 1.5;
+            font-size: 15px;
+            position: relative;
+        }
+
+        .user-container {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .user {
+            background: linear-gradient(135deg, #FF6B35, #FF8E53);
+            color: white;
+            border-bottom-right-radius: 4px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .bot-container {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .bot {
+            background-color: #f1f2f6;
+            color: #2c3e50;
+            border-bottom-left-radius: 4px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .input-area {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 25px;
+            border: none;
+            font-size: 16px;
+            outline: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #FF6B35, #D94625);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+            button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            }
+
+            button:active {
+                transform: translateY(0);
+            }
+
+        #loadingMsg {
+            text-align: center;
+            color: gray;
+            font-style: italic;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-  <h1>💬 Chatbot Du Lịch</h1>
-  <div class="chat-box" id="chatBox"></div>
+    <h1>💬 Trợ lý Du Lịch</h1>
 
-  <div class="input-area">
-    <input id="userInput" placeholder="Nhập tin nhắn..." onkeypress="if(event.key==='Enter') sendMessage()">
-    <button onclick="sendMessage()">Gửi</button>
-  </div>
+    <div class="chat-container">
+        <div class="chat-box" id="chatBox">
+            <div id="loadingMsg">Đang tải cuộc trò chuyện cũ...</div>
+        </div>
 
-  <script>
-    async function sendMessage() {
-      const input = document.getElementById('userInput');
-      const chatBox = document.getElementById('chatBox');
-      const message = input.value.trim();
-      if (!message) return;
+        <div class="input-area">
+            <input id="userInput" placeholder="Hỏi gì đó về du lịch đi..." autocomplete="off">
+            <button onclick="sendMessage()">Gửi ➤</button>
+        </div>
+    </div>
 
-      chatBox.innerHTML += `<div class="message user">🧍‍♂️ ${message}</div>`;
-      input.value = '';
+    <script>
+        const chatBox = document.getElementById('chatBox');
+        const userInput = document.getElementById('userInput');
+        const loadingMsg = document.getElementById('loadingMsg');
 
-      const res = await fetch('/chat', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({message})
-      });
-      const data = await res.json();
+        // Hàm vẽ tin nhắn lên màn hình
+        function appendMessage(text, sender) {
+            if (!text) return;
+            const msgContainer = document.createElement('div');
+            msgContainer.className = sender === 'user' ? 'user-container' : 'bot-container';
 
-      if (data.reply) {
-        chatBox.innerHTML += `<div class="message bot"> ${data.reply}</div>`;
-      } else {
-        chatBox.innerHTML += `<div class="message bot"> Lỗi: ${data.error || 'Không phản hồi được'}</div>`;
-      }
+            const bubble = document.createElement('div');
+            bubble.className = `message ${sender}`;
+            bubble.innerText = text;
 
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-  </script>
+            msgContainer.appendChild(bubble);
+            chatBox.appendChild(msgContainer);
+
+            chatBox.scrollTop = chatBox.scrollHeight; 
+        }
+
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/history');
+                const data = await res.json();
+
+                if (loadingMsg) loadingMsg.style.display = 'none';
+
+                if (Array.isArray(data)) {
+                    data.forEach(msg => {
+                        appendMessage(msg.user_message, 'user');
+                        appendMessage(msg.system_response, 'bot');
+                    });
+                }
+            } catch (err) {
+                console.error("Lỗi tải lịch sử:", err);
+                if (loadingMsg) loadingMsg.innerText = "Chưa có lịch sử chat nào.";
+            }
+        }
+
+        // Gửi tin nhắn mới 
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // 1. Hiện tin nhắn của mình ngay
+            appendMessage(message, 'user');
+            userInput.value = '';
+
+            try {
+                // 2. Gửi lên Backend
+                const res = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: "include",
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await res.json();
+
+                // 3. Hiện câu trả lời từ Backend
+                if (data.reply) {
+                    appendMessage(data.reply, 'bot');
+                } else {
+                    appendMessage("⚠️ Lỗi: " + (data.error || 'Server không trả lời'), 'bot');
+                }
+            } catch (err) {
+                appendMessage("⚠️ Mất kết nối server!", 'bot');
+            }
+        }
+
+        // Nhấn Enter để gửi
+        userInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Tự động tải lịch sử khi mở trang
+        window.onload = loadHistory;
+    </script>
 </body>
 </html>

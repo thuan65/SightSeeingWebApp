@@ -2,106 +2,529 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Diễn đàn Du lịch</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diễn đàn Du lịch - LocaGo!</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-        <div class="container">
-            <div class="d-flex align-items-center">
-                <a href="/dashboard" class="btn btn-outline-secondary btn-sm me-2" title="Trang chủ">Trang chủ</a>
-                <a class="navbar-brand fw-bold" href="/">Diễn đàn Du lịch</a>
-            </div>
-            <div class="d-flex">
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Poppins', 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+        /* Header */
+        header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px 30px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1C6758;
+            text-decoration: none;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .logo span {
+            color: #8EB486;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            padding: 10px 18px;
+            border-radius: 8px;
+            transition: 0.3s;
+            font-size: 15px;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .nav-links a:hover {
+            background: #f0f0f0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1C6758, #8EB486) !important;
+            color: white !important;
+            font-weight: 600;
+        }
+
+        .btn-secondary {
+            border: 2px solid #1C6758 !important;
+            color: #1C6758 !important;
+            font-weight: 600;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #8EB486, #1C6758) !important;
+            color: white !important;
+            font-weight: 600;
+        }
+
+        .btn-danger {
+            background: #e74c3c !important;
+            color: white !important;
+            font-weight: 600;
+        }
+
+        /* Hero Banner */
+        .hero-banner {
+            background: linear-gradient(135deg, #8EB486 0%, #1C6758 100%);
+            padding: 80px 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .hero-banner h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .hero-banner p {
+            font-size: 1.2em;
+            opacity: 0.95;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Search Container */
+        .search-container {
+            max-width: 1000px;
+            margin: -40px auto 40px;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-box input {
+            flex: 1;
+            min-width: 300px;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-size: 15px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: #8EB486;
+            box-shadow: 0 0 0 3px rgba(142, 180, 134, 0.1);
+        }
+
+        .search-button {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #8EB486, #1C6758);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .search-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(142, 180, 134, 0.4);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.2em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 40px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Post Card */
+        .post-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: 0.3s;
+        }
+
+        .post-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .post-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .post-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .post-author {
+            font-weight: 600;
+            color: #1C6758;
+        }
+
+        .badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .post-content {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-reply {
+            padding: 10px 25px;
+            background: transparent;
+            border: 2px solid #8EB486;
+            color: #1C6758;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-reply:hover {
+            background: linear-gradient(135deg, #8EB486, #1C6758);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Answers Section */
+        .answers-section {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .answers-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #1C6758;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .answer-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 4px solid #8EB486;
+        }
+
+        .answer-content {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .answer-author {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .answer-author strong {
+            color: #1C6758;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            font-size: 1.8em;
+            color: #666;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .empty-state p {
+            color: #999;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+
+        /* Footer */
+        footer {
+            background: #2C3E50;
+            color: white;
+            padding: 50px 20px 20px;
+            margin-top: 80px;
+        }
+
+        .footer-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 20px;
+            color: #8EB486;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .footer-section p {
+            line-height: 1.8;
+            color: #bbb;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid #444;
+            color: #888;
+        }
+
+        /* Scroll Top Button */
+        #scrollTop {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #1C6758, #8EB486);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transition: 0.3s;
+            z-index: 999;
+        }
+
+        #scrollTop:hover {
+            transform: translateY(-5px);
+        }
+
+        #scrollTop.show {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-banner h1 {
+                font-size: 2em;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .search-box input {
+                min-width: 100%;
+            }
+
+            .nav-links {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .post-header {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <a href="/" class="logo">Loca<span>Go!</span></a>
+            <div class="nav-links">
+                <a href="/">Trang chủ</a>
+                <a href="/map">Bản đồ</a>
+                <a href="/chat_ui">Chatbot</a>
+                <a href="/forum" style="background: #f0f0f0;">Forum</a>
                 {% if session.get('questioner_id') %}
-                    <a href="/post/new" class="btn btn-success me-2">+ Đặt câu hỏi mới</a>
-                    <a href="/logout" class="btn btn-outline-danger">Đăng xuất</a>
+                    <a href="/post/new" class="btn-success">+ Đặt câu hỏi</a>
+                    <a href="/logout" class="btn-danger">Đăng xuất</a>
                 {% else %}
-                    <a href="/login" class="btn btn-outline-primary me-2" title="Đăng nhập">Đăng nhập</a>
-                    <a href="/register" class="btn btn-primary" title="Đăng ký">Đăng ký</a>
+                    <a href="/register" class="btn-secondary">Đăng ký</a>
+                    <a href="/login" class="btn-primary">Đăng nhập</a>
                 {% endif %}
             </div>
         </div>
-    </nav>
+    </header>
 
-    <div class="container mt-4">
+    <!-- Hero Banner -->
+    <section class="hero-banner">
+        <h1>Cộng đồng Du lịch LocaGo!</h1>
+        <p>Chia sẻ kinh nghiệm, hỏi đáp về địa điểm, ẩm thực, lịch trình và mọi thứ về du lịch!</p>
+    </section>
 
-        <!-- Banner giới thiệu -->
-        <div class="card shadow-sm mb-4 bg-gradient text-white" style="background: linear-gradient(135deg, #4ECDC4, #FF6B35);">
-            <div class="card-body text-center py-4">
-                <h4 class="card-title fw-bold">Cộng đồng Du lịch Việt Nam</h4>
-                <p class="card-text mb-0">Chia sẻ kinh nghiệm, hỏi đáp về địa điểm, ẩm thực, lịch trình và mọi thứ về du lịch!</p>
-            </div>
-        </div>
-
-        <h3 class="text-center mb-4">Diễn đàn Hỏi & Đáp</h3>
-
-        <!-- Thanh tìm kiếm -->
-        <form action="{{ url_for('forum.search_forum') }}" method="get" class="mb-4">
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="input-group">
-                        <input type="text" name="q" placeholder="Tìm kiếm câu hỏi, địa điểm, kinh nghiệm..." value="{{ query or '' }}" class="form-control">
-                        <button type="submit" class="btn btn-primary">Tìm kiếm</button>
-                    </div>
-                </div>
+    <!-- Search Container -->
+    <div class="search-container">
+        <form action="{{ url_for('forum.search_forum') }}" method="get">
+            <div class="search-box">
+                <input type="text" name="q" placeholder="Tìm kiếm câu hỏi, địa điểm, kinh nghiệm..." value="{{ query or '' }}">
+                <button type="submit" class="search-button">Tìm kiếm</button>
             </div>
         </form>
-
-        {% if posts %}
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                {% for post in posts %}
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ post['title'] }}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">
-                            Đăng bởi <b>{{ post['username'] }}</b>
-                            {% if post['tag'] == 'answered' %}
-                            <span class="badge bg-success ms-2">Đã có câu trả lời</span>
-                            {% else %}
-                            <span class="badge bg-warning text-dark ms-2">Chờ trả lời</span>
-                            {% endif %}
-                        </h6>
-                        <p class="card-text mt-3">
-                            {{ post['content'] }}
-                        </p>
-
-                        {% if session.get('questioner_id') %}
-                        <a href="/post/{{ post['id'] }}/reply" class="btn btn-sm btn-outline-primary">Trả lời</a>
-                        {% endif %}
-
-                        {% if post.get('answers') and post['answers']|length > 0 %}
-                        <div class="mt-4">
-                            <h6 class="fw-bold text-success">Câu trả lời từ cộng đồng:</h6>
-                            <ul class="list-group list-group-flush">
-                                {% for ans in post['answers'] %}
-                                <li class="list-group-item">
-                                    <p class="mb-1">{{ ans['content'] }}</p>
-                                    <small class="text-muted">— <b>{{ ans['answerer_username'] }}</b></small>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% else %}
-        <div class="text-center text-muted">
-            <p class="fs-5">Chưa có câu hỏi nào.</p>
-            {% if session.get('questioner_id') %}
-            <p>Hãy là người đầu tiên đặt câu hỏi về du lịch!</p>
-            <a href="/post/new" class="btn btn-primary">Đặt câu hỏi ngay</a>
-            {% endif %}
-        </div>
-        {% endif %}
-
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Main Content -->
+    <div class="container">
+        <h2 class="section-title">Các câu hỏi từ cộng đồng</h2>
+
+        {% if posts %}
+            {% for post in posts %}
+            <div class="post-card">
+                <div class="post-header">
+                    <div>
+                        <h3 class="post-title">{{ post['title'] }}</h3>
+                        <div class="post-meta">
+                            <span>👤 <span class="post-author">{{ post['username'] }}</span></span>
+                            <span>•</span>
+                            <span>{{ post['created_at'][:10] if post.get('created_at') else 'N/A' }}</span>
+                        </div>
+                    </div>
+                    {% if post['tag'] == 'answered' %}
+                        <span class="badge badge-success">✓ Đã có câu trả lời</span>
+                    {% else %}
+                        <span class="badge badge-warning">Chờ trả lời</span>
+                    {% endif %}
+                </div>
+
+                <p class="post-content">{{ post['content'] }}</p>
+
+                <div class="post-actions">
+                    {% if session.get('questioner_id') %}
+                        <a href="/post/{{ post['id'] }}/reply" class="btn-reply">Trả lời</a>
+                    {% else %}
+                        <a href="/login" class="btn-reply">Đăng nhập để trả lời</a>
+                    {% endif %}
+                </div>
+
+                {% if post.get('answers') and post['answers']|length > 0 %}
+                <div class="answers-section">
+                    <div class="answers-title">
+                        Câu trả lời từ cộng đồng ({{ post['answers']|length }})
+                    </div>
+                    {% for ans in post['answers'] %}
+                    <div class="answer-item">
+                        <p class="answer-content">{{ ans['content'] }}</p>
+                        <p class="answer-author">— <strong>{{ ans['answerer_username'] }}</strong></p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">🌍</div>
+                <h2>Chưa có câu hỏi nào</h2>
+                <p>Hãy là người đầu tiên đặt câu hỏi về du lịch!</p>
+                {% if session.get('questioner_id') %}
+                    <a href="/post/new" class="btn-primary" style="text-decoration: none; padding: 15px 40px; border-radius: 50px; display: inline-block;">+ Đặt câu hỏi ngay</a>
+                {% else %}
+                    <a href="/login" class="btn-primary" style="text-decoration: none; padding: 15px 40px; border-radius: 50px; display: inline-block;">Đăng nhập để đặt câu hỏi</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+
 </body>
 </html>
