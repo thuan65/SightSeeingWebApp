@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Bạn Bè</title>
+    <!-- Tải Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Thiết lập font Inter */
+        body { font-family: 'Inter', sans-serif; background-color: #f4f7f9; }
+        /* Tùy chỉnh thanh cuộn (cho thẩm mỹ) */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .card { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body>
+    <div id="userInfo" data-user="{{ session.get('user_id', 0) }}"></div>
+
+    <!-- Main Container -->
+    <div class="min-h-screen p-4 md:p-8 flex justify-center">
+        <div class="w-full max-w-4xl space-y-8">
+            <h1 class="text-4xl font-extrabold text-gray-800 text-center mb-6">Quản Lý Bạn Bè</h1>
+
+            <!-- SEARCH / ADD FRIEND CARD -->
+            <div class="card bg-white p-6 rounded-xl border border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2">1. Tìm kiếm và Kết bạn</h2>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <input type="text" id="search-input" placeholder="Nhập Username để tìm kiếm"
+                           class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150">
+                    <button id="search-button" onclick="searchUser()"
+                            class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-150 shadow-md">
+                        Tìm kiếm
+                    </button>
+                </div>
+
+                <!-- Search Result Display -->
+                <div id="search-result" class="mt-6 border-t pt-4 hidden">
+                    <p class="text-gray-600 mb-2">Kết quả tìm kiếm:</p>
+                    <div class="flex items-center justify-between p-4 bg-gray-50 border rounded-lg">
+                        <span id="result-username" class="text-lg font-medium text-gray-800"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FRIEND LIST / REQUESTS CARD -->
+            <div class="card bg-white p-6 rounded-xl border border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2">2. Danh sách & Yêu cầu</h2>
+                <button onclick="loadFriendData(CURRENT_USER_ID)"
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-150 mb-4">
+                    Tải lại Dữ liệu
+                </button>
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Friends List -->
+                    <div class="border p-4 rounded-lg bg-green-50/50">
+                        <h3 class="font-bold text-lg text-green-700 mb-3">Bạn bè (<span id="friends-count">0</span>)</h3>
+                        <ul id="friends-list" class="space-y-2 max-h-60 overflow-y-auto">
+                            <li class="text-center text-gray-400">Ấn 'Tải lại Dữ liệu' để xem.</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Incoming Requests -->
+                    <div class="border p-4 rounded-lg bg-yellow-50/50">
+                        <h3 class="font-bold text-lg text-yellow-700 mb-3">Yêu cầu đến (<span id="incoming-count">0</span>)</h3>
+                        <ul id="incoming-list" class="space-y-2 max-h-60 overflow-y-auto">
+                            <li class="text-center text-gray-400">Ấn 'Tải lại Dữ liệu' để xem.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Outgoing Requests -->
+                    <div class="border p-4 rounded-lg bg-blue-50/50">
+                        <h3 class="font-bold text-lg text-blue-700 mb-3">Yêu cầu đã gửi (<span id="outgoing-count">0</span>)</h3>
+                        <ul id="outgoing-list" class="space-y-2 max-h-60 overflow-y-auto">
+                            <li class="text-center text-gray-400">Ấn 'Tải lại Dữ liệu' để xem.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const CURRENT_USER_ID = Number(document.getElementById("userInfo").dataset.user);
+        const API_BASE_URL = "/friends"; 
+        
+        // Cập nhật ID người dùng hiện tại trên UI
+        document.getElementById('current-user-id').textContent = CURRENT_USER_ID;
+
+        // Helper để lấy ID người dùng hiện tại
+        function get_current_user_id() {
+            return CURRENT_USER_ID;
+        }
+
+        // --- TOAST/MESSAGE HANDLER ---
+        function showToast(message, type = 'success') {
+            const toastEl = document.getElementById('toast-message');
+            let bgColor = 'bg-green-500';
+            if (type === 'error') bgColor = 'bg-red-500';
+            if (type === 'info') bgColor = 'bg-blue-500';
+
+            toastEl.innerHTML = `
+                <div class="p-3 text-white rounded-lg shadow-xl ${bgColor} text-sm font-medium">
+                    ${message}
+                </div>
+            `;
+            toastEl.classList.remove('opacity-0');
+            toastEl.classList.add('opacity-100');
+
+            setTimeout(() => {
+                toastEl.classList.remove('opacity-100');
+                toastEl.classList.add('opacity-0');
+            }, 3000);
+        }
+
+        // --- CHỨC NĂNG TÌM KIẾM ---
+        async function searchUser() {
+            const searchTerm = document.getElementById("search-input").value.trim();
+            const resultDiv = document.getElementById("search-result");
+
+            if (!searchTerm) {
+                showToast("Nhập username để tìm!", "info");
+                return;
+            }
+
+            try {
+                const res = await fetch(`/friends/search_user?username=${searchTerm}`);
+                const data = await res.json();
+
+                // luôn show result box khi có kết quả
+             resultDiv.classList.remove("hidden");
+        
+                const container = document.getElementById("result-username");
+                container.innerHTML = ""; // xoá kết quả cũ
+
+                if (!Array.isArray(data) || data.length === 0 ) {
+                    container.innerHTML = `<p class="text-gray-500">Không tìm thấy '${searchTerm}'</p>`;
+                    return;
+                }
+
+                // Duyệt danh sách user
+                data.forEach(user => {
+                    container.innerHTML += `
+                        <div class="flex items-center p-4 bg-gray-50 border rounded-lg my-2 shadow-sm">
+                            <span class="text-lg font-medium text-gray-800">
+                                ${user.username} <span class="text-gray-500 text-sm">(ID: ${user.id})</span>
+                            </span>
+
+                            <button 
+                                class="ml-16 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition duration-150"
+                            onclick="sendFriendRequestById(${user.id})"
+                            >
+                                Gửi kết bạn
+                            </button>
+                        </div>
+                    `;
+                });
+
+            } catch (err) {
+                showToast("Lỗi khi tìm kiếm", "error");
+            }
+        }
+
+        async function sendFriendRequestById(toUserId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/request`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ to_user: toUserId })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast(data.message, 'success');
+                    loadFriendData(CURRENT_USER_ID); // reload danh sách sau khi gửi
+                } else {
+                    showToast(data.error || data.message, 'error');
+                }
+            } catch (error) {
+                console.error("Send request error:", error);
+                showToast("Lỗi khi gửi kết bạn", "error");
+            }
+        }
+
+
+        // --- XỬ LÝ ACTION TRÊN DANH SÁCH (SỬ DỤNG FETCH THỰC TẾ) ---
+
+        async function handleFriendAction(action, request_id, target_user_id) {
+            let url = '';
+            let body = {};
+
+            if (action === 'accept' || action === 'reject') {
+                url = `${API_BASE_URL}/${action}`;
+                body = { request_id: request_id };
+            } else if (action === 'unfriend') {
+                url = `${API_BASE_URL}/unfriend`;
+                body = { target_user: target_user_id };
+            } else {
+                return;
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast(data.message, 'success');
+                    loadFriendData(CURRENT_USER_ID); // Tải lại danh sách sau khi thao tác
+                } else {
+                    showToast(`Lỗi: ${data.error || data.message}`, 'error');
+                }
+            } catch (error) {
+                showToast("Lỗi kết nối khi thực hiện hành động.", 'error');
+                console.error("Action Error:", error);
+            }
+        }
+
+
+        // --- TẢI DỮ LIỆU DANH SÁCH BẠN BÈ (SỬ DỤNG FETCH THỰC TẾ) ---
+
+        async function loadFriendData(userId) {
+            const listUrl = `${API_BASE_URL}/list/${userId}`;
+            
+            // Xóa nội dung cũ và hiển thị loading
+            document.getElementById('friends-list').innerHTML = `<li class="text-center text-gray-400">Đang tải...</li>`;
+            document.getElementById('incoming-list').innerHTML = `<li class="text-center text-gray-400">Đang tải...</li>`;
+            document.getElementById('outgoing-list').innerHTML = `<li class="text-center text-gray-400">Đang tải...</li>`;
+
+            try {
+                const response = await fetch(listUrl); 
+                
+                if (!response.ok) {
+                    showToast("Lỗi khi tải dữ liệu bạn bè (Status: " + response.status + ").", 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                
+                renderLists(data);
+
+            } catch (error) {
+                showToast("Lỗi kết nối khi tải danh sách.", 'error');
+                console.error("Load Data Error:", error);
+                renderLists({ friends: [], incoming_requests: [], outgoing_requests: [] });
+            }
+        }
+
+        function renderLists(data) {
+            // 1. Friends List
+            const friendsListEl = document.getElementById('friends-list');
+            friendsListEl.innerHTML = '';
+            document.getElementById('friends-count').textContent = data.friends.length;
+            if (data.friends.length === 0) {
+                friendsListEl.innerHTML = `<li class="text-center text-gray-500 text-sm">Chưa có bạn bè nào.</li>`;
+            } else {
+                data.friends.forEach(f => {
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center p-2 bg-white rounded-md shadow-sm';
+                    li.innerHTML = `
+                        <span class="font-medium text-gray-700">${f.username} (ID: ${f.id})</span>
+                        <button onclick="handleFriendAction('unfriend', null, ${f.id})"
+                                class="text-red-500 hover:text-red-700 text-sm font-semibold p-1 rounded transition duration-150">
+                            Hủy kết bạn
+                        </button>
+                    `;
+                    friendsListEl.appendChild(li);
+                });
+            }
+
+            // 2. Incoming Requests
+            const incomingListEl = document.getElementById('incoming-list');
+            incomingListEl.innerHTML = '';
+            document.getElementById('incoming-count').textContent = data.incoming_requests.length;
+            if (data.incoming_requests.length === 0) {
+                incomingListEl.innerHTML = `<li class="text-center text-gray-500 text-sm">Không có yêu cầu nào.</li>`;
+            } else {
+                data.incoming_requests.forEach(r => {
+                    // Giả định rằng server đã gửi username
+                    const username = r.username || `User ${r.from_user}`; 
+                    const li = document.createElement('li');
+                    li.className = 'p-2 bg-white rounded-md shadow-sm';
+                    li.innerHTML = `
+                        <span class="font-medium text-gray-700 block">${username} (ID: ${r.from_user})</span>
+                        <div class="mt-1 flex gap-2">
+                            <button onclick="handleFriendAction('accept', ${r.id}, null)"
+                                    class="text-xs bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-2 rounded-md transition duration-150">
+                                Chấp nhận
+                            </button>
+                            <button onclick="handleFriendAction('reject', ${r.id}, null)"
+                                    class="text-xs border border-gray-300 hover:bg-gray-100 text-gray-600 font-semibold py-1 px-2 rounded-md transition duration-150">
+                                Từ chối
+                            </button>
+                        </div>
+                    `;
+                    incomingListEl.appendChild(li);
+                });
+            }
+
+            // 3. Outgoing Requests
+            const outgoingListEl = document.getElementById('outgoing-list');
+            outgoingListEl.innerHTML = '';
+            document.getElementById('outgoing-count').textContent = data.outgoing_requests.length;
+            if (data.outgoing_requests.length === 0) {
+                outgoingListEl.innerHTML = `<li class="text-center text-gray-500 text-sm">Không có yêu cầu nào.</li>`;
+            } else {
+                data.outgoing_requests.forEach(r => {
+                    // Giả định rằng server đã gửi username
+                    const username = r.username || `User ${r.to_user}`; 
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center p-2 bg-white rounded-md shadow-sm';
+                    li.innerHTML = `
+                        <span class="font-medium text-gray-700">${username} (ID: ${r.to_user})</span>
+                        <button onclick="handleFriendAction('reject', ${r.id}, null)"
+                                class="text-xs text-red-500 hover:text-red-700 font-semibold p-1 rounded transition duration-150">
+                            Hủy bỏ
+                        </button>
+                    `;
+                    outgoingListEl.appendChild(li);
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>
