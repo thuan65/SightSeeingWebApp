@@ -25,6 +25,7 @@
   </style>
 </head>
 <body>
+  <div id="userInfo" data-user="{{ session.get('user_id', 0) }}"></div>
 
   <h1>{{ image.name }}</h1>
 
@@ -91,11 +92,14 @@
 
       const comment = document.getElementById("comment").value;
       const imageId = Number("{{ image.id }}");  /* FIXED */
+      const currentUserId = Number(document.getElementById("userInfo").dataset.user);
+
 
       const res = await fetch(`/feedback/${imageId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          user_id: currentUserId,
           rating: currentRating,
           comment: comment
         })
@@ -142,6 +146,7 @@
       feedbackData.feedback.forEach(fb => {
         html += `
           <div class="feedback-item">
+            <div><b>${fb.username}</b></div>
             <div class="rating-stars">${"★".repeat(fb.rating)}</div>
             <div>${fb.comment}</div>
             <div style="font-size:13px; color:#666;">${fb.timestamp}</div>
