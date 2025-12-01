@@ -27,7 +27,7 @@ from flask_login import (
 from models_loader import sbert_model
 
 import torch
-from feedback import feedback_bp   
+from SuggestionsFeedback.feedback import feedback_bp   
 # NEW CODE: để người dùng upload ảnh 
 import os
 from friends import friends_bp
