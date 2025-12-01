@@ -18,7 +18,7 @@ from MapRouting.MapRoutingRoute import MapRouting_bp
 
 from Search_Filter.search_filter import search_filter
 from Search_Text.search_text import search_text
-from imageSearch.imageSearchRoute import image_bp
+from imageSearch.imageSearchRoute import search_image_bp
 
 from flask_login import (
     LoginManager, login_user, logout_user, login_required, UserMixin, current_user
@@ -63,7 +63,7 @@ app.register_blueprint(search_text)
 app.register_blueprint(feedback_bp)
 app.register_blueprint(chatBot_bp)
 app.register_blueprint(forum)
-app.register_blueprint(image_bp)
+app.register_blueprint(search_image_bp)
 
 app.register_blueprint(friends_bp)
 app.register_blueprint(favorite_bp)
@@ -169,9 +169,9 @@ def search():
 # ---------------------------------------------------------
 # TRANG BẢN ĐỒ
 # ---------------------------------------------------------
-@app.route("/map")
-def show_map():
-    return render_template("map.html")
+# @app.route("/map")
+# def show_map():
+#     return render_template("map.html")
 
 
 @app.route("/chat_ui")

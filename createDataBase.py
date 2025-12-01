@@ -62,7 +62,7 @@ class Favorite(UserBase):
     __tablename__ = "favorites"
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
-    image_id = Column(Integer, nullable=False)  # ❌ Bỏ ForeignKey
+    image_id = Column(Integer, nullable=False)  # Bỏ ForeignKey
     created_at = Column(DateTime, default=datetime.utcnow)
 
     __table_args__ = (UniqueConstraint("user_id", "image_id", name="uq_user_image"),)
