@@ -7,7 +7,7 @@ import json
 import os
 
 try:
-    from config import get_geojson_path, VIETNAM_BBOX
+    from .config import get_geojson_path, VIETNAM_BBOX
     CONFIG_AVAILABLE = True
 except ImportError:
     CONFIG_AVAILABLE = False

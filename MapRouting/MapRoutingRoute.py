@@ -2,13 +2,14 @@ from flask import Flask, render_template, request, jsonify, Blueprint
 from .routing import get_route
 from .multi_point_routing import find_shortest_route_multi_points
 from .geocoding import geocode_address, reverse_geocode
+import os
 
 MapRouting_bp = Blueprint("Map_Routing" ,__name__, template_folder= "templates")
 
 
 @MapRouting_bp.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('map_index.html')
 
 
 @MapRouting_bp.route('/console')

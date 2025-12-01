@@ -14,7 +14,7 @@ from Forum.forum import forum
 
 from ChatBot.ChatBotRoute import chatBot_bp
 
-from MapRouting.MapRoute import MapRouting_bp
+from MapRouting.MapRoutingRoute import MapRouting_bp
 
 from Search_Filter.search_filter import search_filter
 from Search_Text.search_text import search_text
@@ -53,7 +53,7 @@ app.register_blueprint(forum)
 app.register_blueprint(image_bp)
 
 app.register_blueprint(friends_bp)
-#app.register_blueprint(MapRouting_bp, url_prefix='/MapRouting')
+app.register_blueprint(MapRouting_bp, url_prefix= "/MapRouting")
 
 app.config['JSON_AS_ASCII'] = False
 engine = create_engine("sqlite:///images.db")
@@ -216,7 +216,11 @@ def friends_page():
 # CHẠY ỨNG DỤNG
 # ---------------------------------------------------------
 if __name__ == "__main__":
+    print("===Creating DataBase===")
     with app.app_context():
         db.create_all()
+        
     #app.run(debug=True)
+    print("===Starting Web App===")
     app.run(debug=False, use_reloader=False) #Chạy khi không cần debug
+    print("===Web App Shutting Down===")
