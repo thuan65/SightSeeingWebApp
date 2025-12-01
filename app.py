@@ -6,7 +6,7 @@ from flask import (
 from sentence_transformers import util
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from createDataBase import Image
+from createDataBase import Image, UserSession
 
 from models import db, bcrypt, User
 from forms import RegisterForm, LoginForm
@@ -31,6 +31,8 @@ from SuggestionsFeedback.feedback import feedback_bp
 # NEW CODE: để người dùng upload ảnh 
 import os
 from friends import friends_bp
+from add_favorites.routes import favorite_bp
+
 # ---------------------------------------------------------
 # CẤU HÌNH ỨNG DỤNG FLASK
 # ---------------------------------------------------------
@@ -64,6 +66,7 @@ app.register_blueprint(forum)
 app.register_blueprint(image_bp)
 
 app.register_blueprint(friends_bp)
+app.register_blueprint(favorite_bp)
 app.register_blueprint(MapRouting_bp, url_prefix= "/MapRouting")
 
 app.config['JSON_AS_ASCII'] = False
