@@ -17,9 +17,6 @@ def submit_feedback(image_id):
     
     data = request.json
 
-    print("DATA:", data)
-    print("USER_ID:", data.get("user_id"))
-
     rating = data.get("rating")
     comment = data.get("comment", "")
     user_id = data.get("user_id") or flask_session.get("user_id")
