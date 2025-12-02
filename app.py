@@ -32,6 +32,8 @@ from SuggestionsFeedback.feedback import feedback_bp
 import os
 from friends import friends_bp
 from add_favorites.routes import favorite_bp
+from place_module.nearby_import import nearby_import_bp
+
 
 # ---------------------------------------------------------
 # CẤU HÌNH ỨNG DỤNG FLASK
@@ -68,6 +70,8 @@ app.register_blueprint(search_image_bp)
 app.register_blueprint(friends_bp)
 app.register_blueprint(favorite_bp)
 app.register_blueprint(MapRouting_bp, url_prefix= "/MapRouting")
+app.register_blueprint(nearby_import_bp)
+
 
 app.config['JSON_AS_ASCII'] = False
 engine = create_engine("sqlite:///images.db")
