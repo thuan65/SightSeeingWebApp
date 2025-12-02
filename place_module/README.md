@@ -1,5 +1,5 @@
-1. osm_client.py fetches POI (points of interest) data from Overpass API.
-2. places_db.py initializes the places.db SQLite database.
-3. importer.py processes and inserts POI data into the database.
-4. test_import.py is used to trigger the import process manually.
-5. test2_overpass_raw.py for API debugging
+Remove các database nhà hàng khách sạn cũ không có ảnh
+
+Chuẩn hoá tên thành phố (hcm, sg, đà nẵng -> tên chuẩn). Geocode lấy lat/lon (chuyển tên địa điểm sang tọa độ). Gọi Wikipedia Geosearch để lấy landmark + ảnh + vị trí
+
+Test tại link: http://localhost:5000/import_nearby_test 
