@@ -9,13 +9,7 @@ MapRouting_bp = Blueprint("Map_Routing" ,__name__, template_folder= "templates")
 
 @MapRouting_bp.route('/')
 def index():
-    return render_template('map_index.html')
-
-
-@MapRouting_bp.route('/console')
-def console():
-    return render_template('console.html')
-
+    return render_template('map.html')
 
 @MapRouting_bp.route('/api/geocode', methods=['POST'])
 def geocode():
