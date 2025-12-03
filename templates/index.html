@@ -407,8 +407,8 @@
               <a href="/MapRouting">Bản đồ</a>
               <a href="/chat_ui">Chatbot du lịch</a>
               <a href="/forum">Forum</a>
-              <a href="/register" class="btn-secondary">Đăng ký</a>
-              <a href="/login" class="btn-primary">Đăng nhập</a>
+              <a href="{{ url_for('login_bp.register') }}" class="btn-secondary">Đăng ký</a>
+              <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
           </div>
       </div>
   </header>

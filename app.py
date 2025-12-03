@@ -1,3 +1,4 @@
+from flask import Flask, render_template, request, jsonify, Response, json, session, redirect
 # app.py
 from flask import (
     Flask, render_template, request, jsonify, Response, json,
@@ -13,28 +14,25 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 
+
 from createDataBase import Image, UserSession
 from models import db, bcrypt, User
-from forms import RegisterForm, LoginForm
+from Login.login import login_bp  
 from Forum.forum import forum
-
 from ChatBot.ChatBotRoute import chatBot_bp
-
 from MapRouting.MapRoutingRoute import MapRouting_bp
 from Search_Filter.search_filter import search_filter
 from Search_Text.search_text import search_text
 from imageSearch.imageSearchRoute import search_image_bp
-from SuggestionsFeedback.feedback import feedback_bp   
-from add_favorites.routes import favorite_bp
-
-from models_loader import sbert_model
-
-import torch
-
-# NEW CODE: để người dùng upload ảnh 
-import os
+from SuggestionsFeedback.feedback import feedback_bp
 from friends import friends_bp
+from add_favorites.routes import favorite_bp
+from place_module.nearby_import import nearby_import_bp
 
+
+from flask_login import LoginManager, current_user
+from createDataBase import Image
+import os
 
 # ---------------------------------------------------------
 # CẤU HÌNH ỨNG DỤNG FLASK
@@ -53,24 +51,28 @@ bcrypt.init_app(app)
 # ---------------------------------------------------------
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login' 
+login_manager.login_view = 'login_bp.login' 
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Kết nối SQLite cho phần ảnh
-# Đăng ký API feedback
+# ---------------------------------------------------------
+# KẾT NỐI DB ẢNH VÀ REGISTER BLUEPRINT
+#  ---------------------------------------------------------
 app.register_blueprint(search_filter)
 app.register_blueprint(search_text)
 app.register_blueprint(feedback_bp)
 app.register_blueprint(chatBot_bp)
 app.register_blueprint(forum)
 app.register_blueprint(search_image_bp)
+app.register_blueprint(login_bp)
 
 app.register_blueprint(friends_bp)
 app.register_blueprint(favorite_bp)
 app.register_blueprint(MapRouting_bp, url_prefix= "/MapRouting")
+app.register_blueprint(nearby_import_bp)
+
 
 app.config['JSON_AS_ASCII'] = False
 engine = create_engine("sqlite:///images.db")
@@ -180,56 +182,13 @@ def search():
 @app.route("/chat_ui")
 def chat_ui():
     return render_template("chat_ui.html")
-
-# ---------------------------------------------------------
-# ĐĂNG KÝ TÀI KHOẢN
-# ---------------------------------------------------------
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    form = RegisterForm()
-    if form.validate_on_submit():
-        hashed_pw = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        new_user = User(username=form.username.data, password=hashed_pw)
-        db.session.add(new_user)
-        db.session.commit()
-        flash("Tạo tài khoản thành công! Hãy đăng nhập.", "success")
-        return redirect(url_for('login'))
-    return render_template('register.html', form=form)
-
-# ---------------------------------------------------------
-# ĐĂNG NHẬP
-# ---------------------------------------------------------
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user and bcrypt.check_password_hash(user.password, form.password.data):
-            
-            login_user(user)
-            
-            session['username'] = user.username
-            session['user_id'] = user.id
-            return redirect(url_for('index'))  # ⬅️ Sau khi login -> index.html
-        else:
-            flash("Tên đăng nhập hoặc mật khẩu sai!", "danger")
-    return render_template('login.html', form=form)
-
-# ---------------------------------------------------------
-# ĐĂNG XUẤT
-# ---------------------------------------------------------
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    flash("Đã đăng xuất!", "info")
-    return redirect(url_for('login'))
 # ---------------------------------------------------------
 # KẾT BẠN
 # ---------------------------------------------------------
 @app.route("/friends")
 def friends_page():
     if "user_id" not in session:  
-        return redirect("/login")  # chưa login thì không xem friend list
+        return redirect("/auth/login")  # chưa login thì không xem friend list
     
     return render_template("friends.html")  # session tự truyền vào file
 # ---------------------------------------------------------

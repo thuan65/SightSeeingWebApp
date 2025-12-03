@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Khám phá địa điểm</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container { max-width: 1200px; margin: auto; }
+
+    .search-section {
+      background: white; border-radius: 15px; padding: 30px; margin-bottom: 40px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .search-section h2 {
+      color: #333; margin-bottom: 20px; font-size: 24px;
+    }
+
+    .search-input-wrapper {
+      display: flex; gap: 10px; margin-bottom: 15px;
+    }
+
+    input {
+      flex: 1; padding: 12px 15px; border: 2px solid #ddd;
+      border-radius: 8px; font-size: 16px; transition: border-color .3s;
+    }
+    input:focus { outline: none; border-color: #667eea; }
+
+    button {
+      padding: 12px 30px; background: #667eea; color: white;
+      border: none; border-radius: 8px; font-size: 16px; font-weight: 600;
+      cursor: pointer; transition: background .3s;
+    }
+    button:hover { background: #5568d3; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+
+    .loading, .error, .success {
+      padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 15px;
+    }
+    .loading { color: #667eea; font-weight: 600; text-align: center; }
+    .error { background: #fee; color: #c33; border-left: 4px solid #c33; }
+    .success { background: #efe; color: #3c3; border-left: 4px solid #3c3; }
+
+    .places-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .place-card {
+      background: white; border-radius: 12px; overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      transition: transform .3s, box-shadow .3s; cursor: pointer;
+    }
+    .place-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+    }
+
+    .place-image {
+      width: 100%; height: 220px; object-fit: cover; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex; align-items: center; justify-content: center; color: white; font-size: 50px;
+    }
+
+    .place-info { padding: 16px; }
+    .place-name { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: #222; }
+    .place-location { font-size: 13px; color: #888; }
+
+    .info-box {
+      background: #f5f5f5; padding: 12px; border-radius: 8px; margin-top: 15px;
+      font-size: 14px; color: #666;
+    }
+
+    .no-results {
+      text-align: center; color: #999; padding: 40px 20px; font-size: 16px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="search-section">
+    <h2>🌍 Khám phá địa điểm nổi bật</h2>
+
+    <div class="search-input-wrapper">
+      <input type="text" id="city" placeholder="Nhập tên thành phố (VD: Ho Chi Minh, Hanoi, Da Nang...)">
+      <button id="searchBtn" onclick="loadLandmarks()">Tìm kiếm</button>
+    </div>
+
+    <div id="message"></div>
+  </div>
+
+  <div id="placesContainer" class="places-grid"></div>
+
+</div>
+
+<script>
+async function loadLandmarks() {
+  const city = document.getElementById("city").value.trim();
+  const msg = document.getElementById("message");
+  const container = document.getElementById("placesContainer");
+  const btn = document.getElementById("searchBtn");
+
+  msg.innerHTML = "";
+  container.innerHTML = "";
+
+  if (!city) {
+    msg.innerHTML = '<div class="error">❌ Vui lòng nhập tên thành phố</div>';
+    return;
+  }
+
+  msg.innerHTML = '<div class="loading">⏳ Đang tìm các địa điểm...</div>';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`/import_nearby?city=${encodeURIComponent(city)}`);
+    
+    // Check if response is actually JSON
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      msg.innerHTML = `<div class="error">❌ Server error: Invalid response type</div>`;
+      btn.disabled = false;
+      return;
+    }
+    
+    const data = await res.json();
+
+    if (data.error) {
+      msg.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+      btn.disabled = false;
+      return;
+    }
+
+    msg.innerHTML = `<div class="success">🎉 Tìm thấy <b>${data.total}</b> địa điểm nổi bật tại <b>${data.city}</b> (bán kính 2.5km)</div>`;
+
+    if (data.total === 0) {
+      container.innerHTML = '<div class="no-results">Không có địa điểm nổi bật nào trong khu vực này.</div>';
+      btn.disabled = false;
+      return;
+    }
+
+    container.innerHTML = data.places.map((p, idx) => `
+      <div class="place-card">
+        <img src="${p.image_url}" 
+             class="place-image" 
+             onerror="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; this.style.fontSize='40px'; this.textContent='📍';"
+             alt="${p.name}">
+        
+        <div class="place-info">
+          <div class="place-name">${p.name}</div>
+          <div class="place-location">📍 ${p.address || 'Không xác định'}</div>
+        </div>
+      </div>
+    `).join("");
+
+    btn.disabled = false;
+
+  } catch (err) {
+    console.error("Fetch error:", err);
+    msg.innerHTML = `<div class="error">❌ Lỗi: ${err.message}</div>`;
+    btn.disabled = false;
+  }
+}
+
+// Enter để search
+document.getElementById("city").addEventListener("keypress", (e) => {
+  if (e.key === "Enter") loadLandmarks();
+});
+</script>
+
+</body>
+</html>
