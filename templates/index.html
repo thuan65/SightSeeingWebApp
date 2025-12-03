@@ -232,6 +232,22 @@
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       }
 
+    /* Thẻ cố định cho Danh sách Yêu thích */
+      .fixed-favorite-card {
+          border: 3px solid #1C6758; 
+          background: #e7fff3; /* Nền sáng */
+          order: -1; /* Đảm bảo nó luôn ở vị trí đầu tiên trong grid */
+      }
+
+      .fixed-favorite-card:hover {
+          box-shadow: 0 15px 35px rgba(28, 103, 88, 0.3);
+      }
+
+      .fixed-favorite-card img {
+            /* Hiệu ứng mờ cho hình ảnh placeholder */
+         filter: brightness(1.2) contrast(1.1) !important; 
+        }
+
       /* Nội dung chính */
       .container {
           max-width: 1400px;
@@ -489,12 +505,22 @@
   </section>
 
   <!-- Nội dung chính -->
-  <div class="container">
-      <h2 class="section-title">Khám phá điểm đến</h2>
-      
-      <div id="results" class="image-grid">
-      </div>
-  </div>
+<div class="container">
+    <h2 class="section-title">Khám phá điểm đến</h2>
+    
+    <div id="results" class="image-grid">
+        <div class="image-card fixed-favorite-card" onclick="window.location.href='/favorite/list'">
+            <img src="https://via.placeholder.com/280x220?text=Yeu+Thich" 
+                 alt="Danh sách yêu thích"
+                 style="filter: grayscale(10%);">
+            <div class="image-info">
+                <h3 style="color: #1C6758;">❤️ Danh sách yêu thích</h3>
+                <div class="tags">Truy cập nhanh</div>
+                <div class="rating">Xem các địa điểm đã lưu</div>
+            </div>
+        </div>
+        </div>
+</div>
 
   <!-- Footer -->
   <footer>
