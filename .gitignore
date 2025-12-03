@@ -4,6 +4,7 @@
 *.py[codz]
 *$py.class
 
+
 # Environments
 .env
 .envrc

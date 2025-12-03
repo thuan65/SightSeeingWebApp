@@ -6,6 +6,15 @@ import torch
 import os
 from dotenv import load_dotenv
 
+from models import ConversationHistory
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(BASE_DIR, "system_prompt.txt")
+
+with open(file_path, 'r', encoding='utf-8') as file:
+    SYSTEM_PROMPT = file.read()
+
 # ======================================================
 #Load môi trường & cấu hình API key
 # ======================================================
@@ -77,15 +86,39 @@ def is_sightseeing_question(user_message: str) -> bool:
     msg = user_message.lower()
     return any(k in msg for k in keywords)
 
+# ======================================================
+# Truy vấn database để lấy lịch sử chat
+# ======================================================
+
+def load_chat_history(user_id: str):
+    # Lấy tất cả message của user, sắp xếp theo thời gian
+    logs = ConversationHistory.query.filter_by(user_id=user_id).order_by(ConversationHistory.timestamp).all()
+    
+    # Tạo list message theo format OpenAI / Gemini
+    chat_history = []
+    for log in logs:
+        chat_history.append({
+            "role": log.role,
+            "content": log.content
+        })
+    return chat_history
 
 # ======================================================
-# 6. Trả lời bằng Gemini
+# Trả lời bằng Gemini
 # ======================================================
+
 def gemini_reply(user_message: str) -> str:
     #Sinh phản hồi bằng Gemini.
 
     chat = gemini_model.start_chat()
-    response = chat.send_message(user_message)
+    response = chat.send_message(
+         messages=[
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_message}
+         ],
+        max_tokens=200
+        )
+    
     return response.text.strip()
 
 

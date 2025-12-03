@@ -56,7 +56,7 @@ class ConversationHistory(db.Model):
     # ID của người dùng (để biết lịch sử này của ai)
     user_id = db.Column(db.Integer, nullable=False) 
     
-    # Phân biệt là chat với 'chatbot' hay 'expert'
+    # Phân biệt là chat với 'chatbot' hay 'user'
     session_type = db.Column(db.String(50), nullable=False) 
     
     # Nội dung người dùng gửi

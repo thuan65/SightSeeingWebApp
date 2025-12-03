@@ -24,7 +24,7 @@ class Feedback(Base):
     comment = Column(Text)
     timestamp = Column(DateTime, default=func.datetime("now", "localtime"))
 
-engine = create_engine("sqlite:///images.db")
+engine = create_engine("sqlite:///instance/images.db")
 Session = sessionmaker(bind=engine)
 Base.metadata.create_all(engine)
 

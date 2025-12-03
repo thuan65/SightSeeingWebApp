@@ -3,11 +3,17 @@ from flask import (
     Flask, render_template, request, jsonify, Response, json,
     redirect, url_for, flash, session
 )
+
+from flask_login import (
+    LoginManager, login_user, logout_user, login_required, UserMixin, current_user
+)
+
 from sentence_transformers import util
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from createDataBase import Image, UserSession
 
+
+from createDataBase import Image, UserSession
 from models import db, bcrypt, User
 from forms import RegisterForm, LoginForm
 from Forum.forum import forum
@@ -15,23 +21,20 @@ from Forum.forum import forum
 from ChatBot.ChatBotRoute import chatBot_bp
 
 from MapRouting.MapRoutingRoute import MapRouting_bp
-
 from Search_Filter.search_filter import search_filter
 from Search_Text.search_text import search_text
 from imageSearch.imageSearchRoute import search_image_bp
-
-from flask_login import (
-    LoginManager, login_user, logout_user, login_required, UserMixin, current_user
-)
+from SuggestionsFeedback.feedback import feedback_bp   
+from add_favorites.routes import favorite_bp
 
 from models_loader import sbert_model
 
 import torch
-from SuggestionsFeedback.feedback import feedback_bp   
+
 # NEW CODE: để người dùng upload ảnh 
 import os
 from friends import friends_bp
-from add_favorites.routes import favorite_bp
+
 
 # ---------------------------------------------------------
 # CẤU HÌNH ỨNG DỤNG FLASK
