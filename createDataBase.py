@@ -14,6 +14,8 @@ class Image(Base):
     description = Column(Text)
     rating = Column(Float)
     rating_count = Column(Integer, default=1) # So luong nguoi danh gia
+    address = Column(String)   # <── thêm dòng này
+
 
 class Feedback(Base):
     __tablename__ = "feedback"

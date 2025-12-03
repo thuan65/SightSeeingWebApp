@@ -3,6 +3,7 @@ import requests
 from flask import Blueprint, request, jsonify, render_template
 import time
 import unicodedata
+from createDataBase import Session, Image
 
 UA = {"User-Agent": "Mozilla/5.0"}
 CACHE = {}
@@ -333,6 +334,30 @@ def fetch_wiki_landmarks(lat, lon, radius=2500, limit=20):
         traceback.print_exc()
         return []
 
+def save_place_to_db(place):
+    session = Session()
+    try:
+        # Tránh trùng (nếu đã có tên này trong DB)
+        exists = session.query(Image).filter_by(name=place["name"]).first()
+        if exists:
+            return
+
+        img = Image(
+            name=place["name"],
+            tags="nearby",
+            filename=place["image_url"],
+            description="Địa điểm nhập tự động",
+            rating=0,
+            rating_count=1,
+            address=place["address"]   # <── quan trọng
+        )
+        session.add(img)
+        session.commit()
+    except Exception as e:
+        print("DB error:", e)
+        session.rollback()
+    finally:
+        session.close()
 
 def fetch_wiki_thumbnail_safe(pageid, name, lat, lon):
     """Safe wrapper to fetch image + address in parallel"""
@@ -437,6 +462,9 @@ def api_import_nearby():
         # Fetch landmarks - AUTO 2.5KM radius
         print(f"[INFO] Fetching landmarks for {city_raw} at ({lat:.4f}, {lon:.4f})")
         places = fetch_wiki_landmarks(lat, lon, radius=2500, limit=30)
+        for p in places:
+            save_place_to_db(p)
+
         
         if not places:
             error_resp = jsonify({"error": f"Không tìm thấy địa danh nào tại '{city_raw}'"})
