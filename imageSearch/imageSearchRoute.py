@@ -2,12 +2,12 @@ from flask import Blueprint, current_app, request, render_template
 from .imageSearchLogic import find_similar
 import os #for psth join
 
-image_bp = Blueprint('image_bp', __name__)
+search_image_bp = Blueprint('image_bp', __name__)
 
 # ---------------------------------------------------------
 # TÌM KIẾM ẢNH BẰNG ẢNH (UPLOAD)
 # ---------------------------------------------------------
-@image_bp.route("/search_image", methods=["GET", "POST"])
+@search_image_bp.route("/search_image", methods=["GET", "POST"])
 def search_image():
     if request.method == "POST":
         file = request.files.get("file")
