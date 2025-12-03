@@ -250,7 +250,7 @@
         }
 
         .btn-reply {
-            padding: 10px 25px;
+            padding: 12px 30px;
             background: transparent;
             border: 2px solid #8EB486;
             color: #1C6758;
@@ -267,6 +267,18 @@
             background: linear-gradient(135deg, #8EB486, #1C6758);
             color: white;
             border-color: transparent;
+            transform: translateY(-2px);
+        }
+
+        .btn-reply-primary {
+            background: linear-gradient(135deg, #8EB486, #1C6758);
+            color: white;
+            border: none;
+        }
+
+        .btn-reply-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(142, 180, 134, 0.4);
         }
 
         /* Answers Section */
@@ -335,44 +347,6 @@
             margin-bottom: 30px;
         }
 
-        /* Footer */
-        footer {
-            background: #2C3E50;
-            color: white;
-            padding: 50px 20px 20px;
-            margin-top: 80px;
-        }
-
-        .footer-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
-            margin-bottom: 30px;
-        }
-
-        .footer-section h3 {
-            margin-bottom: 20px;
-            color: #8EB486;
-            font-weight: 600;
-            font-size: 18px;
-        }
-
-        .footer-section p {
-            line-height: 1.8;
-            color: #bbb;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: 30px;
-            border-top: 1px solid #444;
-            color: #888;
-        }
-
         /* Scroll Top Button */
         #scrollTop {
             position: fixed;
@@ -422,6 +396,10 @@
             .post-header {
                 flex-direction: column;
             }
+
+            .post-actions {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -432,22 +410,20 @@
         <div class="header-container">
             <a href="/" class="logo">Loca<span>Go!</span></a>
             <div class="nav-links">
-                <a href="/">Trang chủ</a>
-                <a href="/map">Bản đồ</a>
-                <a href="/chat_ui">Chatbot</a>
-                <a href="/forum" style="background: #f0f0f0;">Forum</a>
-                {% if session.get('questioner_id') %}
-                    <a href="/post/new" class="btn-success">+ Đặt câu hỏi</a>
-                    <a href="/logout" class="btn-danger">Đăng xuất</a>
-                {% else %}
-                    <a href="/register" class="btn-secondary">Đăng ký</a>
-                    <a href="/login" class="btn-primary">Đăng nhập</a>
-                {% endif %}
+                <select id="languageSelect">
+                    <option value="vi">Tiếng Việt</option>
+                    <option value="en">English</option>
+                </select>
+                <a href="/MapRouting">Bản đồ</a>
+                <a href="/chat_ui">Chatbot du lịch</a>
+                <a href="{{ url_for('forum.show_forum') }}">Forum</a>
+                <a href="{{ url_for('login_bp.register') }}" class="btn-secondary">Đăng ký</a>
+                <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
             </div>
         </div>
     </header>
-
-    <!-- Hero Banner -->
+          
+  <!-- Hero Banner -->
     <section class="hero-banner">
         <h1>Cộng đồng Du lịch LocaGo!</h1>
         <p>Chia sẻ kinh nghiệm, hỏi đáp về địa điểm, ẩm thực, lịch trình và mọi thứ về du lịch!</p>
@@ -474,13 +450,29 @@
                     <div>
                         <h3 class="post-title">{{ post['title'] }}</h3>
                         <div class="post-meta">
-                            <span>👤 <span class="post-author">{{ post['username'] }}</span></span>
+                            <span>👤 <span class="post-author">{{ post['username'] }}</span>
+                                {% if session.get('questioner_id') == post['questioner_id'] %}
+                                    <span style="color: #1C6758; font-weight: 700;">(Bạn là Tác giả)</span>
+                                {% endif %}
+                            </span>
                             <span>•</span>
                             <span>{{ post['created_at'][:10] if post.get('created_at') else 'N/A' }}</span>
                         </div>
                     </div>
+
+                    <p class="post-content">{{ post['content'] }}</p>
+
+                    <div class="post-actions">
+                        </div>
+                    
+                    {% if post.get('answers') and post['answers']|length > 0 %}
+                    <div class="answers-section">
+                        <div class="answers-title">
+                            Câu trả lời từ cộng đồng ({{ post['answers']|length }})
+                        </div>
+
                     {% if post['tag'] == 'answered' %}
-                        <span class="badge badge-success">✓ Đã có câu trả lời</span>
+                        <span class="badge badge-success">Đã có câu trả lời</span>
                     {% else %}
                         <span class="badge badge-warning">Chờ trả lời</span>
                     {% endif %}
@@ -490,7 +482,7 @@
 
                 <div class="post-actions">
                     {% if session.get('questioner_id') %}
-                        <a href="/post/{{ post['id'] }}/reply" class="btn-reply">Trả lời</a>
+                        <a href="/post/{{ post['id'] }}/reply" class="btn-reply btn-reply-primary">Trả lời câu hỏi</a>
                     {% else %}
                         <a href="/login" class="btn-reply">Đăng nhập để trả lời</a>
                     {% endif %}
@@ -504,7 +496,13 @@
                     {% for ans in post['answers'] %}
                     <div class="answer-item">
                         <p class="answer-content">{{ ans['content'] }}</p>
-                        <p class="answer-author">— <strong>{{ ans['answerer_username'] }}</strong></p>
+                        <p class="answer-author">— <strong>{{ ans['answerer_username'] }}</strong> 
+                            {% if ans['answerer_username'] == post['username'] %}
+                                <span style="color: #8EB486; font-weight: 600;">(Chủ đề)</span>
+                            {% elif session.get('questioner_id') and ans['answerer_username'] == session.get('username') %}
+                                <span style="color: #1C6758; font-weight: 600;">(Câu trả lời của bạn)</span>
+                            {% endif %}
+                        </p>
                     </div>
                     {% endfor %}
                 </div>
@@ -514,17 +512,38 @@
         {% else %}
             <div class="empty-state">
                 <div class="empty-state-icon">🌍</div>
-                <h2>Chưa có câu hỏi nào</h2>
+                <h3>Chưa có câu hỏi nào</h3>
                 <p>Hãy là người đầu tiên đặt câu hỏi về du lịch!</p>
                 {% if session.get('questioner_id') %}
-                    <a href="/post/new" class="btn-primary" style="text-decoration: none; padding: 15px 40px; border-radius: 50px; display: inline-block;">+ Đặt câu hỏi ngay</a>
+                    <a href="{{ url_for('forum.new_post') }}" class="btn-primary" style="text-decoration: none; padding: 15px 40px; border-radius: 50px; display: inline-block;">Đặt câu hỏi ngay</a>
                 {% else %}
-                    <a href="/login" class="btn-primary" style="text-decoration: none; padding: 15px 40px; border-radius: 50px; display: inline-block;">Đăng nhập để đặt câu hỏi</a>
+                    <div class="btn-primary" style="text-decoration: none; padding: 15px 40px; border-radius: 50px; display: inline-block;">Đăng nhập để đặt câu hỏi</div>
                 {% endif %}
             </div>
         {% endif %}
     </div>
 
+    <!-- Scroll to Top Button -->
+    <button id="scrollTop" onclick="scrollToTop()">↑</button>
+
+    <script>
+        // Show scroll to top button
+        window.onscroll = function() {
+            const btn = document.getElementById('scrollTop');
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                btn.classList.add('show');
+            } else {
+                btn.classList.remove('show');
+            }
+        };
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+    </script>
 
 </body>
 </html>
