@@ -58,7 +58,6 @@ def compute_similarity(query_text, places, top_k=5):
         
     # Sắp xếp giảm dần theo similarity
     scored.sort(reverse=True, key=lambda x: x[0])
-    
     # Trả về top_k kết quả
     return [dict(x[1]) for x in scored[:top_k]]
 
@@ -67,8 +66,7 @@ def compute_similarity(query_text, places, top_k=5):
 @search_text.route("/search_text", methods=["GET"])
 def search_text_route():
     """Endpoint tìm kiếm địa điểm dựa trên ngữ nghĩa (Semantic Search)."""
-    user_message = request.args.get("q", "").strip()
-    
+    user_message = request.args.get("query", "").strip()
     # Kiểm tra đầu vào
     if not user_message:
         return jsonify({"message": "Vui lòng nhập từ khóa tìm kiếm."})
@@ -76,7 +74,7 @@ def search_text_route():
     try:
         # 1. Lấy tất cả địa điểm từ DB
         places = get_all_places()
-        
+
         # 2. Tính toán độ tương đồng ngữ nghĩa
         top_results = compute_similarity(user_message, places)
         

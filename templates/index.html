@@ -407,8 +407,18 @@
               <a href="/MapRouting">Bản đồ</a>
               <a href="/chat_ui">Chatbot du lịch</a>
               <a href="/forum">Forum</a>
-              <a href="{{ url_for('login_bp.register') }}" class="btn-secondary">Đăng ký</a>
-              <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
+     <nav>
+    {% if current_user.is_authenticated %}
+        <!-- Hiện khi đã đăng nhập -->
+        <a href="{{ url_for('login_bp.logout') }}" class="btn btn-danger">Đăng xuất</a>
+    {% else %}
+        <!-- Hiện khi chưa đăng nhập -->
+        <a href="{{ url_for('login_bp.register') }}" class="btn btn-secondary">Đăng ký</a>
+        <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary">Đăng nhập</a>
+    {% endif %}
+</nav>
+
+
           </div>
       </div>
   </header>

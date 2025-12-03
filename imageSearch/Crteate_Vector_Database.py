@@ -30,7 +30,7 @@ def main():
     tmp_dir = os.path.join(PARENT_DIR, "static")
     db_dir = os.path.join(tmp_dir, "images") # nơi chứa ảnh gốc để so sánh 
     file_path_vectorDatabase = os.path.join(PARENT_DIR, "instance", "faiss_index.index")
-
+    file_path_metadata = os.path.join(PARENT_DIR, "instance", "metadata.json")
 
     
     #db_dir = "static/images" # nơi chứa ảnh gốc để so sánh 
@@ -56,6 +56,12 @@ def main():
     index = faiss.IndexFlatL2(dim)
     index.add(db_embeddings_np) #Tạo database
     faiss.write_index(index, file_path_vectorDatabase)
+
+    index_to_name = {i: db_names[i] for i in range(len(db_names))}
+
+    #===  metadata (địa điểm) ===
+    with open(file_path_metadata, "w", encoding="utf-8") as f:
+        json.dump(index_to_name, f)
 
 
 

@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, Response, json, session, redirect
 # app.py
+
 from flask import (
     Flask, render_template, request, jsonify, Response, json,
     redirect, url_for, flash, session
@@ -12,11 +13,12 @@ from flask_login import (
 from sentence_transformers import util
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-
+from sqlalchemy import func, or_
 
 
 from createDataBase import Image, UserSession
 from models import db, bcrypt, User
+
 from Login.login import login_bp  
 from Forum.forum import forum
 from ChatBot.ChatBotRoute import chatBot_bp
@@ -45,7 +47,7 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 # Khởi tạo database, bcrypt và login manager
 db.init_app(app)
 bcrypt.init_app(app)
-
+print("3")
 # ---------------------------------------------------------
 # LƯU LỊCH SỬ 
 # ---------------------------------------------------------
@@ -107,7 +109,12 @@ def image_detail(image_id):
 @app.route("/api/search")
 def search():
     keyword = request.args.get("q", "").lower()
-    results = db_session.query(Image).filter(Image.tags.like(f"%{keyword}%")).all()
+    results = db_session.query(Image).filter(
+        or_(
+        func.lower(Image.tags).like(f"%{keyword}%"),
+        func.lower(Image.name).like(f"%{keyword}%")
+        )
+        ).all()
     data = [{"id": img.id, "name": img.name, "filename": img.filename} for img in results]
     return jsonify(data)
 
