@@ -2,7 +2,9 @@
 from flask import Blueprint, request, jsonify, session as flask_session
 from datetime import datetime
 
-from createDataBase import UserSession, FriendRequest, Friendship, User, UserBase
+#from createDataBase import UserSession, FriendRequest, Friendship, User, UserBase
+from extensions import db
+from models import FriendRequest, Friendship, User
 
 friends_bp = Blueprint("friends", __name__, url_prefix="/friends")
 
@@ -24,19 +26,19 @@ def send_request():
     if int(to_user) == int(from_user):
         return jsonify({"error": "Cannot friend yourself"}), 400
 
-    usession = UserSession()
+
     try:
         # kiểm tra tồn tại user đích
-        if not usession.query(User).filter_by(id=to_user).first():
+        if not db.session.query(User).filter_by(id=to_user).first():
             return jsonify({"error": "Target user not found"}), 404
 
         # kiểm tra đã là bạn
-        already = usession.query(Friendship).filter_by(user_id=from_user, friend_id=to_user).first()
+        already = db.session.query(Friendship).filter_by(user_id=from_user, friend_id=to_user).first()
         if already:
             return jsonify({"message": "Already friends"}), 200
 
         # kiểm tra request hiện tại (unique constraint) - có thể pending hoặc rejected
-        fr = usession.query(FriendRequest).filter_by(from_user=from_user, to_user=to_user).first()
+        fr = db.session.query(FriendRequest).filter_by(from_user=from_user, to_user=to_user).first()
         if fr:
             if fr.status == "pending":
                 return jsonify({"message": "Request already pending"}), 200
@@ -44,22 +46,18 @@ def send_request():
                 # nếu trước đó rejected/cancelled thì cho tạo lại (update)
                 fr.status = "pending"
                 fr.created_at = datetime.utcnow()
-                usession.commit()
+                db.session.commit()
                 return jsonify({"message": "Request re-sent"}), 200
 
         # tạo mới
         new_fr = FriendRequest(from_user=from_user, to_user=to_user, status="pending", created_at=datetime.utcnow())
-        usession.add(new_fr)
-        usession.commit()
+        db.session.add(new_fr)
+        db.session.commit()
         return jsonify({"message": "Friend request sent"}), 201
 
     except Exception as e:
-        usession.rollback()
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
-
-    finally:
-        usession.close()
-
 
 # 2) Accept một lời mời
 @friends_bp.route("/accept", methods=["POST"])
@@ -72,29 +70,25 @@ def accept_request():
     if not request_id:
         return jsonify({"error": "request_id required"}), 400
 
-    usession = UserSession()
     try:
-        fr = usession.query(FriendRequest).filter_by(id=request_id, to_user=current, status="pending").first()
+        fr = db.session.query(FriendRequest).filter_by(id=request_id, to_user=current, status="pending").first()
         if not fr:
             return jsonify({"error": "Friend request not found or already handled"}), 404
 
         # mark accepted
         fr.status = "accepted"
-        usession.add(fr)
+        db.session.add(fr)
 
         # tạo 2 dòng friendship (hai chiều)
         f1 = Friendship(user_id=fr.from_user, friend_id=fr.to_user, created_at=datetime.utcnow())
         f2 = Friendship(user_id=fr.to_user, friend_id=fr.from_user, created_at=datetime.utcnow())
-        usession.add_all([f1, f2])
-        usession.commit()
+        db.session.add_all([f1, f2])
+        db.session.commit()
         return jsonify({"message": "Friend request accepted"}), 200
 
     except Exception as e:
-        usession.rollback()
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
-    finally:
-        usession.close()
-
 
 # 3) Reject / cancel một lời mời
 @friends_bp.route("/reject", methods=["POST"])
@@ -107,9 +101,8 @@ def reject_request():
     if not request_id:
         return jsonify({"error": "request_id required"}), 400
 
-    usession = UserSession()
     try:
-        fr = usession.query(FriendRequest).filter_by(id=request_id).first()
+        fr = db.session.query(FriendRequest).filter_by(id=request_id).first()
         if not fr:
             return jsonify({"error": "Friend request not found"}), 404
 
@@ -118,15 +111,13 @@ def reject_request():
             return jsonify({"error": "Not authorized"}), 403
 
         fr.status = "rejected"
-        usession.add(fr)
-        usession.commit()
+        db.session.add(fr)
+        db.session.commit()
         return jsonify({"message": "Friend request rejected/cancelled"}), 200
 
     except Exception as e:
-        usession.rollback()
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
-    finally:
-        usession.close()
 
 
 # 4) Unfriend (bỏ bạn)
@@ -140,39 +131,35 @@ def unfriend():
     if not target:
         return jsonify({"error": "target_user required"}), 400
 
-    usession = UserSession()
     try:
         # xóa cả hai hướng
-        usession.query(Friendship).filter_by(user_id=current, friend_id=target).delete()
-        usession.query(Friendship).filter_by(user_id=target, friend_id=current).delete()
-        usession.commit()
+        db.session.query(Friendship).filter_by(user_id=current, friend_id=target).delete()
+        db.session.query(Friendship).filter_by(user_id=target, friend_id=current).delete()
+        db.session.commit()
         return jsonify({"message": "Unfriended"}), 200
 
     except Exception as e:
-        usession.rollback()
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
-    finally:
-        usession.close()
-
 
 # 5) Lấy danh sách bạn / pending requests (optional)
 @friends_bp.route("/list/<int:user_id>", methods=["GET"])
 def list_friends(user_id):
-    usession = UserSession()
+
     try:
         # friends
-        friends = usession.query(Friendship).filter_by(user_id=user_id).all()
+        friends = db.session.query(Friendship).filter_by(user_id=user_id).all()
         friends_ids = [f.friend_id for f in friends]
         # lấy username
-        users = usession.query(User).filter(User.id.in_(friends_ids)).all() if friends_ids else []
+        users = db.session.query(User).filter(User.id.in_(friends_ids)).all() if friends_ids else []
         friends_list = [{"id": u.id, "username": u.username} for u in users]
 
         # pending incoming
-        incoming = usession.query(FriendRequest).filter_by(to_user=user_id, status="pending").all()
+        incoming = db.session.query(FriendRequest).filter_by(to_user=user_id, status="pending").all()
         incoming_list = [{"id": r.id, "from_user": r.from_user} for r in incoming]
 
         # pending outgoing
-        outgoing = usession.query(FriendRequest).filter_by(from_user=user_id, status="pending").all()
+        outgoing = db.session.query(FriendRequest).filter_by(from_user=user_id, status="pending").all()
         outgoing_list = [{"id": r.id, "to_user": r.to_user} for r in outgoing]
 
         return jsonify({
@@ -183,8 +170,6 @@ def list_friends(user_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    finally:
-        usession.close()
 
 @friends_bp.route("/search_user")
 def search_user():
@@ -200,11 +185,10 @@ def search_user():
     if not current_user:
         return jsonify({"error": "User not logged in"}), 401
 
-    usession = UserSession()
     try:
         # Tìm user khớp với từ khóa, không phân biệt hoa thường
         users = (
-            usession.query(User)
+            db.session.query(User)
             .filter(User.username.ilike(f"%{username}%"))
             .filter(User.id != current_user)  # bỏ qua chính user
             .limit(10)
@@ -221,11 +205,8 @@ def search_user():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    finally:
-        usession.close()
 
 @friends_bp.route("/debug_users")
 def debug_users():
-    usession = UserSession()
-    users = usession.query(User).all()
+    users = db.session.query(User).all()
     return jsonify([{"id": u.id, "username": u.username} for u in users])

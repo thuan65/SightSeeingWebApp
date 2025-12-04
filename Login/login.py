@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, current_user
-from models import db, bcrypt, User
+from extensions import db, bcrypt
+from models import User
 from forms import RegisterForm, LoginForm
 
 login_bp = Blueprint("login_bp", __name__, url_prefix="/auth",template_folder='templates')

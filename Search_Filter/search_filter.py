@@ -1,21 +1,22 @@
-from flask import Blueprint, request, Response
-from sqlalchemy import create_engine, text
+from flask import Blueprint, request, Response, current_app
+# from sqlalchemy import create_engine, text
+from extensions import db
 import json
 import os
 
 # --- Thiết lập Engine (Đọc từ cấu hình trong createDataBase.py) ---
 
-def get_db_engine():
-    """
-    Tạo và trả về SQLAlchemy Engine để kết nối tới images.db.
-    Lưu ý: Bạn phải đảm bảo rằng engine này được tạo đồng nhất với
-    cấu hình trong createDataBase.py (sqlite:///images.db).
-    """
-    # Vì file images.db được tạo ở thư mục gốc, ta sử dụng đường dẫn tương đối này.
-    # Trong môi trường sản xuất/lớn hơn, bạn nên dùng biến môi trường để định nghĩa đường dẫn DB.
+# def get_db_engine():
+#     """
+#     Tạo và trả về SQLAlchemy Engine để kết nối tới images.db.
+#     Lưu ý: Bạn phải đảm bảo rằng engine này được tạo đồng nhất với
+#     cấu hình trong createDataBase.py (sqlite:///instance/images.db).
+#     """
+#     # Vì file images.db được tạo ở thư mục gốc, ta sử dụng đường dẫn tương đối này.
+#     # Trong môi trường sản xuất/lớn hơn, bạn nên dùng biến môi trường để định nghĩa đường dẫn DB.
     
-    # Giả sử images.db nằm ở thư mục gốc của ứng dụng
-    return create_engine("sqlite:///images.db", echo=False)
+#     # Giả sử images.db nằm ở thư mục gốc của ứng dụng
+#     return create_engine("sqlite:///instance/images.db", echo=False)
 
 # --- Định nghĩa Blueprint ---
 
@@ -54,10 +55,11 @@ def search_filter_route():
         # Tùy chọn: Sắp xếp kết quả theo rating giảm dần
         query += " ORDER BY rating DESC, rating_count DESC"
         
-        engine = get_db_engine()
-        with engine.connect() as conn:
+        # engine = get_db_engine()
+        
+        with current_app.app_context():
             # Thực thi query
-            results = conn.execute(text(query), params).mappings().all()
+            results = db.session.execute(db.text(query), params).mappings().all()
 
         # Chuyển kết quả về định dạng JSON
         # Chuyển đổi mỗi row (mapping) thành dictionary để dễ dàng serialize

@@ -3,7 +3,9 @@ import requests
 from flask import Blueprint, request, jsonify, render_template
 import time
 import unicodedata
-from createDataBase import Session, Image
+from createDataBase import Session
+from models import Image
+from extensions import db
 
 UA = {"User-Agent": "Mozilla/5.0"}
 CACHE = {}
@@ -335,10 +337,9 @@ def fetch_wiki_landmarks(lat, lon, radius=2500, limit=20):
         return []
 
 def save_place_to_db(place):
-    session = Session()
     try:
         # Tránh trùng (nếu đã có tên này trong DB)
-        exists = session.query(Image).filter_by(name=place["name"]).first()
+        exists = db.session.query(Image).filter_by(name=place["name"]).first()
         if exists:
             return
 
@@ -351,13 +352,11 @@ def save_place_to_db(place):
             rating_count=1,
             address=place["address"]   # <── quan trọng
         )
-        session.add(img)
-        session.commit()
+        db.session.add(img)
+        db.session.commit()
     except Exception as e:
         print("DB error:", e)
-        session.rollback()
-    finally:
-        session.close()
+        db.session.rollback()
 
 def fetch_wiki_thumbnail_safe(pageid, name, lat, lon):
     """Safe wrapper to fetch image + address in parallel"""

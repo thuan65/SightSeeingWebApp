@@ -3,10 +3,7 @@ from flask_bcrypt import Bcrypt
 from sqlalchemy import func, Boolean, UniqueConstraint
 from datetime import datetime
 from flask_login import UserMixin
-
-
-db = SQLAlchemy()
-bcrypt = Bcrypt()
+from extensions import db, bcrypt
 
 class User(db.Model, UserMixin):
     __tablename__ = "user"
@@ -112,3 +109,32 @@ class Friendship(db.Model):
     created_at = db.Column(db.DateTime, default=func.datetime("now", "localtime"))
 
     __table_args__ = (UniqueConstraint("user_id", "friend_id", name="uq_user_friend"),)
+
+class Image(db.Model):
+    __tablename__ = "images"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    tags = db.Column(db.String)
+    filename = db.Column(db.String)
+    description = db.Column(db.Text)
+    rating = db.Column(db.Float)
+    rating_count = db.Column(db.Integer, default=1) # So luong nguoi danh gia
+    address = db.Column(db.String)   # <── thêm dòng này
+
+class Feedback(db.Model):
+    __tablename__ = "feedback"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    image_id = db.Column(db.Integer, db.ForeignKey("images.id"), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, default=func.datetime("now", "localtime"))
+
+class Favorite(db.Model):
+    __tablename__ = "favorites"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    image_id = db.Column(db.Integer, nullable=False)  # Bỏ ForeignKey
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (UniqueConstraint("user_id", "image_id", name="uq_user_image"),)

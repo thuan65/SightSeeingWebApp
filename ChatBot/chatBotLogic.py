@@ -1,12 +1,13 @@
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import util
 from models_loader import sbert_model
-from sqlalchemy import create_engine, text
 import google.generativeai as genai
 import torch
 import os
 from dotenv import load_dotenv
 
-from models import ConversationHistory
+from flask import current_app
+from models import ConversationHistory, Image
+from extensions import db
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -33,14 +34,8 @@ gemini_model = genai.GenerativeModel("gemini-2.5-flash")
 # ======================================================
 #Kết nối database
 # ======================================================
-engine = create_engine("sqlite:///instance/images.db")
 
-with engine.connect() as conn:
-    results = conn.execute(text("SELECT * FROM images")).mappings().all()
 
-# Chuẩn bị embedding cho toàn bộ địa điểm
-place_sentences = [f"{r['name']} - {r['description']}" for r in results]
-place_embeddings = sbert_model.encode(place_sentences, convert_to_tensor=True)
 
 # ======================================================
 # Phân loại ý định người dùng
@@ -66,6 +61,11 @@ def detect_intent(text: str) -> str:
 #Gợi ý địa điểm từ cơ sở dữ liệu
 # ======================================================
 def suggest_place(user_query: str) -> dict:
+    with current_app.app_context():
+        results = Image.query.all()
+    # Chuẩn bị embedding cho toàn bộ địa điểm
+        place_sentences = [f"{r.name} - {r.description}" for r in results]
+        place_embeddings = sbert_model.encode(place_sentences, convert_to_tensor=True)
     """
     Trả về địa điểm có mô tả gần nhất với truy vấn người dùng.
     """
@@ -108,40 +108,76 @@ def load_chat_history(user_id: str):
 # ======================================================
 
 def gemini_reply(user_message: str) -> str:
-    #Sinh phản hồi bằng Gemini.
-
-    chat = gemini_model.start_chat()
-    response = chat.send_message(
-         messages=[
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": user_message}
-         ],
-        max_tokens=200
-        )
-    
-    return response.text.strip()
-
-
+    """
+    Gửi user_message đến Gemini và trả về phản hồi dạng chuỗi.
+    """
+    try:
+        response = gemini_model.generate_content(user_message)
+        return response.text
+    except Exception as e:
+        return f"Lỗi khi gọi Gemini API: {e}"
 
 # ======================================================
 # 7. Hàm trung tâm: Chatbot trả lời
 # ======================================================
+# def chatbot_reply(user_message: str):
+# # Sinh phản hồi dựa trên intent.
+#     intent = detect_intent(user_message)
+
+#     if intent == "suggest":
+#         place = suggest_place(user_message)
+#         raw_info = f" Gợi ý cho bạn: {place['name']} — {place['description']}"
+#         prompt = f"""Người dùng hỏi: "{user_message}".
+#         Dưới đây là thông tin tôi tìm thấy:
+#         {raw_info}
+#         Hãy viết lại câu trả lời ngắn gọn, thân thiện, tự nhiên như hướng dẫn viên du lịch đang nói chuyện, bằng tiếng Việt.
+#         """
+#         reply = gemini_reply(prompt)
+#     else:
+#         reply = gemini_reply(user_message)
+
+#     return reply
+
 def chatbot_reply(user_message: str):
-# Sinh phản hồi dựa trên intent.
     intent = detect_intent(user_message)
 
     if intent == "suggest":
         place = suggest_place(user_message)
-        raw_info = f" Gợi ý cho bạn: {place['name']} — {place['description']}"
-        prompt = f"""Người dùng hỏi: "{user_message}".
-        Dưới đây là thông tin tôi tìm thấy:
+        raw_info = f"Gợi ý cho bạn: {place['name']} — {place['description']}"
+
+        prompt = f"""
+        # SYSTEM INSTRUCTION
+        {SYSTEM_PROMPT}
+
+        # USER MESSAGE
+        Người dùng hỏi: "{user_message}"
+
+        # ASSISTANT RESOURCES
+        Dưới đây là thông tin tôi tìm thấy từ cơ sở dữ liệu nội bộ:
         {raw_info}
-        Hãy viết lại câu trả lời ngắn gọn, thân thiện, tự nhiên như hướng dẫn viên du lịch đang nói chuyện, bằng tiếng Việt.
+
+        # TASK
+        Dựa trên SYSTEM_INSTRUCTION + USER_MESSAGE + ASSISTANT_RESOURCES,
+        hãy viết câu trả lời ngắn gọn, thân thiện, tự nhiên như hướng dẫn viên du lịch đang nói chuyện, bằng tiếng Việt.
         """
+
         reply = gemini_reply(prompt)
+
     else:
-        reply = gemini_reply(user_message)
+        # Trường hợp không suggest thì chỉ gộp SYSTEM_PROMPT + user input
+        prompt = f"""
+        # SYSTEM INSTRUCTION
+        {SYSTEM_PROMPT}
+
+        # USER MESSAGE
+        {user_message}
+
+        # TASK
+        Dựa trên SYSTEM_INSTRUCTION + USER_MESSAGE, hãy trả lời tự nhiên và đúng yêu cầu.
+        """
+    reply = gemini_reply(prompt)
 
     return reply
+
 
 print("Ai runningnn...")

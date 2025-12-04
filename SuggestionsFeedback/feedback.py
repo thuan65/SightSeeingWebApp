@@ -3,9 +3,11 @@
 from flask import Blueprint, request, jsonify, session as flask_session, render_template
 from Forum.toxic_filter import is_toxic
 from datetime import datetime
+from extensions import db
 
 # Import từ DB
-from createDataBase import Image, Feedback, Session, User, UserSession
+# from createDataBase import Image, Feedback, Session, User, UserSession
+from models import Image, Feedback, User
 
 feedback_bp = Blueprint("feedback", __name__)
 
@@ -28,11 +30,10 @@ def submit_feedback(image_id):
     if rating is None:
         return jsonify({"error": "Rating is required"}), 400
 
-    session = Session()
 
     try:
         # Tìm ảnh trong DB
-        image = session.query(Image).filter_by(id=image_id).first()
+        image = db.session.query(Image).filter_by(id=image_id).first()
         if not image:
             return jsonify({"error": "Image not found"}), 404
 
@@ -53,8 +54,8 @@ def submit_feedback(image_id):
             timestamp=datetime.now()
         )
 
-        session.add(fb)
-        session.commit()
+        db.session.add(fb)
+        db.session.commit()
 
         return jsonify({
             "message": "Feedback submitted",
@@ -64,11 +65,8 @@ def submit_feedback(image_id):
         })
 
     except Exception as e:
-        session.rollback()
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
-
-    finally:
-        session.close()
 
 
 # ---------------------------------------------------------
@@ -76,16 +74,15 @@ def submit_feedback(image_id):
 # ---------------------------------------------------------
 @feedback_bp.route("/feedback/<int:image_id>", methods=["GET"])
 def get_feedback(image_id):
-    session = Session()
-    usession = UserSession()
+  
 
     try:
-        image = session.query(Image).filter_by(id=image_id).first()
+        image = db.session.query(Image).filter_by(id=image_id).first()
         if not image:
             return jsonify({"error": "Image not found"}), 404
 
         feedback_list = (
-            session.query(Feedback)
+            db.session.query(Feedback)
             .filter_by(image_id=image_id)
             .order_by(Feedback.timestamp.desc())
             .all()
@@ -94,7 +91,7 @@ def get_feedback(image_id):
         result = []
         for f in feedback_list:
             # Lấy username từ users.db
-            user = usession.query(User).filter_by(id=f.user_id).first()
+            user = db.session.query(User).filter_by(id=f.user_id).first()
             username = user.username if user else "Unknown"
 
             result.append({
@@ -114,7 +111,3 @@ def get_feedback(image_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-    finally:
-        session.close()
-        usession.close()

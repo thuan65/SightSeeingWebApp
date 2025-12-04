@@ -5,17 +5,17 @@
 
 # forum = Blueprint("forum", __name__)
 
-# model = SentenceTransformer("keepitreal/vietnamese-sbert")
+# sbert_model = SentenceTransformer("keepitreal/vietnamese-sbert")
 
 # def compute_similarity(query_text, posts, top_k=5):
 #     """So sánh độ tương đồng giữa query và posts trong DB"""
-#     query_embedding = model.encode(query_text, convert_to_tensor=True)
+#     query_embedding = sbert_model.encode(query_text, convert_to_tensor=True)
 
 #     scored = []
 #     for post in posts:
 #         # combine title + content
 #         post_text = f"{post['title']} {post['content']}"
-#         post_embedding = model.encode(post_text, convert_to_tensor=True)
+#         post_embedding = sbert_model.encode(post_text, convert_to_tensor=True)
 #         similarity = util.cos_sim(query_embedding, post_embedding).item()
 #         scored.append((similarity, post))
 
@@ -146,22 +146,24 @@
 from flask import Blueprint, render_template, request, redirect, session
 from sentence_transformers import SentenceTransformer, util
 from .toxic_filter import is_toxic
+from models_loader import sbert_model
 # SỬ DỤNG ORM VÀ MODELS MỚI
-from models import db, User, Post, Answer 
+from models import User, Post, Answer
+from extensions import  db
 
 forum = Blueprint("forum", __name__, template_folder='template')
 
-model = SentenceTransformer("keepitreal/vietnamese-sbert")
+sbert_model = SentenceTransformer("keepitreal/vietnamese-sbert")
 
 def compute_similarity(query_text, posts, top_k=5):
     """So sánh độ tương đồng giữa query và posts trong DB"""
-    query_embedding = model.encode(query_text, convert_to_tensor=True)
+    query_embedding = sbert_model.encode(query_text, convert_to_tensor=True)
 
     scored = []
     for post in posts:
         # combine title + content
         post_text = f"{post['title']} {post['content']}"
-        post_embedding = model.encode(post_text, convert_to_tensor=True)
+        post_embedding = sbert_model.encode(post_text, convert_to_tensor=True)
         similarity = util.cos_sim(query_embedding, post_embedding).item()
         scored.append((similarity, post))
 

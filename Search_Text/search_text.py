@@ -1,6 +1,7 @@
-from flask import Blueprint, request, Response, jsonify
+from flask import Blueprint, request, Response, jsonify, current_app
 from sentence_transformers import util
 from sqlalchemy import create_engine, text
+from extensions import db
 from models_loader import sbert_model
 import json
 import os
@@ -14,22 +15,22 @@ search_text = Blueprint("search_text", __name__)
 # Sử dụng mô hình tiếng Việt đã được nhắc đến
 
 # 3. Kết nối Database Engine
-def get_db_engine():
-    """
-    Tạo và trả về SQLAlchemy Engine để kết nối tới images.db.
-    Lưu ý: Engine này phải đồng nhất với cấu hình trong createDataBase.py
-    (đã giả định là sqlite:///images.db).
-    """
-    return create_engine("sqlite:///images.db", echo=False)
+# def get_db_engine():
+#     """
+#     Tạo và trả về SQLAlchemy Engine để kết nối tới images.db.
+#     Lưu ý: Engine này phải đồng nhất với cấu hình trong createDataBase.py
+#     (đã giả định là sqlite:///images.db).
+#     """
+#     return create_engine("sqlite:///instance/images.db", echo=False)
 
 # --- Logic Xử lý Dữ liệu ---
 
 def get_all_places():
     """Lấy tất cả địa điểm (images) từ database."""
     # Lấy engine đã kết nối tới images.db
-    engine = get_db_engine()
-    with engine.connect() as conn:
-        results = conn.execute(text("SELECT * FROM images")).mappings().all()
+    # engine = get_db_engine()
+    with current_app.app_context() as conn:
+        results = db.session.execute(db.text("SELECT * FROM images")).mappings().all()
     # Chuyển đổi kết quả (Mapping) sang danh sách các dict Python
     return [dict(row) for row in results]
 
@@ -67,6 +68,7 @@ def compute_similarity(query_text, places, top_k=5):
 def search_text_route():
     """Endpoint tìm kiếm địa điểm dựa trên ngữ nghĩa (Semantic Search)."""
     user_message = request.args.get("query", "").strip()
+    print(user_message)
     # Kiểm tra đầu vào
     if not user_message:
         return jsonify({"message": "Vui lòng nhập từ khóa tìm kiếm."})

@@ -156,6 +156,7 @@ def readCsv(path):
             data.append(row)
     return data
 
+
 def normalizeTags(tagStr):
     if not tagStr:
         return ""
