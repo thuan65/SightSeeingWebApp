@@ -1,6 +1,6 @@
 import csv
-from sqlalchemy import create_engine, Column, Integer, String, Text, Float, DateTime, func, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import create_engine, Column, Integer, String, Text, Float, DateTime, func, ForeignKey, UniqueConstraint, Boolean
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship, backref
 from datetime import datetime
 
 Base = declarative_base()
@@ -36,7 +36,37 @@ class User(UserBase):
     __tablename__ = "user"  
     id = Column(Integer, primary_key=True)
     username = Column(String, nullable=False)
-    # nếu có thêm cột password, email... giữ nguyên
+    password = Column(String(200), nullable=False)
+    online = Column(Boolean, default=True)
+    share_mode = Column(String(50), default="friends")  # hidden, friends
+
+class Post(UserBase):
+    __tablename__ = "posts"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(Text, nullable=True)
+    content = Column(Text, nullable=True)
+    questioner_id = Column(Integer, ForeignKey("user.id"))
+    tag = Column(String, default="unanswered")
+    created_at = Column(DateTime, server_default=func.datetime("now", "localtime"))
+
+    # Quan hệ ORM
+    answers = relationship("Answer", back_populates="post", cascade="all, delete")
+    questioner = relationship("User", back_populates="posts")
+
+
+class Answer(UserBase):
+    __tablename__ = "answers"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    content = Column(Text)
+    answerer_id = Column(Integer, ForeignKey("user.id"))
+    post_id = Column(Integer, ForeignKey("posts.id"))
+    created_at = Column(DateTime, server_default=func.datetime("now", "localtime"))
+
+    # Quan hệ ORM
+    post = relationship("Post", back_populates="answers")
+    answerer = relationship("User", back_populates="answers")
 
 # Bảng lưu lời mời (pending / accepted / rejected / cancelled)
 class FriendRequest(UserBase):
@@ -68,6 +98,47 @@ class Favorite(UserBase):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     __table_args__ = (UniqueConstraint("user_id", "image_id", name="uq_user_image"),)
+
+class ConversationHistory(UserBase):
+    __tablename__ = "conversation_history"
+
+    id = Column(Integer, primary_key=True)
+    
+    # ID của người dùng (để biết lịch sử này của ai)
+    user_id = Column(Integer, nullable=False) 
+    
+    # Phân biệt là chat với 'chatbot' hay 'user'
+    session_type = Column(String(50), nullable=False) 
+    
+    # Nội dung người dùng gửi
+    user_message = Column(Text, nullable=True)
+    
+    # Nội dung hệ thống (bot/chuyên gia) trả lời
+    system_response = Column(Text, nullable=True)
+    
+    # Dấu thời gian
+    timestamp = Column(DateTime, default=func.now())
+
+    def to_dict(self):
+        """Chuyển đổi object sang dictionary để trả về JSON"""
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'session_type': self.session_type,
+            'user_message': self.user_message,
+            'system_response': self.system_response,
+            'timestamp': self.timestamp.isoformat()
+        }
+    
+class LiveLocation(UserBase):
+    __tablename__ = 'live_locations'
+    user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
+    lat = Column(Float, nullable=False)
+    lng = Column(Float, nullable=False)
+    timestamp = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Mối quan hệ: Một LiveLocation thuộc về một User
+    user = relationship('User', backref=backref('location', uselist=False))
     
 # Kết nối tới users.db (instance)
 engine_users = create_engine("sqlite:///instance/users.db", echo=False)

@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
-from sqlalchemy import func
+from sqlalchemy import func, Boolean, UniqueConstraint
 from datetime import datetime
 from flask_login import UserMixin
 
@@ -14,6 +14,8 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
+    online = db.Column(Boolean, default=True)
+    share_mode = db.Column(db.String(50), default="friends")  # hidden, friends
 
     # Quan hệ ORM
     posts = db.relationship("Post", back_populates="questioner", cascade="all, delete")
@@ -78,3 +80,35 @@ class ConversationHistory(db.Model):
             'system_response': self.system_response,
             'timestamp': self.timestamp.isoformat()
         }
+    
+class LiveLocation(db.Model):
+    __tablename__ = 'live_locations'
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    lat = db.Column(db.Float, nullable=False)
+    lng = db.Column(db.Float, nullable=False)
+    timestamp = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
+
+    # Mối quan hệ: Một LiveLocation thuộc về một User
+    user = db.relationship('User', backref=db.backref('location', uselist=False))
+
+
+# === MODELS TỪ createDataBase.py (Cho users.db) ===
+
+class FriendRequest(db.Model):
+    __tablename__ = "friend_requests"
+    id = db.Column(db.Integer, primary_key=True)
+    from_user = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    to_user = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    status = db.Column(db.String(50), nullable=False, default="pending")
+    created_at = db.Column(db.DateTime, default=func.datetime("now", "localtime"))
+
+    __table_args__ = (UniqueConstraint("from_user", "to_user", name="uq_from_to"),)
+
+class Friendship(db.Model):
+    __tablename__ = "friendships"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    friend_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=func.datetime("now", "localtime"))
+
+    __table_args__ = (UniqueConstraint("user_id", "friend_id", name="uq_user_friend"),)
