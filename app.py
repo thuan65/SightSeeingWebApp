@@ -33,7 +33,6 @@ from place_module.nearby_import import nearby_import_bp
 
 
 from flask_login import LoginManager, current_user
-from createDataBase import Image
 import os
 
 # ---------------------------------------------------------
@@ -41,13 +40,13 @@ import os
 # ---------------------------------------------------------
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mysecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///FlaskDataBase.db'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 # Khởi tạo database, bcrypt và login manager
 db.init_app(app)
 bcrypt.init_app(app)
-print("3")
+
 # ---------------------------------------------------------
 # LƯU LỊCH SỬ 
 # ---------------------------------------------------------
@@ -77,7 +76,7 @@ app.register_blueprint(nearby_import_bp)
 
 
 app.config['JSON_AS_ASCII'] = False
-engine = create_engine("sqlite:///images.db")
+engine = create_engine("sqlite:///instance/images.db")
 Session = sessionmaker(bind=engine)
 db_session = Session()
 

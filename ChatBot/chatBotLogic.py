@@ -33,7 +33,7 @@ gemini_model = genai.GenerativeModel("gemini-2.5-flash")
 # ======================================================
 #Kết nối database
 # ======================================================
-engine = create_engine("sqlite:///images.db")
+engine = create_engine("sqlite:///instance/images.db")
 
 with engine.connect() as conn:
     results = conn.execute(text("SELECT * FROM images")).mappings().all()
