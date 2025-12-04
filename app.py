@@ -16,8 +16,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import func, or_
 
 
-from createDataBase import Image, UserSession
-from models import db, bcrypt, User
+from createDataBase import Image, UserSession, FriendRequest, Friendship, User, Feedback
+from models import db, bcrypt, User, Post, Answer, ConversationHistory, LiveLocation
 
 from Login.login import login_bp  
 from Forum.forum import forum
@@ -80,6 +80,17 @@ app.config['JSON_AS_ASCII'] = False
 engine = create_engine("sqlite:///images.db")
 Session = sessionmaker(bind=engine)
 db_session = Session()
+
+
+
+
+
+
+
+
+
+
+
 
 # ---------------------------------------------------------
 # TRANG CHÍNH
