@@ -143,20 +143,25 @@
 # print(is_toxic("vl"))  # True
 
 
-from flask import Blueprint, render_template, request, redirect, session
+from flask import Blueprint, render_template, request, redirect, session, flash
 from sentence_transformers import SentenceTransformer, util
 from .toxic_filter import is_toxic
 from models_loader import sbert_model
-# SỬ DỤNG ORM VÀ MODELS MỚI
-from models import User, Post, Answer
-from extensions import  db
+from flask_login import current_user
+from sqlalchemy import or_, and_
+from models import User, Post, Answer, Friendship 
+from extensions import db
 
 forum = Blueprint("forum", __name__, template_folder='template')
 
-sbert_model = SentenceTransformer("keepitreal/vietnamese-sbert")
+# Nếu không import được sbert_model từ models_loader thì dùng dòng dưới:
+# sbert_model = SentenceTransformer("keepitreal/vietnamese-sbert")
 
 def compute_similarity(query_text, posts, top_k=5):
     """So sánh độ tương đồng giữa query và posts trong DB"""
+    if not posts:
+        return []
+
     query_embedding = sbert_model.encode(query_text, convert_to_tensor=True)
 
     scored = []
@@ -177,21 +182,41 @@ def compute_similarity(query_text, posts, top_k=5):
         r["score"] = float(scored[i][0])
     return results
 
-def get_all_forum_posts_orm():
+def get_visible_posts_orm():
     """
-    Lấy tất cả posts, trả về dict có đủ fields:
-    id, title, content, questioner_id, username, tag, created_at, answers
-    Sử dụng SQLAlchemy ORM.
+    Lấy danh sách posts dựa trên quyền riêng tư của người xem (current_user).
     """
     # Eager load questioner và answers (kèm answerer)
-    posts = Post.query.options(
+    query = Post.query.options(
         db.joinedload(Post.questioner),
         db.joinedload(Post.answers).joinedload(Answer.answerer)
-    ).order_by(Post.created_at.desc()).all()
+    )
 
+    if current_user.is_authenticated:
+        user_id = current_user.id
+
+        # 1. Lấy danh sách ID bạn bè
+        # Lưu ý: friends_query trả về danh sách Row, cần lấy giá trị friend_id
+        friends_query = Friendship.query.filter_by(user_id=user_id).with_entities(Friendship.friend_id).all()
+        friend_ids = [f.friend_id for f in friends_query]
+
+        # 2. Tạo bộ lọc (Filter Logic)
+        posts = query.filter(
+            or_(
+                Post.privacy == 'public',                   # Ai cũng xem được
+                Post.questioner_id == user_id,              # Bài của chính mình
+                and_(
+                    Post.privacy == 'friends',              # Bài chế độ bạn bè...
+                    Post.questioner_id.in_(friend_ids)      # ...của người nằm trong list bạn bè
+                )
+            )
+        ).order_by(Post.created_at.desc()).all()
+    else:
+        # Nếu chưa đăng nhập chỉ xem được Public
+        posts = query.filter(Post.privacy == 'public').order_by(Post.created_at.desc()).all()
+        
     result = []
     for post in posts:
-        # Chuyển đổi sang định dạng dictionary để tương thích với logic cũ/template
         answers_list = []
         for ans in post.answers:
             answers_list.append({
@@ -207,35 +232,35 @@ def get_all_forum_posts_orm():
             "created_at": str(post.created_at), 
             "questioner_id": post.questioner_id,
             "username": post.questioner.username if post.questioner else "N/A",
+            "privacy": post.privacy,
             "answers": answers_list
         })
     return result
 
-
+# --- ROUTE HIỂN THỊ FORUM (Bổ sung lại hàm này) ---
 @forum.route("/forum")
 def show_forum():
-    # Thay thế logic sqlite3 bằng ORM
-    posts_with_answers = get_all_forum_posts_orm()
+    posts_with_answers = get_visible_posts_orm()
     return render_template("forum.html", posts=posts_with_answers)
 
 @forum.route("/post/new", methods=["GET","POST"])
 def new_post():
-    if "questioner_id" not in session:
-        # Kiểm tra session của người dùng (Giả sử id người dùng là 'questioner_id')
-        return "Không phải người dùng", 403
+    if not current_user.is_authenticated:
+        return "Vui lòng đăng nhập", 403
 
     if request.method == "POST":
-        title = request.form["title"]
-        content = request.form["content"]
+        title = request.form.get("title")
+        content = request.form.get("content")
+        privacy = request.form.get("privacy", "public") 
 
         if is_toxic(content) or is_toxic(title):
-            return render_template("new_post.html", error="Nội dung câu hỏi/tiêu đề không phù hợp. Vui lòng viết lại.")
+            return render_template("new_post.html", error="Nội dung không phù hợp.")
         
-        # Thay thế logic sqlite3 bằng ORM
         new_post_entry = Post(
             title=title, 
             content=content, 
-            questioner_id=session["questioner_id"]
+            questioner_id=current_user.id, 
+            privacy=privacy 
         )
         db.session.add(new_post_entry)
         db.session.commit()
@@ -246,10 +271,9 @@ def new_post():
 
 @forum.route("/post/<int:post_id>/reply", methods=["GET","POST"])
 def reply_post(post_id):
-    if "questioner_id" not in session:
+    if not current_user.is_authenticated:
         return "Bạn không có quyền trả lời!", 403
 
-    # Thay thế logic sqlite3 bằng ORM
     post = Post.query.get(post_id)
     if not post:
         return "Bài viết không tồn tại", 404
@@ -257,21 +281,18 @@ def reply_post(post_id):
     if request.method == "POST":
         content = request.form["content"]
         
-        # Thêm câu trả lời
         new_answer = Answer(
             content=content, 
-            answerer_id=session["questioner_id"], 
+            answerer_id=current_user.id, # Dùng current_user thống nhất
             post_id=post_id
         )
         db.session.add(new_answer)
         
-        # Cập nhật trạng thái post
         post.tag = "answered"
-        
         db.session.commit()
         return redirect("/forum")
 
-    # Chuyển đối tượng ORM thành dictionary để tương thích với template
+    # Convert object -> dict cho template
     post_dict = {
         "id": post.id,
         "title": post.title,
@@ -288,12 +309,10 @@ def search_forum():
     if not query:
         return render_template("search_results.html", query=query, posts=[])
 
-    # Lấy tất cả post (kèm answers) bằng ORM
-    posts = get_all_forum_posts_orm() 
+    # Chỉ search trong những bài được phép xem
+    posts = get_visible_posts_orm()
     
     top_results = compute_similarity(query, posts)
     filtered_results = [p for p in top_results if not is_toxic(p["content"])]
-    
-    # Logic lấy answers thủ công đã được loại bỏ vì get_all_forum_posts_orm() đã bao gồm
 
     return render_template("search_results.html", posts=filtered_results, query=query)
