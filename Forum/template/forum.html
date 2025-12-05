@@ -417,8 +417,17 @@
                 <a href="/MapRouting">Bản đồ</a>
                 <a href="/chat_ui">Chatbot du lịch</a>
                 <a href="{{ url_for('forum.show_forum') }}">Forum</a>
-                <a href="{{ url_for('login_bp.register') }}" class="btn-secondary">Đăng ký</a>
-                <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
+
+
+
+                {% if current_user.is_authenticated %}
+                <!-- Hiện khi đã đăng nhập -->
+                <a href="{{ url_for('login_bp.logout') }}" class="btn btn-danger">Đăng xuất</a>
+                {% else %}
+                <!-- Hiện khi chưa đăng nhập -->
+                <a href="{{ url_for('login_bp.register') }}" class="btn btn-secondary">Đăng ký</a>
+                <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary">Đăng nhập</a>
+                {% endif %}
             </div>
         </div>
     </header>
@@ -450,13 +459,25 @@
                     <div>
                         <h3 class="post-title">{{ post['title'] }}</h3>
                         <div class="post-meta">
-                            <span>👤 <span class="post-author">{{ post['username'] }}</span>
-                                {% if session.get('questioner_id') == post['questioner_id'] %}
-                                    <span style="color: #1C6758; font-weight: 700;">(Bạn là Tác giả)</span>
+                            <span>
+                                👤 <span class="post-author">{{ post['username'] }}</span>
+                                {% if current_user.is_authenticated and current_user.id == post['questioner_id'] %}
+                                <span style="color: #1C6758; font-weight: 700;">(Bạn là Tác giả)</span>
                                 {% endif %}
                             </span>
                             <span>•</span>
                             <span>{{ post['created_at'][:10] if post.get('created_at') else 'N/A' }}</span>
+                            <span>•</span>
+                            <span style="font-weight: 500; color: #555;">
+                                {% if post['privacy'] == 'private' %}
+                                🔒 Riêng tư
+                                {% elif post['privacy'] == 'friends' %}
+                                👥 Bạn bè
+                                {% else %}
+                                🌐 Công khai
+                                {% endif %}
+                            </span>
+
                         </div>
                     </div>
 
@@ -481,10 +502,10 @@
                 <p class="post-content">{{ post['content'] }}</p>
 
                 <div class="post-actions">
-                    {% if session.get('questioner_id') %}
-                        <a href="/post/{{ post['id'] }}/reply" class="btn-reply btn-reply-primary">Trả lời câu hỏi</a>
+                    {% if current_user.is_authenticated %}
+                    <a href="/post/{{ post['id'] }}/reply" class="btn-reply btn-reply-primary">Trả lời câu hỏi</a>
                     {% else %}
-                        <a href="/login" class="btn-reply">Đăng nhập để trả lời</a>
+                    <a href="{{ url_for('login_bp.login') }}" class="btn-reply">Đăng nhập để trả lời</a>
                     {% endif %}
                 </div>
 
@@ -496,11 +517,12 @@
                     {% for ans in post['answers'] %}
                     <div class="answer-item">
                         <p class="answer-content">{{ ans['content'] }}</p>
-                        <p class="answer-author">— <strong>{{ ans['answerer_username'] }}</strong> 
+                        <p class="answer-author">
+                            — <strong>{{ ans['answerer_username'] }}</strong>
                             {% if ans['answerer_username'] == post['username'] %}
-                                <span style="color: #8EB486; font-weight: 600;">(Chủ đề)</span>
-                            {% elif session.get('questioner_id') and ans['answerer_username'] == session.get('username') %}
-                                <span style="color: #1C6758; font-weight: 600;">(Câu trả lời của bạn)</span>
+                            <span style="color: #8EB486; font-weight: 600;">(Chủ đề)</span>
+                            {% elif current_user.is_authenticated and ans['answerer_username'] == current_user.username %}
+                            <span style="color: #1C6758; font-weight: 600;">(Câu trả lời của bạn)</span>
                             {% endif %}
                         </p>
                     </div>
@@ -510,16 +532,16 @@
             </div>
             {% endfor %}
         {% else %}
-            <div class="empty-state">
-                <div class="empty-state-icon">🌍</div>
-                <h3>Chưa có câu hỏi nào</h3>
-                <p>Hãy là người đầu tiên đặt câu hỏi về du lịch!</p>
-                {% if session.get('questioner_id') %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">🌍</div>
+                    <h3>Chưa có câu hỏi nào</h3>
+                    <p>Hãy là người đầu tiên đặt câu hỏi về du lịch!</p>
+                    {% if current_user.is_authenticated %}
                     <a href="{{ url_for('forum.new_post') }}" class="btn-primary" style="text-decoration: none; padding: 15px 40px; border-radius: 50px; display: inline-block;">Đặt câu hỏi ngay</a>
-                {% else %}
-                    <div class="btn-primary" style="text-decoration: none; padding: 15px 40px; border-radius: 50px; display: inline-block;">Đăng nhập để đặt câu hỏi</div>
-                {% endif %}
-            </div>
+                    {% else %}
+                    <a href="{{ url_for('login_bp.login') }}" class="btn-primary" style="text-decoration: none; padding: 15px 40px; border-radius: 50px; display: inline-block;">Đăng nhập để đặt câu hỏi</a>
+                    {% endif %}
+                </div>
         {% endif %}
     </div>
 
