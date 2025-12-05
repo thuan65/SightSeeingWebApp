@@ -117,10 +117,9 @@ def search():
         )
     ).all()
 
-    data = [
-        {"id": img.id, "name": img.name, "filename": img.filename}
-        for img in results
-    ]
+# Chuyển tất cả fields của Image thành dict        
+    data = [ {c.name: getattr(img, c.name) for c in img.__table__.columns} 
+                 for img in results ]
     return jsonify(data)
 
 
