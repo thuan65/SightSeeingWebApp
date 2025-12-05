@@ -677,7 +677,7 @@
 
           container.innerHTML = data.map(place => `
               <div class="image-card" onclick="viewDetail(${place.id})">
-                  <img src="/static/images/${place.filename || 'default.jpg'}" 
+                  <img src="${place.filename?.includes('://') ? place.filename : `/static/images/${place.filename || 'default.jpg'}`}"
                        alt="${place.name || 'Hình ảnh'}"
                        onerror="this.src='https://via.placeholder.com/280x220?text=No+Image'">
                   <div class="image-info">
