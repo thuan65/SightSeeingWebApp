@@ -216,34 +216,39 @@
                 </div>
             {% endif %}
 
-            <form method="POST">
-                <div class="form-group">
-                    <label class="form-label">Tiêu đề câu hỏi</label>
-                    <input 
-                        type="text"
-                        name="title" 
-                        class="form-control"
-                        value="{{ request.form.title or '' }}"
-                        placeholder="VD: Nên đi du lịch Đà Lạt mùa nào?"
-                        required
-                    >
-                </div>
+                <form method="POST">
+                    <div class="form-group">
+                        <label class="form-label">Tiêu đề câu hỏi</label>
+                        <input type="text"
+                               name="title"
+                               class="form-control"
+                               value="{{ request.form.title or '' }}"
+                               placeholder="VD: Nên đi du lịch Đà Lạt mùa nào?"
+                               required>
+                    </div>
 
-                <div class="form-group">
-                    <label class="form-label">Nội dung chi tiết</label>
-                    <textarea 
-                        name="content" 
-                        class="form-control"
-                        placeholder="Mô tả chi tiết câu hỏi của bạn... Càng chi tiết càng dễ nhận được câu trả lời hữu ích!"
-                        required
-                    >{{ request.form.content or '' }}</textarea>
-                </div>
+                    <div class="form-group">
+                        <label class="form-label">Nội dung chi tiết</label>
+                        <textarea name="content"
+                                  class="form-control"
+                                  placeholder="Mô tả chi tiết câu hỏi của bạn... Càng chi tiết càng dễ nhận được câu trả lời hữu ích!"
+                                  required>{{ request.form.content or '' }}</textarea>
+                    </div>
 
-                <div class="btn-group">
-                    <button type="submit" class="btn btn-primary">Đăng câu hỏi</button>
-                    <a href="/forum" class="btn btn-secondary">← Quay lại</a>
-                </div>
-            </form>
+                    <div class="form-group">
+                        <label class="form-label">Chế độ hiển thị</label>
+                        <select name="privacy" class="form-control">
+                            <option value="public" selected>🌐 Công khai (Mọi người)</option>
+                            <option value="friends">👥 Bạn bè (Chỉ bạn bè)</option>
+                            <option value="private">🔒 Riêng tư (Chỉ mình tôi)</option>
+                        </select>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">Đăng câu hỏi</button>
+                        <a href="/forum" class="btn btn-secondary">← Quay lại</a>
+                    </div>
+                </form>
 
             <div class="tips">
                 <h3>Mẹo để nhận được câu trả lời nhanh:</h3>
