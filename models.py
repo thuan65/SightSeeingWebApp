@@ -26,6 +26,8 @@ class Post(db.Model):
     content = db.Column(db.Text, nullable=True)
     questioner_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     tag = db.Column(db.String, default="unanswered")
+    privacy = db.Column(db.String(30), default='public', nullable=False)
+
     created_at = db.Column(db.DateTime, server_default=func.datetime("now", "localtime"))
 
     # Quan hệ ORM
