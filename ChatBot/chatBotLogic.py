@@ -30,12 +30,11 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 # Mô hình hội thoại Gemini
 gemini_model = genai.GenerativeModel("gemini-2.5-flash")
+# gemini_model = genai.GenerativeModel("gemini-live-2.5-flash")
 
 # ======================================================
 #Kết nối database
 # ======================================================
-
-
 
 # ======================================================
 # Phân loại ý định người dùng
@@ -112,10 +111,24 @@ def gemini_reply(user_message: str) -> str:
     Gửi user_message đến Gemini và trả về phản hồi dạng chuỗi.
     """
     try:
-        response = gemini_model.generate_content(user_message)
+        response = gemini_model.generate_content(user_message, stream= True)
         return response.text
     except Exception as e:
         return f"Lỗi khi gọi Gemini API: {e}"
+    
+def gemini_stream(user_message: str):
+    try:
+        response = gemini_model.generate_content(
+            user_message, 
+            stream=True
+        )
+        for chunk in response:
+            if chunk.text:
+                yield f"data: {chunk.text}\n\n"
+    except Exception as e:
+        yield f"data: Lỗi khi gọi Gemini API: {e}\n\n"
+
+
 
 # ======================================================
 # 7. Hàm trung tâm: Chatbot trả lời
@@ -161,7 +174,7 @@ def chatbot_reply(user_message: str):
         hãy viết câu trả lời ngắn gọn, thân thiện, tự nhiên như hướng dẫn viên du lịch đang nói chuyện, bằng tiếng Việt.
         """
 
-        reply = gemini_reply(prompt)
+        reply = gemini_stream(prompt)
 
     else:
         # Trường hợp không suggest thì chỉ gộp SYSTEM_PROMPT + user input
@@ -175,9 +188,8 @@ def chatbot_reply(user_message: str):
         # TASK
         Dựa trên SYSTEM_INSTRUCTION + USER_MESSAGE, hãy trả lời tự nhiên và đúng yêu cầu.
         """
-    reply = gemini_reply(prompt)
+    reply = gemini_stream(prompt)
 
     return reply
-
 
 print("Ai runningnn...")

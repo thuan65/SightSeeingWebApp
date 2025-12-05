@@ -1,4 +1,4 @@
-﻿from flask import Blueprint, request, jsonify 
+﻿from flask import Blueprint, request, jsonify, Response, current_app
 from flask_login import current_user 
 from models import db, ConversationHistory 
 from .chatBotLogic import chatbot_reply
@@ -9,40 +9,78 @@ from .chatBotLogic import chatbot_reply
 
 chatBot_bp = Blueprint("chat_bot", __name__)
 
-@chatBot_bp.route("/chat", methods=["POST"])
-def chat():
+# @chatBot_bp.route("/stream", methods=["POST"])
+# def stream():
+#     data = request.get_json()
+#     user_message = data.get("message", "")
+#     print("Client gửi:", user_message)
+
+#     def generate():
+#         for chunk in chatbot_reply(user_message):
+#             yield chunk   # Đã bao gồm "data: ...\n\n"
+
+#         yield "data: [DONE]\n\n"
+
+#     return Response(generate(), mimetype="text/event-stream")
+
+@chatBot_bp.route("/stream", methods=["POST"])
+def stream():
     data = request.get_json()
     if not data or "message" not in data:
         return jsonify({"error": "Missing 'message' in request"}), 400
 
-    user_message = data["message"].strip()
+    user_message = data.get("message", "").strip()
     if not user_message:
         return jsonify({"error": "Empty message"}), 400
 
+    # Lưu thông tin user trước khi generate() làm mất context
+    user_is_auth = current_user.is_authenticated
+    user_id = current_user.id if user_is_auth else None
+
+    full_bot_reply = []
+    real_app = current_app._get_current_object()
     try:
-        bot_response = chatbot_reply(user_message)
-        #Kiểm tra nếu người dùng đã đăng nhập thì lưu vào DB
-        if current_user.is_authenticated:
-            new_history = ConversationHistory(
-                session_type='chatbot',
-                user_id=current_user.id,
-                user_message=user_message,
-                system_response=bot_response
-            )
-            db.session.add(new_history)
-            db.session.commit()
-            print(f"Đã lưu lịch sử chat cho user {current_user.username}")
-            # DEBUG
-        else:
-            print("DEBUG: User đang là 'Anonymous' (Vô danh) -> KHÔNG LƯU DB")
-            #Trả kết quả 
-        return jsonify({
-            "reply": bot_response,
-            "saved": current_user.is_authenticated # Báo hiệu đã lưu hay chưa
-        })
+        def generate():
+            # STREAM từng chunk
+            for chunk in chatbot_reply(user_message):
+                clean = chunk.replace("data: ", "").strip()
+                full_bot_reply.append(clean)
+                yield chunk
+
+            # Ghép bot trả lời
+            bot_response = "".join(full_bot_reply)
+
+            # LƯU DB (bọc trong app context để tránh lỗi)
+            if user_is_auth:
+                with real_app.app_context():
+                    new_history = ConversationHistory(
+                        session_type='chatbot',
+                        user_id=user_id,
+                        user_message=user_message,
+                        system_response=bot_response
+                    )
+                    db.session.add(new_history)
+                    db.session.commit()
+                    print(f"Đã lưu lịch sử chat user_id={user_id}")
+
+            else:
+                print("User Anonymous → Không lưu")
+
+            # Thông báo kết thúc stream
+            yield "data: [DONE]\n\n"
+
+        return Response(generate(), mimetype="text/event-stream")
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+
+  #Trả kết quả 
+        # return jsonify({
+        #     "reply": bot_response,
+        #     "saved": current_user.is_authenticated # Báo hiệu đã lưu hay chưa
+        # })
 
 # ---------------------------------------------------------
 # API LẤY LỊCH SỬ CHAT CŨ (Load khi mở trang chat)
@@ -61,3 +99,5 @@ def get_chat_history():
         return jsonify([h.to_dict() for h in histories])
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+

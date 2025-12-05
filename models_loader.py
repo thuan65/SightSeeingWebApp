@@ -1,3 +1,7 @@
+import time
+
+start = time.time()
+
 from sentence_transformers import SentenceTransformer
 from transformers import CLIPProcessor, CLIPModel
 
@@ -12,3 +16,7 @@ processor = CLIPProcessor.from_pretrained(Clip_model, use_fast=True)#For faster 
 # dùng cho kiểm tra toxicity của forum & feedback
 EN_MODEL = "unitary/toxic-bert"
 VI_MODEL = "visolex/phobert-hsd"
+
+end = time.time()
+
+print("Thời gian chạy:", end - start, "giây")
