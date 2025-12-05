@@ -41,7 +41,7 @@ def stream():
     real_app = current_app._get_current_object()
     try:
         def generate():
-            # STREAM từng chunk
+
             for chunk in chatbot_reply(user_message):
                 clean = chunk.replace("data: ", "").strip()
                 full_bot_reply.append(clean)
@@ -50,7 +50,7 @@ def stream():
             # Ghép bot trả lời
             bot_response = "".join(full_bot_reply)
 
-            # LƯU DB (bọc trong app context để tránh lỗi)
+            # LƯU DB
             if user_is_auth:
                 with real_app.app_context():
                     new_history = ConversationHistory(
