@@ -2,7 +2,9 @@
 
 from flask import Blueprint, request, jsonify, session as flask_session, render_template
 from datetime import datetime
+from Forum.toxic_filter import is_toxic
 from extensions import db
+
 
 # Import từ DB
 # from createDataBase import Image, Feedback, Session, User, UserSession

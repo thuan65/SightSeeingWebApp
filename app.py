@@ -14,10 +14,10 @@ from sqlalchemy import func, or_
 from sentence_transformers import util
 
 # 🟩 QUAN TRỌNG: dùng Session từ createDataBase (đã fix DB path)
-from createDataBase import Image, Session
+# from createDataBase import Image, Session
 
-from createDataBase import Image, UserSession, FriendRequest, Friendship, User, Feedback
-from models import User, Post, Answer, ConversationHistory, LiveLocation
+# from createDataBase import Image, UserSession, FriendRequest, Friendship, User, Feedback
+from models import User, Post, Answer, ConversationHistory, LiveLocation, Image
 from extensions import db, bcrypt
 
 import os
@@ -31,9 +31,9 @@ app = create_app()
 
 
 
-engine = create_engine("sqlite:///instance/images.db")
-Session = sessionmaker(bind=engine)
-db_session = Session()
+# engine = create_engine("sqlite:///instance/images.db")
+# Session = sessionmaker(bind=engine)
+# db_session = Session()
 
 
 

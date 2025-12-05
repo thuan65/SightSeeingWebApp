@@ -3,7 +3,7 @@ import requests
 from flask import Blueprint, request, jsonify, render_template
 import time
 import unicodedata
-from createDataBase import Session
+# from createDataBase import Session
 from models import Image
 from extensions import db
 
