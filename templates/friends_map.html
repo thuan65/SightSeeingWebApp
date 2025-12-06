@@ -17,8 +17,18 @@
         <p>GPS Status: <strong id="gps_status" style="color: orange;">Đang tìm vị trí...</strong></p>
         <p>Cập nhật vị trí thật mỗi: <strong>5 giây</strong></p>
     </div>
+    <hr>
+    <div style="text-align: center; margin-top: 10px;">
+        <h2>Chia sẻ Vị trí</h2>
+        <label for="shareToggle">Trạng thái:</label>
+        <button id="shareToggle" data-mode="friends" style="padding: 10px; font-weight: bold;">
+            Đang Chia Sẻ (Friends)
+        </button>
+        <p id="toggleStatus" style="color: grey; margin-top: 5px;">Chế độ hiện tại: <span id="currentMode">Đang Tải...</span></p>
+    </div>
+    <hr>
 
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
         // --- Cấu hình Ban đầu ---
@@ -224,6 +234,265 @@
                 console.log('Friend IDs for initialization:', data.friends_ids);
             });
 
-    </script>
+    </script> -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    // --- Cấu hình Ban đầu ---
+    let user_id = null; 
+    let username = 'Unknown';
+    let locationInterval = null;
+    let currentShareMode = 'hidden'; // 'friends' hoặc 'hidden'
+    const socket = io.connect('http://' + document.domain + ':' + location.port);
+    const map = L.map('map').setView([10.7769, 106.7009], 13);
+    const markers = {};
+
+    // Sử dụng đường dẫn tĩnh (Đã sửa theo gợi ý trước)
+    const ICON_BASE_URL = '/location_sharing/static/img/'; // Đảm bảo đường dẫn này đúng
+    
+    const selfIcon = L.icon({
+        iconUrl: ICON_BASE_URL + 'user-icon.png', 
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32]
+    });
+
+    const friendIcon = L.icon({
+        iconUrl: ICON_BASE_URL + 'friend-icon.png', 
+        iconSize: [24, 24], 
+        iconAnchor: [12, 24],
+        popupAnchor: [0, -24]
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // --- DOM Elements ---
+    const shareToggleButton = document.getElementById('shareToggle');
+    const currentModeSpan = document.getElementById('currentMode');
+
+    // --- Hàm Gửi Vị trí Thật (Geolocation) ---
+    function getAndSendLocation() {
+        if (user_id === null || currentShareMode === 'hidden') return;
+        
+        document.getElementById('gps_status').innerText = 'Đang tìm vị trí...';
+        document.getElementById('gps_status').style.color = 'orange';
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    document.getElementById('gps_status').innerText = 'OK';
+                    document.getElementById('gps_status').style.color = 'green';
+                    
+                    socket.emit('update_location', { lat: lat, lng: lng });
+
+                    updateMarker(user_id, username, lat, lng, true);
+                },
+                function(error) {
+                    let errorMessage = (error.code === 1) ? "LỖI: Từ chối cấp quyền GPS." : "LỖI GPS: Timeout/Không xác định.";
+                    document.getElementById('gps_status').innerText = errorMessage;
+                    document.getElementById('gps_status').style.color = 'red';
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            document.getElementById('gps_status').innerText = 'Trình duyệt không hỗ trợ Geolocation.';
+            document.getElementById('gps_status').style.color = 'red';
+        }
+    }
+
+    // --- Hàm xử lý cập nhật Marker trên Map ---
+    function updateMarker(id, user_name, lat, lng, is_self = false) {
+        const latlng = [lat, lng];
+        
+        // YÊU CẦU 3: Hiển thị tên người dùng
+        const displayName = is_self ? "Tôi" : user_name;
+        // YÊU CẦU 3: Cập nhật popup để hiển thị vị trí cuối (Last Known)
+        const popupText = `<b>${displayName}</b><br>${is_self ? 'Vị trí hiện tại' : 'Vị trí cuối (Online)'}`;
+        
+        if (markers[id]) {
+            markers[id].setLatLng(latlng);
+            markers[id].getPopup().setContent(popupText);
+            // Đặt opacity về 1.0 khi nhận được update (vì người này đang online/share)
+            markers[id].setOpacity(1.0); 
+        } else {
+            const marker = L.marker(latlng, { icon: is_self ? selfIcon : friendIcon }).addTo(map);
+            marker.bindPopup(popupText);
+            
+            markers[id] = marker;
+        }
+        if (is_self) {
+            //map.setView(latlng, map.getZoom() > 13 ? map.getZoom() : 13);
+            document.getElementById('username_display').innerText = username + " (Tôi)";
+        }
+        // Gọi hàm fitBounds sau khi marker đã được vẽ/cập nhật
+        // Dùng setTimeout để đảm bảo tất cả các event SocketIO đã kịp thời xử lý
+        setTimeout(fitMapToAllMarkers, 100);
+    }
+
+
+    // --- Hàm điều chỉnh view map để bao trùm tất cả markers ---
+    function fitMapToAllMarkers() {
+        const latLngs = [];
+        let needsAdjustment = false;
+        
+        // 1. Thu thập tất cả tọa độ từ đối tượng markers
+        for (const id in markers) {
+            if (markers.hasOwnProperty(id)) {
+                const marker = markers[id];
+                latLngs.push(marker.getLatLng());
+                needsAdjustment = true;
+            }
+        }
+
+        if (needsAdjustment && latLngs.length > 0) {
+            try {
+                // 2. Tạo đối tượng Bounding Box từ các tọa độ
+                const bounds = L.latLngBounds(latLngs);
+                
+                // 3. Áp dụng fitBounds lên map
+                // Padding: thêm một chút khoảng trống (ví dụ: 50 pixels) xung quanh các markers
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+                console.log("[CLIENT] Map view đã được điều chỉnh để bao trùm tất cả markers.");
+
+            } catch (error) {
+                // Bắt lỗi nếu chỉ có một điểm (Leaflet đôi khi lỗi với chỉ một điểm)
+                if (latLngs.length === 1) {
+                     map.setView(latLngs[0], 13); // Nếu chỉ có 1 điểm, chỉ cần setView
+                } else {
+                    console.error("Lỗi khi điều chỉnh fitBounds:", error);
+                }
+            }
+        }
+    }
+
+
+
+    // --- Quản lý Consent và Toggle ---
+    
+    function setShareMode(mode) {
+        currentShareMode = mode;
+        const btnText = (mode === 'friends') ? "Đang Chia Sẻ (Friends)" : "Đã Ẩn (Hidden)";
+        shareToggleButton.innerText = btnText;
+        shareToggleButton.style.backgroundColor = (mode === 'friends') ? '#4CAF50' : '#f44336';
+        currentModeSpan.innerText = mode === 'friends' ? 'Friends' : 'Hidden';
+        shareToggleButton.setAttribute('data-mode', mode);
+
+        if (mode === 'friends') {
+            // Bắt đầu gửi vị trí
+            if (locationInterval) clearInterval(locationInterval);
+            getAndSendLocation(); 
+            locationInterval = setInterval(getAndSendLocation, 5000);
+        } else {
+            // Dừng gửi vị trí
+            if (locationInterval) clearInterval(locationInterval);
+        }
+
+        // Gửi trạng thái mới lên server qua API
+        fetch('/api/share_mode', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode: mode })
+        })
+        .then(res => res.json())
+        .then(data => console.log("Trạng thái chia sẻ đã cập nhật:", data))
+        .catch(err => console.error("Lỗi khi cập nhật Share Mode:", err));
+    }
+    
+    shareToggleButton.addEventListener('click', () => {
+        const oldMode = shareToggleButton.getAttribute('data-mode');
+        const newMode = (oldMode === 'friends') ? 'hidden' : 'friends';
+        
+        if (newMode === 'friends') {
+            // YÊU CẦU 1: Hỏi lại khi chuyển từ Hidden sang Friends
+            if (oldMode === 'hidden' && !confirm("Bạn có chắc chắn muốn chia sẻ vị trí của mình với bạn bè không?")) {
+                 return; // Không làm gì nếu người dùng hủy
+            }
+            setShareMode('friends');
+        } else if (newMode === 'hidden') {
+            setShareMode('hidden');
+        }
+    });
+
+    // --- Xử lý sự kiện SocketIO ---
+    socket.on('connect', function() {
+        document.getElementById('socket_status').innerText = 'Connected';
+        document.getElementById('socket_status').style.color = 'green';
+        
+        // 1. Lấy thông tin user và share_mode hiện tại
+        fetch('/api/current_user_info')
+            .then(res => res.json())
+            .then(data => {
+                user_id = data.user_id;
+                username = data.username;
+                currentShareMode = data.share_mode || 'friends'; 
+                
+                // Khởi tạo UI và logic dựa trên share_mode
+                // YÊU CẦU 1: Hỏi consent lần đầu nếu share_mode chưa được set
+                if (currentShareMode !== 'hidden' && !localStorage.getItem('locationConsentShown')) {
+                    if (confirm("Bạn có muốn chia sẻ vị trí của mình với bạn bè không?")) {
+                        currentShareMode = 'friends';
+                    } else {
+                        currentShareMode = 'hidden';
+                    }
+                    localStorage.setItem('locationConsentShown', 'true');
+                }
+
+                setShareMode(currentShareMode); // Cập nhật trạng thái lần đầu
+
+
+                
+                // 2. Lấy vị trí ban đầu của tất cả bạn bè (Lọc bằng share_mode)
+                // fetch('/api/friends_list') 
+                //     .then(res => res.json())
+                //     .then(friendData => {
+                //         // Logic phức tạp hơn cần thêm API để lấy LiveLocation/last_known_location 
+                //         // của tất cả bạn bè đang ở mode 'friends' hoặc 'online=0'
+                //         // VÌ TA KHÔNG CÓ API ĐÓ, TA CHỈ CÓ THỂ CHỜ SOCKETIO CẬP NHẬT.
+                //         console.log('Chờ vị trí ban đầu từ SocketIO...');
+                //     });
+                fetch('/api/initial_locations') 
+                    .then(res => res.json())
+                    .then(data => {
+                        // Vẽ tất cả các vị trí cuối đã được tải
+                        data.locations.forEach(loc => {
+                            updateMarker(loc.user_id, loc.username, loc.lat, loc.lng, loc.is_self || false);
+                        });
+                        
+                        // Quan trọng: Gọi fitBounds sau khi tất cả markers đã được thêm lần đầu
+                        setTimeout(fitMapToAllMarkers, 500); 
+                    })
+                    .catch(err => console.error("Lỗi khi tải vị trí cuối:", err));
+            })
+            .catch(err => {
+                console.error("Lỗi xác thực hoặc tải thông tin user:", err);
+                document.getElementById('username_display').innerText = 'LỖI TẢI USER';
+            });
+    });
+
+    socket.on('disconnect', function() {
+        document.getElementById('socket_status').innerText = 'Disconnected';
+        document.getElementById('socket_status').style.color = 'red';
+        if (locationInterval) clearInterval(locationInterval);
+    });
+
+    // Nhận cập nhật vị trí từ bạn bè
+    socket.on('friend_location_update', function(data) {
+        if (data.user_id !== user_id) { 
+            // Vị trí này là live (người kia đang share_mode='friends')
+            updateMarker(data.user_id, data.username, data.lat, data.lng, false);
+            // Có thể thêm logic làm sáng marker nếu cần.
+        }
+    });
+
+    // YÊU CẦU 2: LOẠI BỎ logic xóa marker hoàn toàn. Marker sẽ tồn tại mãi mãi 
+    // trừ khi người dùng load lại trang (và không có API lấy vị trí ban đầu)
+    // hoặc có một sự kiện xóa rõ ràng từ server (đã loại bỏ).
+
+</script>
 </body>
 </html>

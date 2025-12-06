@@ -142,12 +142,30 @@ def get_friends_ids(user_id):
     friend_ids = set()
     
     for friendship in friendships:
-        if friendship.user_id != user_id:
-            friend_ids.add(friendship.user_id)
-        if friendship.friend_id != user_id:
-            friend_ids.add(friendship.friend_id)
+        # if (friendship.user_id != user_id):
+        #     friend_ids.add(friendship.user_id)
+        # if friendship.friend_id != user_id:
+        #     friend_ids.add(friendship.friend_id)
+        for friendship in friendships:
+            friend_id_to_check = None
+            
+            # 1. Xác định ID người bạn (ID khác user_id)
+            if friendship.user_id != user_id:
+                friend_id_to_check = friendship.user_id
+            elif friendship.friend_id != user_id:
+                friend_id_to_check = friendship.friend_id
+            
+            if friend_id_to_check:
+                # 2. Lấy đối tượng User từ DB (Gây nhiều DB hit)
+                friend_user = db.session.query(User).filter_by(id=friend_id_to_check).first()
+                
+                # 3. CÚ PHÁP KIỂM TRA ĐÚNG:
+                if friend_user and friend_user.online == True: # True tương đương với 1 trong DB
+                    friend_ids.add(friend_id_to_check)
             
     final_ids = list(friend_ids)
+
+
     # # Lấy thông tin User của các ID bạn bè đang online
     # online_frs = User.query.filter(
     #     User.id.in_(final_ids),
@@ -162,6 +180,27 @@ def get_friends_ids(user_id):
     #         online_friends.add(fr.friend_id)
     
     # realfinal_ids = list(online_friends)
+
+    # """
+    # Tìm tất cả ID bạn bè của người dùng hiện tại (user_id) đang online.
+    # """
+    # # 1. Lấy danh sách ID của tất cả bạn bè
+    # friend_ids_subquery = db.session.query(Friendship.from_user).filter(
+    #     Friendship.to_user == user_id
+    # ).union(
+    #     db.session.query(Friendship.to_user).filter(
+    #         Friendship.from_user == user_id
+    #     )
+    # ).subquery()
+    
+    # # 2. Chỉ lọc những người bạn đang online (User.online == True)
+    # online_friend_ids = db.session.query(User.id).filter(
+    #     User.id.in_(friend_ids_subquery),
+    #     User.online == True  # <--- ĐIỀU KIỆN QUAN TRỌNG
+    # ).all()
+    
+    # # Chuyển đổi kết quả sang list ID đơn giản
+    # return [id[0] for id in online_friend_ids]
     print(f"\n[DEBUG CORE] Tìm bạn bè cho ID {user_id}. Kết quả: {final_ids}")
     
     return final_ids
@@ -320,9 +359,68 @@ def get_current_user_info():
         'share_mode': current_user.share_mode 
     })
 
+# Trong app.py (Thêm vào cùng vị trí với các API khác)
+@app.route('/api/share_mode', methods=['POST'])
+@login_required
+def update_share_mode():
+    data = request.get_json()
+    mode = data.get('mode')
+    user_id = current_user.id
+    
+    if mode in ['friends', 'hidden']:
+        current_user.share_mode = mode
+        db.session.commit()
+        
+        # Nếu chuyển sang HIDDEN, phải gửi event xóa marker cho tất cả bạn bè
+        # if mode == 'hidden':
+        #     # Hàm get_friends_ids đã được định nghĩa trong app.py
+        #     friend_ids = get_friends_ids(user_id) 
+        #     for friend_id in friend_ids:
+        #         # Gửi event để client tự xóa marker của người này
+        #         socketio.emit('friend:disconnected', {'userId': user_id}, room=f'user_{friend_id}')
+        
+        return jsonify({"message": "Share mode updated", "new_mode": mode}), 200
+    return jsonify({"message": "Invalid mode"}), 400
 
+# Trong app.py
+@app.route('/api/initial_locations', methods=['GET'])
+@login_required
+def initial_locations():
+    user_id = current_user.id
+    
+    # Lấy ID của tất cả bạn bè (đang share_mode='friends' hoặc chưa set)
+    friend_ids = get_friends_ids(user_id) # Hàm đã có của bạn
+    
+    # 1. Lấy LiveLocation của tất cả bạn bè đã tìm được
+    # Cần phải JOIN với bảng User để lấy username và share_mode
+    locations = db.session.query(LiveLocation, User.username, User.share_mode).join(User, LiveLocation.user_id == User.id).filter(
+        LiveLocation.user_id.in_(friend_ids)
+    ).all()
+    
+    result = []
+    for loc, uname, mode in locations:
+        # Chỉ hiển thị vị trí cuối nếu họ không ở chế độ 'hidden'
+        #if mode != 'hidden':
+        result.append({
+            'user_id': loc.user_id,
+            'username': uname,
+            'lat': loc.lat,
+            'lng': loc.lng,
+            'share_mode': mode
+        })
+            
+    # Thêm vị trí của chính mình (để đảm bảo map bao trùm cả mình)
+    my_location = db.session.query(LiveLocation).filter_by(user_id=user_id).first()
+    if my_location:
+         result.append({
+            'user_id': user_id,
+            'username': current_user.username,
+            'lat': my_location.lat,
+            'lng': my_location.lng,
+            'is_self': True
+        })
 
-
+    return jsonify({"locations": result}), 200
 
 
 
