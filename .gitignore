@@ -4,6 +4,11 @@
 *.py[codz]
 *$py.class
 
+*.db
+instance/*
+!instance/.gitkeep
+
+
 
 # Environments
 .env

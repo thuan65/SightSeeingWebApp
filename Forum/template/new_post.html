@@ -216,7 +216,7 @@
                 </div>
             {% endif %}
 
-                <form method="POST">
+                <form method="POST" enctype="multipart/form-data">
                     <div class="form-group">
                         <label class="form-label">Tiêu đề câu hỏi</label>
                         <input type="text"
@@ -244,6 +244,18 @@
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label class="form-label">Ảnh minh họa (tối đa 3 ảnh)</label>
+                        <input type="file"
+                            name="images"
+                            accept="image/*"
+                            multiple
+                            class="form-control"
+                            id="imageInput">
+                            <div id="preview" style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;"></div>
+                    </div>
+                    
+
                     <div class="btn-group">
                         <button type="submit" class="btn btn-primary">Đăng câu hỏi</button>
                         <a href="/forum" class="btn btn-secondary">← Quay lại</a>
@@ -262,4 +274,31 @@
         </div>
     </div>
 </body>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const fileInput = document.getElementById("imageInput");
+    const previewBox = document.getElementById("preview");
+
+    fileInput.addEventListener("change", function() {
+        previewBox.innerHTML = "";  // reset preview
+
+        if (this.files.length > 3) {
+            alert("Bạn chỉ được chọn tối đa 3 ảnh!");
+            this.value = "";
+            return;
+        }
+
+        // Tạo preview
+        Array.from(this.files).forEach(file => {
+            const img = document.createElement("img");
+            img.src = URL.createObjectURL(file);
+            img.style.width = "120px";
+            img.style.borderRadius = "10px";
+            img.style.objectFit = "cover";
+            img.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)";
+            previewBox.appendChild(img);
+        });
+    });
+});
+</script>
 </html>

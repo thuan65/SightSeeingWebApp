@@ -151,11 +151,16 @@ from flask_login import current_user
 from sqlalchemy import or_, and_
 from models import User, Post, Answer, Friendship 
 from extensions import db
+from werkzeug.utils import secure_filename
+from .image_filter import is_nsfw_image
+import os
+import json
 
 forum = Blueprint("forum", __name__, template_folder='template')
 
 # Nếu không import được sbert_model từ models_loader thì dùng dòng dưới:
 # sbert_model = SentenceTransformer("keepitreal/vietnamese-sbert")
+UPLOAD_FOLDER = "static/post_images"
 
 def compute_similarity(query_text, posts, top_k=5):
     """So sánh độ tương đồng giữa query và posts trong DB"""
@@ -233,7 +238,9 @@ def get_visible_posts_orm():
             "questioner_id": post.questioner_id,
             "username": post.questioner.username if post.questioner else "N/A",
             "privacy": post.privacy,
-            "answers": answers_list
+            "answers": answers_list,
+            "images": json.loads(post.images) if post.images else [] 
+
         })
     return result
 
@@ -243,7 +250,7 @@ def show_forum():
     posts_with_answers = get_visible_posts_orm()
     return render_template("forum.html", posts=posts_with_answers)
 
-@forum.route("/post/new", methods=["GET","POST"])
+@forum.route("/post/new", methods=["GET", "POST"])
 def new_post():
     if not current_user.is_authenticated:
         return "Vui lòng đăng nhập", 403
@@ -251,23 +258,72 @@ def new_post():
     if request.method == "POST":
         title = request.form.get("title")
         content = request.form.get("content")
-        privacy = request.form.get("privacy", "public") 
+        privacy = request.form.get("privacy", "public")
 
-        if is_toxic(content) or is_toxic(title):
-            return render_template("new_post.html", error="Nội dung không phù hợp.")
-        
-        new_post_entry = Post(
-            title=title, 
-            content=content, 
-            questioner_id=current_user.id, 
-            privacy=privacy 
+        # 1️⃣ Filter toxic text
+        if is_toxic(title) or is_toxic(content):
+            return render_template("new_post.html",
+                                   error="Nội dung bài viết không phù hợp.")
+
+        images = request.files.getlist("images")
+
+        if len(images) > 3:
+            return render_template("new_post.html",
+                                   error="Chỉ được upload tối đa 3 ảnh!")
+
+        saved_filenames = []
+
+        for img in images:
+            if not img.filename:
+                continue
+
+            safe_name = secure_filename(img.filename)
+            temp_path = os.path.join("static/checkImage", safe_name)
+            os.makedirs("static/checkImage", exist_ok=True)
+            img.save(temp_path)
+
+            # 2️⃣ NSFW Filter (only for public posts)
+            if privacy == "public":
+                blocked, info = is_nsfw_image(temp_path)
+                print("NSFW check:", info)
+
+                if blocked:
+                    os.remove(temp_path)
+                    return render_template(
+                        "new_post.html",
+                        error=f"Ảnh không hợp lệ: NSFW score {info['nsfw_score']:.2f}"
+                    )
+
+            # 3️⃣ Save safe image to final folder
+            base, ext = os.path.splitext(safe_name)
+            final_path = os.path.join(UPLOAD_FOLDER, safe_name)
+            counter = 1
+            while os.path.exists(final_path):
+                safe_name = f"{base}_{counter}{ext}"
+                final_path = os.path.join(UPLOAD_FOLDER, safe_name)
+                counter += 1
+
+            os.rename(temp_path, final_path)
+            saved_filenames.append(safe_name)
+
+        # 4️⃣ Insert post into DB
+        new_post = Post(
+            title=title,
+            content=content,
+            privacy=privacy,
+            questioner_id=current_user.id,
+            images=json.dumps(saved_filenames)
         )
-        db.session.add(new_post_entry)
+
+        db.session.add(new_post)
         db.session.commit()
-        
+        flash("Đăng bài thành công!", "success")
+
         return redirect("/forum")
 
     return render_template("new_post.html")
+
+
 
 @forum.route("/post/<int:post_id>/reply", methods=["GET","POST"])
 def reply_post(post_id):
@@ -290,7 +346,8 @@ def reply_post(post_id):
         
         post.tag = "answered"
         db.session.commit()
-        return redirect("/forum")
+        return redirect(f"/forum/post/{post_id}")
+
 
     # Convert object -> dict cho template
     post_dict = {
@@ -316,3 +373,75 @@ def search_forum():
     filtered_results = [p for p in top_results if not is_toxic(p["content"])]
 
     return render_template("search_results.html", posts=filtered_results, query=query)
+
+# chi tiet bai viet
+@forum.route("/forum/post/<int:post_id>")
+def view_post(post_id):
+    post = Post.query.get_or_404(post_id)
+
+    post_dict = {
+        "id": post.id,
+        "title": post.title,
+        "content": post.content,
+        "username": post.questioner.username,
+        "created_at": str(post.created_at),
+        "privacy": post.privacy,
+        "images": json.loads(post.images) if post.images else [],
+        "answers": [
+            {
+                "content": a.content,
+                "answerer_username": a.answerer.username
+            } for a in post.answers
+        ]
+    }
+
+    return render_template("post_detail.html", post=post_dict)
+
+@forum.route("/post/<int:post_id>/delete", methods=["POST"])
+def delete_post(post_id):
+    if not current_user.is_authenticated:
+        return "Bạn không có quyền xóa bài!", 403
+
+    post = Post.query.get_or_404(post_id)
+
+    # Chỉ người đăng mới được xóa
+    if post.questioner_id != current_user.id and not current_user.is_admin:
+        return "Bạn không được phép xóa bài viết này!", 403
+
+    # Xóa ảnh vật lý
+    if post.images:
+        try:
+            filenames = json.loads(post.images)
+            for fname in filenames:
+                img_path = os.path.join("static/post_images", fname)
+                if os.path.exists(img_path):
+                    os.remove(img_path)
+        except:
+            pass
+
+    # Xóa post → Answer sẽ tự xóa theo cascade
+    db.session.delete(post)
+    db.session.commit()
+
+    return redirect("/forum")
+
+@forum.route("/forum/myposts")
+def my_posts():
+    if not current_user.is_authenticated:
+        return redirect("/login")
+
+    posts = Post.query.filter_by(questioner_id=current_user.id).order_by(Post.created_at.desc()).all()
+
+    result = []
+    for post in posts:
+        result.append({
+            "id": post.id,
+            "title": post.title,
+            "content": post.content,
+            "created_at": str(post.created_at),
+            "privacy": post.privacy,
+            "username": current_user.username,
+            "images": json.loads(post.images) if post.images else []
+        })
+
+    return render_template("my_posts.html", posts=result)

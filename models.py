@@ -17,6 +17,7 @@ class User(db.Model, UserMixin):
     # Quan hệ ORM
     posts = db.relationship("Post", back_populates="questioner", cascade="all, delete")
     answers = db.relationship("Answer", back_populates="answerer", cascade="all, delete")
+    is_admin = db.Column(db.Boolean, default=False)
 
 class Post(db.Model):
     __tablename__ = "posts"
@@ -24,6 +25,8 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.Text, nullable=True)
     content = db.Column(db.Text, nullable=True)
+
+    images = db.Column(db.Text)
     questioner_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     tag = db.Column(db.String, default="unanswered")
     privacy = db.Column(db.String(30), default='public', nullable=False)
