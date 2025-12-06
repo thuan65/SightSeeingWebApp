@@ -26,4 +26,4 @@ lên https://aistudio.google.com/app/api-keys
 tạo API key mới và cho vào file ".env.
 
 do đã thay database nên vào đường link sau để tải ảnh: https://drive.google.com/drive/folders/1UeO6AejNDUdvGBbMDMWhoKXyuvI4LkM3?usp=drive_link
-lưu ý tạo một file tên images trong file instance để chạy (images/images(1).....)
+giải nén và cho thư mục images vào trong thư mục images ở trong phần static
