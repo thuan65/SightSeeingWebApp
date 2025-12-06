@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ post.title }} - LocaGo Forum</title>
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px 30px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1C6758;
+            text-decoration: none;
+        }
+        .logo span { color: #8EB486; }
+
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .post-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .post-title {
+            font-size: 2em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .post-meta {
+            display: flex;
+            gap: 15px;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .post-content {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #333;
+            margin: 25px 0;
+            white-space: pre-line;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+        }
+
+
+        /* IMAGE GRID */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .image-grid img {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            object-fit: contain;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* ANSWERS */
+        .answers-section {
+            margin-top: 35px;
+            border-top: 2px solid #e0e0e0;
+            padding-top: 20px;
+        }
+
+        .answer-item {
+            background: #f8f9fa;
+            border-left: 4px solid #8EB486;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+
+        .answer-author {
+            font-size: 14px;
+            color: #1C6758;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .reply-box {
+            margin-top: 25px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        .reply-box textarea {
+            font-family: 'Poppins', sans-serif;
+            width: 100%;
+            padding: 12px;
+            font-size: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            resize: vertical;
+            min-height: 120px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .reply-box textarea:focus {
+            border-color: #8EB486;
+            box-shadow: 0 0 0 3px rgba(142, 180, 134, 0.15);
+        }
+
+        .btn-primary {
+            padding: 12px 28px;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #8EB486, #1C6758);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 12px;
+            display: inline-block;
+        }
+
+        .btn-back {
+            display: inline-block;
+            margin-top: 20px;
+            color: #1C6758;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="header-container">
+        <a href="/" class="logo">Loca<span>Go!</span></a>
+        <a href="/forum" class="btn-back">← Quay về Forum</a>
+    </div>
+</header>
+
+<div class="container">
+
+    <div class="post-card">
+
+        <!-- TITLE -->
+        <h1 class="post-title">{{ post.title }}</h1>
+
+        <!-- META -->
+        <div class="post-meta">
+            <span>👤 {{ post.username }}</span>
+            <span>📅 {{ post.created_at[:10] }}</span>
+            <span>
+                {% if post.privacy == "public" %}
+                    🌐 Công khai
+                {% elif post.privacy == "friends" %}
+                    👥 Bạn bè
+                {% else %}
+                    🔒 Riêng tư
+                {% endif %}
+            </span>
+        </div>
+
+        <!-- IMAGE GRID -->
+        {% if post.images and post.images|length > 0 %}
+        <div class="image-grid">
+            {% for img in post.images %}
+                <img src="/static/post_images/{{ img }}">
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- FULL CONTENT -->
+        <div class="post-content">{{ post.content }}</div>
+
+        <!-- ANSWERS -->
+        <div class="answers-section">
+            <h3 style="color:#1C6758; font-weight:700;">Câu trả lời ({{ post.answers|length }})</h3>
+
+            {% for ans in post.answers %}
+            <div class="answer-item">
+                <div class="answer-author">💬 {{ ans.answerer_username }}</div>
+                <div>{{ ans.content }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- REPLY FORM -->
+        {% if current_user.is_authenticated %}
+        <div class="reply-box">
+            <form action="/post/{{ post.id }}/reply" method="POST">
+                <textarea name="content" placeholder="Nhập câu trả lời của bạn..." required></textarea>
+                <button class="btn-primary">Gửi câu trả lời</button>
+            </form>
+        </div>
+        {% else %}
+        <p style="margin-top:20px;">
+            <a href="/login" class="btn-primary">Đăng nhập để trả lời</a>
+        </p>
+        {% endif %}
+
+    </div>
+
+</div>
+
+</body>
+</html>

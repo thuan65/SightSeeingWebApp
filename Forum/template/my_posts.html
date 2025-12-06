@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài viết của tôi - LocaGo Forum</title>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        /* HEADER */
+        header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px 30px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1C6758;
+            text-decoration: none;
+        }
+        .logo span { color: #8EB486; }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            padding: 10px 18px;
+            border-radius: 8px;
+            transition: 0.3s;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .nav-links a:hover { background: #f0f0f0; }
+
+        .btn-danger {
+            background: #e74c3c !important;
+            color: white !important;
+        }
+
+        /* MAIN CONTENT */
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.2em;
+            font-weight: 700;
+            margin-bottom: 40px;
+        }
+
+        /* POST CARD */
+        .post-card {
+            background: white;
+            border-radius: 15px;
+            padding: 28px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: 0.3s;
+            position: relative;
+        }
+        .post-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .post-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .post-meta {
+            display: flex;
+            gap: 15px;
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0 20px;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 120px);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .preview-grid img {
+            width: 120px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .post-content-preview {
+            color: #555;
+            line-height: 1.6;
+            font-size: 15px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .post-actions a {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #8EB486, #1C6758);
+            color: white;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* ⋯ MENU */
+        .post-menu {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            cursor: pointer;
+            font-size: 22px;
+            padding: 4px 8px;
+            border-radius: 10px;
+            color: #1C6758;
+            transition: 0.2s ease;
+            user-select: none;
+        }
+        .post-menu:hover {
+            background: rgba(28,103,88,0.12);
+        }
+
+        .menu-box {
+            position: absolute;
+            top: 48px;
+            right: 18px;
+            background: #ffffff;
+            padding: 12px;
+            border-radius: 14px;
+            display: none;
+            min-width: 150px;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.15);
+            z-index: 99;
+        }
+
+        .menu-box button {
+            width: 100%;
+            background: transparent;
+            color: #e74c3c;
+            border: none;
+            padding: 10px 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="header-container">
+        <a href="/" class="logo">Loca<span>Go!</span></a>
+
+        <div class="nav-links">
+            <a href="/MapRouting">Bản đồ</a>
+            <a href="/chat_ui">Chatbot du lịch</a>
+            <a href="{{ url_for('forum.show_forum') }}">Forum</a>
+
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('forum.my_posts') }}" style="font-weight:700;">Bài viết của tôi</a>
+                <a href="{{ url_for('login_bp.logout') }}" class="btn-danger">Đăng xuất</a>
+            {% else %}
+                <a href="{{ url_for('login_bp.register') }}" class="btn-secondary">Đăng ký</a>
+                <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
+            {% endif %}
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <h2 class="section-title">Bài viết của tôi</h2>
+
+    {% if posts %}
+        {% for post in posts %}
+        <div class="post-card">
+
+            <!-- ⋯ MENU -->
+            <div class="post-menu" onclick="toggleMenu({{ post.id }})">⋯</div>
+
+            <div class="menu-box" id="menu-{{ post.id }}">
+                <button onclick="deletePost({{ post.id }})">🗑 Xóa bài viết</button>
+            </div>
+
+            <h3 class="post-title">{{ post.title }}</h3>
+
+            <div class="post-meta">
+                <span>📅 {{ post.created_at[:10] }}</span>
+                <span>
+                    {% if post.privacy == "public" %} 🌐 Công khai
+                    {% elif post.privacy == "friends" %} 👥 Bạn bè
+                    {% else %} 🔒 Riêng tư
+                    {% endif %}
+                </span>
+            </div>
+
+            {% if post.images %}
+            <div class="preview-grid">
+                {% for img in post.images[:3] %}
+                <img src="/static/post_images/{{ img }}">
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <p class="post-content-preview">
+                {{ post.content[:150] }}{% if post.content|length > 150 %}...{% endif %}
+            </p>
+
+            <div class="post-actions">
+                <a href="/forum/post/{{ post.id }}">Xem chi tiết</a>
+            </div>
+
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="text-align:center;color:#666;">Bạn chưa đăng bài nào.</p>
+    {% endif %}
+</div>
+
+
+<script>
+function toggleMenu(id) {
+    document.querySelectorAll(".menu-box").forEach(m => {
+        if (m.id !== "menu-" + id) m.style.display = "none";
+    });
+
+    let box = document.getElementById("menu-" + id);
+    box.style.display = box.style.display === "block" ? "none" : "block";
+}
+
+function deletePost(postId) {
+    if (!confirm("Bạn có chắc muốn xóa bài viết này không?")) return;
+
+    fetch(`/post/${postId}/delete`, { method: "POST" })
+        .then(res => { if (res.ok) location.reload(); });
+}
+</script>
+
+</body>
+</html>
