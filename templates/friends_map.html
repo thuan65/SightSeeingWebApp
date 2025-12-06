@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Real-Time Location Sharing Test - GPS</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { height: 600px; width: 80%; margin: 20px auto; }
+    </style>
+</head>
+<body>
+
+    <h1 style="text-align: center;">Vị trí của User: <span id="username_display">Loading...</span></h1>
+    <div id="map"></div>
+    <div style="text-align: center;">
+        <p>Trạng thái Socket: <strong id="socket_status" style="color: red;">Disconnected</strong></p>
+        <p>GPS Status: <strong id="gps_status" style="color: orange;">Đang tìm vị trí...</strong></p>
+        <p>Cập nhật vị trí thật mỗi: <strong>5 giây</strong></p>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        // --- Cấu hình Ban đầu ---
+        let user_id = null; 
+        let username = 'Unknown';
+        let locationInterval = null;
+        const socket = io.connect('http://' + document.domain + ':' + location.port);
+        const map = L.map('map').setView([10.7769, 106.7009], 13); // Tọa độ mặc định: Sài Gòn
+        const markers = {}; // Lưu trữ các marker theo user_id
+
+        // Icon tùy chỉnh (Sử dụng đường dẫn tĩnh từ file list của bạn)
+        const selfIcon = L.icon({
+            iconUrl: '/static/user-icon.png', // Dùng user-icon.png
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        const friendIcon = L.icon({
+            iconUrl: '/static/friend-icon.png', // Dùng friend-icon.png
+            iconSize: [64, 64], 
+            iconAnchor: [12, 24],
+            popupAnchor: [0, -24]
+        });
+
+        // Thêm layer bản đồ (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // --- Hàm Lấy và Cập nhật Vị trí Thật (Geolocation) ---
+        function getAndSendLocation() {
+            if (user_id === null) return;
+            
+            document.getElementById('gps_status').innerText = 'Đang tìm vị trí...';
+            document.getElementById('gps_status').style.color = 'orange';
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        // HÀM THÀNH CÔNG
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        const latlng = [lat, lng];
+
+                        document.getElementById('gps_status').innerText = 'OK';
+                        document.getElementById('gps_status').style.color = 'green';
+                        
+                        // 1. Gửi vị trí thật qua SocketIO
+                        socket.emit('update_location', { 
+                            lat: lat, 
+                            lng: lng 
+                        });
+
+                        // 2. Cập nhật marker của chính mình trên map
+                        updateMarker(user_id, username, lat, lng, true);
+                    },
+                    function(error) {
+                        // HÀM THẤT BẠI - BÁO LỖI RÕ RÀNG
+                        let errorMessage = '';
+
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = "LỖI: Người dùng từ chối cấp quyền (PERMISSION_DENIED)";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = "LỖI: Vị trí không xác định được (POSITION_UNAVAILABLE)";
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage = "LỖI: Hết thời gian chờ (TIMEOUT)";
+                                break;
+                            default:
+                                errorMessage = "LỖI: Không xác định (" + error.code + ")";
+                                break;
+                        }
+                        
+                        document.getElementById('gps_status').innerText = errorMessage;
+                        document.getElementById('gps_status').style.color = 'red';
+                        console.error("Geolocation error code:", error.code, error.message);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000, // Tăng thời gian chờ của API lên 10 giây
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                document.getElementById('gps_status').innerText = 'Trình duyệt không hỗ trợ Geolocation.';
+                document.getElementById('gps_status').style.color = 'red';
+            }
+        }
+
+
+        // --- Hàm xử lý cập nhật Marker trên Map ---
+        function updateMarker(id, user_name, lat, lng, is_self = false) {
+            const latlng = [lat, lng];
+            
+            if (id in markers) {
+                // Di chuyển marker hiện có
+                markers[id].marker.setLatLng(latlng);
+                markers[id].marker.getPopup().setContent(`<b>${user_name}</b><br>${is_self ? 'Vị trí của bạn' : 'Bạn bè'}`);
+            } else {
+                // Tạo marker mới
+                const marker = L.marker(latlng, {
+                    icon: is_self ? selfIcon : friendIcon
+                }).addTo(map);
+
+                marker.bindPopup(`<b>${user_name}</b><br>${is_self ? 'Vị trí của bạn' : 'Bạn bè'}`);
+                
+                markers[id] = {
+                    marker: marker,
+                    username: user_name
+                };
+            }
+            if (is_self) {
+                map.setView(latlng, map.getZoom() > 13 ? map.getZoom() : 13); // Tập trung và zoom tối thiểu 13
+            }
+            // Chỉ cập nhật username hiển thị ở đây nếu là chính mình
+            if (is_self && document.getElementById('username_display').innerText.indexOf('Loading') !== -1) {
+                document.getElementById('username_display').innerText = user_name + " (ID: " + id + ")";
+            }
+        }
+        
+        // --- Xử lý sự kiện SocketIO ---
+        socket.on('connect', function() {
+            document.getElementById('socket_status').innerText = 'Connected';
+            document.getElementById('socket_status').style.color = 'green';
+            console.log('Socket Connected. Fetching user info...');
+            
+            // 1. Lấy thông tin user (ID và Username)
+            fetch('/api/current_user_info')
+                .then(res => {
+                    if (res.status === 404) {
+                        throw new Error("Lỗi 404: /api/current_user_info not found. Cần thêm route vào app.py.");
+                    }
+                    if (!res.ok) { // Bất kỳ lỗi HTTP nào khác (ví dụ: 401)
+                        throw new Error(`Lỗi HTTP ${res.status}. Bạn cần phải đăng nhập.`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    user_id = data.user_id;
+                    username = data.username;
+                    document.getElementById('username_display').innerText = username + " (ID: " + user_id + ")";
+                    
+                    // 2. Bắt đầu cập nhật vị trí thật mỗi 5 giây
+                    if (locationInterval) clearInterval(locationInterval);
+                    getAndSendLocation(); // Gửi vị trí lần đầu
+                    locationInterval = setInterval(getAndSendLocation, 5000); // Gửi định kỳ
+                })
+                .catch(err => {
+                    console.error("Authentication or Info Fetch Error:", err);
+                    document.getElementById('username_display').innerText = 'LỖI XÁC THỰC: ' + err.message;
+                    document.getElementById('socket_status').innerText = 'Lỗi Auth';
+                });
+        });
+
+        socket.on('disconnect', function() {
+            document.getElementById('socket_status').innerText = 'Disconnected';
+            document.getElementById('socket_status').style.color = 'red';
+            console.log('Socket Disconnected. Stopping location updates.');
+            map.removeLayer(markers[user_id].marker); // Xóa marker của chính mình khi ngắt kết nối
+            if (locationInterval) clearInterval(locationInterval);
+        });
+
+        // Nhận cập nhật vị trí từ bạn bè
+        socket.on('friend_location_update', function(data) {
+            console.log(`Location update from ${data.username} (ID: ${data.user_id})`);
+            // Kiểm tra: nếu ID người gửi KHÔNG phải là ID của mình
+            if (data.user_id !== user_id) { 
+                updateMarker(data.user_id, data.username, data.lat, data.lng, false);
+            }
+        });
+        
+        // Nhận thông báo trạng thái online/offline từ bạn bè
+        socket.on('friend_status_update', function(data) {
+            console.log(`Status update: User ${data.user_id} is_online: ${data.is_online}`);
+            if (data.user_id in markers) {
+                // Làm mờ hoặc hiển thị tùy thuộc vào trạng thái
+                markers[data.user_id].marker.setOpacity(data.is_online ? 1.0 : 0.5); 
+            }
+        });
+
+        socket.on("friend:disconnected", data => {
+            const disconnectedUserId = data.userId;
+
+            // Kiểm tra xem marker có tồn tại trong đối tượng markers không
+            if (markers[disconnectedUserId]) {
+                // 1. Xóa marker khỏi bản đồ
+                map.removeLayer(markers[disconnectedUserId]);
+                
+                // 2. Xóa tham chiếu khỏi đối tượng markers
+                delete markers[disconnectedUserId];
+                
+                console.log(`[CLIENT] Đã xóa marker của User ID: ${disconnectedUserId} (ngắt kết nối)`);
+            }
+        });
+
+        // Lấy danh sách bạn bè ban đầu (từ HTTP route)
+        fetch('/location_sharing/friends_list')
+            .then(res => res.json())
+            .then(data => {
+                console.log('Friend IDs for initialization:', data.friends_ids);
+            });
+
+    </script>
+</body>
+</html>
