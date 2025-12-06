@@ -5,9 +5,10 @@
 *$py.class
 
 *.db
-instance/*
 !instance/.gitkeep
 
+instance/*
+tempCodeRunnerFile.py
 
 
 # Environments
