@@ -13,102 +13,82 @@ from flask_login import (
 from sqlalchemy import func, or_
 from sentence_transformers import util
 
-# 🟩 QUAN TRỌNG: dùng Session từ createDataBase (đã fix DB path)
-# from createDataBase import Image, Session
-
-# from createDataBase import Image, UserSession, FriendRequest, Friendship, User, Feedback
+# --- IMPORT MODELS & EXTENSIONS ---
 from models import User, Post, Answer, ConversationHistory, LiveLocation, Image
 from extensions import db, bcrypt
+from __init__ import create_app
 
 import os
 
-from __init__ import create_app
-
-# ---------------------------------------------------------
-# CẤU HÌNH ỨNG DỤNG FLASK
-# ---------------------------------------------------------
-app = create_app()
-
-
-
-# engine = create_engine("sqlite:///instance/images.db")
-# Session = sessionmaker(bind=engine)
-# db_session = Session()
-
-
-
+# --- [QUAN TRỌNG] IMPORT MAP ROUTING ---
+# Đảm bảo bạn đã có file __init__.py trong thư mục MapRouting
+from MapRouting.MapRoutingRoute import MapRouting_bp
 
 # =========================================================
-# LOGIN MANAGER
+# 1. KHỞI TẠO APP
+# =========================================================
+app = create_app()
+
+# =========================================================
+# 2. CẤU HÌNH LOGIN MANAGER
 # =========================================================
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login_bp.login'
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# ---------------------------------------------------------
-# KẾT NỐI DB ẢNH VÀ REGISTER BLUEPRINT
-#  ---------------------------------------------------------
-# app.register_blueprint(search_filter)
-# app.register_blueprint(search_text)
-# app.register_blueprint(feedback_bp)
-# app.register_blueprint(chatBot_bp)
-# app.register_blueprint(forum)
-# app.register_blueprint(search_image_bp)
-# app.register_blueprint(login_bp)
 
-# app.register_blueprint(friends_bp)
-# app.register_blueprint(favorite_bp)
-# app.register_blueprint(MapRouting_bp, url_prefix= "/MapRouting")
-# app.register_blueprint(nearby_import_bp)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ---------------------------------------------------------
-# TRANG CHÍNH
 # =========================================================
+# 3. ĐĂNG KÝ BLUEPRINT (AN TOÀN TUYỆT ĐỐI)
+# =========================================================
+# Logic này kiểm tra xem Blueprint đã tồn tại trong app chưa.
+# Nếu create_app() đã đăng ký rồi thì bỏ qua, nếu chưa thì đăng ký mới.
+# Giúp tránh lỗi "ValueError: The name ... is already registered"
+
+blueprint_name = MapRouting_bp.name  # Lấy tên định danh của Blueprint (ví dụ: Map_Routing_System)
+
+if blueprint_name not in app.blueprints:
+    app.register_blueprint(MapRouting_bp, url_prefix="/MapRouting")
+    print(f"✅ Đã đăng ký thành công Blueprint: {blueprint_name} tại /MapRouting")
+else:
+    print(f"ℹ️ Blueprint '{blueprint_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
+
+
+# =========================================================
+# 4. CÁC ROUTE CHÍNH CỦA APP
+# =========================================================
+
 @app.route("/")
 def index():
+    """Trang chủ hiển thị danh sách ảnh"""
     keyword = request.args.get("q", "")
-    
-    if keyword:
-        images = db.session.query(Image).filter(Image.tags.like(f"%{keyword}%")).all()
-    else:
-        images = db.session.query(Image).all()
-    return render_template("index.html", images=images, keyword=keyword)
+
+    try:
+        if keyword:
+            images = db.session.query(Image).filter(Image.tags.like(f"%{keyword}%")).all()
+        else:
+            images = db.session.query(Image).all()
+        return render_template("index.html", images=images, keyword=keyword)
+    except Exception as e:
+        return f"Lỗi kết nối cơ sở dữ liệu: {str(e)}", 500
 
 
-# =========================================================
-# CHI TIẾT ẢNH
-# =========================================================
 @app.route("/image/<int:image_id>")
 def image_detail(image_id):
+    """Trang chi tiết của một bức ảnh"""
     image = db.session.query(Image).filter_by(id=image_id).first()
     if not image:
         return "Ảnh không tồn tại!", 404
     return render_template("detail.html", image=image)
 
 
-# =========================================================
-# API: TÌM KIẾM ẢNH
-# =========================================================
 @app.route("/api/search")
 def search():
+    """API tìm kiếm ảnh (dùng cho AJAX nếu cần)"""
     keyword = request.args.get("q", "").lower()
     results = db.session.query(Image).filter(
         or_(
@@ -117,37 +97,38 @@ def search():
         )
     ).all()
 
-# Chuyển tất cả fields của Image thành dict        
-    data = [ {c.name: getattr(img, c.name) for c in img.__table__.columns} 
-                 for img in results ]
+    # Chuyển đổi đối tượng SQLAlchemy thành Dictionary
+    data = [{c.name: getattr(img, c.name) for c in img.__table__.columns}
+            for img in results]
     return jsonify(data)
 
 
-# =========================================================
-# GIAO DIỆN CHATBOT
-# =========================================================
 @app.route("/chat_ui")
 def chat_ui():
+    """Giao diện Chatbot"""
     return render_template("chat_ui.html")
 
 
-# =========================================================
-# TRANG BẠN BÈ
-# =========================================================
 @app.route("/friends")
 def friends_page():
+    """Trang bạn bè (Yêu cầu đăng nhập)"""
     if "user_id" not in session:
-        return redirect("/auth/login")  
+        return redirect("/auth/login")
     return render_template("friends.html")
 
 
 # =========================================================
-# CHẠY ỨNG DỤNG
+# 5. KHỞI CHẠY SERVER
 # =========================================================
 if __name__ == "__main__":
-    print("=== Initializing Flask Database ===")
-    with app.app_context():
-        db.create_all()
+    print("=== System Starting ===")
 
-    print("=== Starting Web App ===")
-    app.run(debug=False, use_reloader=False)
+    # Tạo context để đảm bảo truy cập được DB
+    with app.app_context():
+        # db.create_all()  # Uncomment nếu bạn muốn tạo bảng mới (cẩn thận mất dữ liệu cũ)
+        pass
+
+    print(f"🚀 Server đang chạy tại: http://localhost:5000")
+    print(f"🗺️  MapRouting module tại: http://localhost:5000/MapRouting/")
+
+    app.run(debug=True, use_reloader=False)
