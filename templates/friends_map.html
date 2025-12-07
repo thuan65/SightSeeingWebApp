@@ -369,12 +369,12 @@
                     // Định dạng danh sách bài viết
                     data.forEach(post => {
                         // TẠO THẺ IMAGE NẾU CÓ filename
-                        //const imageHtml = post.image_filename 
-                        //    ? `<img src="/static/post_images/${post.image_filename}" style="max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ddd;">` 
-                        //    : '';
+                        const imageHtml = post.image_filename 
+                            ? `<img src="/static/post_images/${post.image_filename}" style="max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ddd;">` 
+                            : '';
                         popupContent += `
                             <div style="margin-bottom: 10px; border: 1px solid #eee; padding: 8px; border-radius: 4px; background-color: #f9f9f9;">
-                                 <h4 style="margin: 0; font-size: 1.1em;">
+                                ${imageHtml} <h4 style="margin: 0; font-size: 1.1em;">
                                     <a href="/forum/post/${post.id}" target="_blank" title="Xem thêm trong Forum" style="color: #007bff; text-decoration: none; font-weight: bold;">
                                         ${post.title}
                                     </a>

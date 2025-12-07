@@ -496,7 +496,7 @@ def get_friend_posts(user_id):
             if post.content and len(post.content) > 150:
                 content_snippet = post.content[:150] + "..."
             
-            # image_filename = post.images
+            image_filename = json.loads(post.images) if post.images else []
                 
             results.append({
                 "id": post.id,
@@ -504,7 +504,7 @@ def get_friend_posts(user_id):
                 "content_snippet": content_snippet,
                 "created_at": post.created_at.strftime("%Y-%m-%d %H:%M:%S"),
                 "privacy": post.privacy,
-                # "image_filename": image_filename
+                "image_filename": image_filename[0] if image_filename else None
             })
         # print(results[0].image_filename)
         # print(results[1].image_filename)
