@@ -931,7 +931,7 @@
           // Hiển thị kết quả (3 cột, tối đa 3 hàng)
           container.innerHTML = destinationsToShow.map(place => `
               <div class="image-card" onclick="viewDetail(${place.id})">
-                  <img src="/static/images/${place.filename || 'default.jpg'}" 
+                  <img src="${place.filename?.includes('://') ? place.filename : `/static/images/${place.filename || 'default.jpg'}`}"
                        alt="${place.name || 'Hình ảnh'}"
                        onerror="this.src='https://via.placeholder.com/280x220?text=LocaGo'">
                   <div class="image-info">
