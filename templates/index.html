@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LocaGo! - Khám phá điểm đến</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -49,9 +51,10 @@
           display: flex;
           gap: 20px;
           align-items: center;
+          position: relative;
       }
 
-      .nav-links a, .nav-links select {
+      .nav-links a, .nav-links button {
           text-decoration: none;
           color: #333;
           padding: 10px 18px;
@@ -65,7 +68,7 @@
           font-family: 'Poppins', sans-serif;
       }
 
-      .nav-links a:hover {
+      .nav-links a:hover, .nav-links button:hover {
           background: #f0f0f0;
       }
 
@@ -75,18 +78,99 @@
           font-weight: 600;
       }
 
-      .btn-secondary {
-          border: 2px solid #1C6758 !important;
-          color: #1C6758 !important;
-          font-weight: 600;
+      /* Hamburger Menu */
+      .hamburger-btn {
+          font-size: 24px;
+          padding: 8px 12px !important;
       }
 
-      /* Phần Hero */
+      .dropdown-menu {
+          position: absolute;
+          top: 60px;
+          right: 0;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+          padding: 10px;
+          min-width: 200px;
+          display: none;
+          z-index: 1001;
+      }
+
+      .dropdown-menu.show {
+          display: block;
+          animation: fadeIn 0.2s ease;
+      }
+
+      @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+      }
+
+      .dropdown-menu a {
+          display: block;
+          padding: 12px 16px;
+          border-radius: 8px;
+          margin: 2px 0;
+          color: #333;
+      }
+
+      .dropdown-menu a:hover {
+          background: #f0f0f0;
+      }
+
+      /* Hero Section with Slideshow */
       .hero {
-          background: linear-gradient(135deg, #8EB486 0%, #1C6758 100%);
+          position: relative;
+          height: 600px;
+          overflow: hidden;
+          color: white;
+      }
+
+      .hero-slideshow {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 1;
+      }
+
+      .hero-slide {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-size: cover;
+          background-position: center;
+          opacity: 0;
+          transition: opacity 1.5s ease-in-out;
+      }
+
+      .hero-slide.active {
+          opacity: 1;
+      }
+
+      .hero-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 2;
+      }
+
+      .hero-content {
+          position: relative;
+          z-index: 3;
           padding: 60px 20px;
           text-align: center;
-          color: white;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
       }
 
       .hero h1 {
@@ -94,6 +178,7 @@
           margin-bottom: 15px;
           font-weight: 700;
           font-family: 'Poppins', sans-serif;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
       }
 
       .hero p {
@@ -101,9 +186,10 @@
           margin-bottom: 40px;
           opacity: 0.95;
           font-weight: 400;
+          text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
       }
 
-      /* Khung tìm kiếm */
+      /* Search Container */
       .search-container {
           max-width: 900px;
           margin: 0 auto;
@@ -194,7 +280,6 @@
           box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
       }
 
-      /* Gợi ý tìm kiếm */
       .suggestion-tags {
           margin-top: 20px;
           padding-top: 20px;
@@ -232,23 +317,7 @@
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       }
 
-    /* Thẻ cố định cho Danh sách Yêu thích */
-      .fixed-favorite-card {
-          border: 3px solid #1C6758; 
-          background: #e7fff3; /* Nền sáng */
-          order: -1; /* Đảm bảo nó luôn ở vị trí đầu tiên trong grid */
-      }
-
-      .fixed-favorite-card:hover {
-          box-shadow: 0 15px 35px rgba(28, 103, 88, 0.3);
-      }
-
-      .fixed-favorite-card img {
-            /* Hiệu ứng mờ cho hình ảnh placeholder */
-         filter: brightness(1.2) contrast(1.1) !important; 
-        }
-
-      /* Nội dung chính */
+      /* Main Content Layout */
       .container {
           max-width: 1400px;
           margin: 40px auto;
@@ -264,11 +333,21 @@
           font-family: 'Poppins', sans-serif;
       }
 
-      .image-grid {
+      /* Đảm bảo layout 1fr 400px được giữ */
+      .content-layout {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 25px;
+          grid-template-columns: 1fr 400px;
+          gap: 30px;
           margin-bottom: 60px;
+      }
+
+      /* Left: Destinations Grid */
+      .destinations-grid {
+          display: grid;
+          /* Thiết lập 3 cột cố định theo yêu cầu */
+          grid-template-columns: repeat(3, 1fr); 
+          gap: 25px;
+          grid-auto-rows: minmax(300px, auto);
       }
 
       .image-card {
@@ -316,11 +395,173 @@
           font-weight: 600;
       }
 
+      /* Pagination */
+      .pagination {
+          /* Giữ nguyên vì nó nằm trong cột trái, không cần grid-column: 1 / -1; */
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 15px;
+          margin-top: 30px;
+      }
+
+      .pagination button {
+          padding: 12px 24px;
+          background: white;
+          border: 2px solid #1C6758;
+          border-radius: 8px;
+          color: #1C6758;
+          font-weight: 600;
+          cursor: pointer;
+          transition: 0.3s;
+      }
+
+      .pagination button:hover:not(:disabled) {
+          background: #1C6758;
+          color: white;
+      }
+
+      .pagination button:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+      }
+
+      .pagination .page-info {
+          font-weight: 600;
+          color: #333;
+      }
+
+      /* Right Sidebar - ĐÃ BỎ position: sticky để cho phép cuộn thoải mái */
+      .sidebar {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+          /* position: sticky;
+          top: 90px;
+          height: fit-content; */
+      }
+
+      .sidebar-card {
+          background: white;
+          border-radius: 15px;
+          padding: 20px;
+          box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+      }
+
+      .sidebar-card h3 {
+          font-size: 18px;
+          font-weight: 600;
+          margin-bottom: 15px;
+          color: #1C6758;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+      }
+
+      /* Friends Online */
+      .friends-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          max-height: 300px;
+          /* Cho phép cuộn danh sách bạn bè nếu quá dài */
+          overflow-y: auto; 
+      }
+
+      .friend-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px;
+          border-radius: 8px;
+          transition: 0.2s;
+      }
+
+      .friend-item:hover {
+          background: #f5f5f5;
+      }
+
+      .friend-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #8EB486, #1C6758);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: 600;
+          position: relative;
+      }
+
+      .status-dot {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          border: 2px solid white;
+      }
+
+      .status-dot.online {
+          background: #4ade80;
+      }
+
+      .status-dot.offline {
+          background: #94a3b8;
+      }
+
+      .friend-name {
+          font-weight: 500;
+          color: #333;
+          font-size: 14px;
+      }
+
+      /* Map Container */
+      .map-container {
+          width: 100%;
+          height: 400px;
+          border-radius: 12px;
+          overflow: hidden;
+          background: #e5e7eb;
+          position: relative;
+      }
+
+      .map-container #miniMap {
+          width: 100%;
+          height: 100%;
+          border-radius: 12px;
+      }
+
+      .map-link-btn {
+          position: absolute;
+          bottom: 10px;
+          right: 10px;
+          background: white;
+          border: 2px solid #1C6758;
+          padding: 8px 16px;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #1C6758;
+          cursor: pointer;
+          z-index: 1000;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          transition: 0.3s;
+      }
+
+      .map-link-btn:hover {
+          background: #1C6758;
+          color: white;
+      }
+
       .no-results { 
           text-align: center; 
           padding: 60px 20px; 
           color: #999;
           font-size: 18px;
+          grid-column: 1 / -1;
       }
 
       /* Footer */
@@ -361,12 +602,12 @@
           color: #888;
       }
 
-      /* Nút cuộn lên đầu trang */
+      /* Scroll Top Button */
       #scrollTop {
           position: fixed;
           bottom: 30px;
           right: 30px;
-          background: linear-gradient(135deg, #1C6758,  #8EB486);
+          background: linear-gradient(135deg, #1C6758, #8EB486);
           color: white;
           width: 50px;
           height: 50px;
@@ -388,7 +629,27 @@
           display: block;
       }
 
-      /* Responsive - Giao diện mobile */
+      /* Responsive */
+      @media (max-width: 1024px) {
+          .content-layout {
+              grid-template-columns: 1fr;
+          }
+
+          .sidebar {
+              position: relative;
+              top: 0;
+              flex-direction: row;
+          }
+
+          .sidebar-card {
+              flex: 1;
+          }
+
+          .destinations-grid {
+              grid-template-columns: repeat(2, 1fr);
+          }
+      }
+
       @media (max-width: 768px) {
           .hero h1 {
               font-size: 2em;
@@ -406,134 +667,161 @@
               flex-wrap: wrap;
               gap: 10px;
           }
+
+          .sidebar {
+              flex-direction: column;
+          }
+
+          .destinations-grid {
+              grid-template-columns: 1fr;
+          }
       }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
   <header>
       <div class="header-container">
           <a href="/" class="logo">Loca<span>Go!</span></a>
           <div class="nav-links">
-              <select id="languageSelect">
-                  <option value="vi">Tiếng Việt</option>
-                  <option value="en">English</option>
-              </select>
-              <a href="/MapRouting">Bản đồ</a>
+              <a href="/MapRouting">Bản đồ du lịch</a>
               <a href="/chat_ui">Chatbot du lịch</a>
               <a href="/forum">Forum</a>
-     <nav>
-    {% if current_user.is_authenticated %}
-        <!-- Hiện khi đã đăng nhập -->
-        <a href="{{ url_for('login_bp.logout') }}" class="btn btn-danger">Đăng xuất</a>
-    {% else %}
-        <!-- Hiện khi chưa đăng nhập -->
-        <a href="{{ url_for('login_bp.register') }}" class="btn btn-secondary">Đăng ký</a>
-        <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary">Đăng nhập</a>
-    {% endif %}
-</nav>
-
-
+              <a href="/friends_map">Friends map</a>
+              <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
+              <button class="hamburger-btn" onclick="toggleMenu()">
+                  <i class="fas fa-bars"></i>
+              </button>
+              <div class="dropdown-menu" id="dropdownMenu">
+                  <a href="{{ url_for('favorite_bp.list_favorites') }}"><i class="fas fa-heart"></i> Danh sách yêu thích</a>
+                  <a href="/friends"><i class="fas fa-user-friends"></i> Bạn bè</a>
+                  <a href="{{ url_for('login_bp.logout') }}"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+              </div>
           </div>
       </div>
   </header>
 
-  <!-- Phần Hero với form tìm kiếm -->
   <section class="hero">
-      <h1>Khám phá phiên bản tuyệt nhất của bạn!</h1>
-      <p>Mở ra chân trời mới, đam mê mới và đánh thức phiên bản rực rỡ của bạn cùng LocaGo!</p>
+      <div class="hero-slideshow">
+          <div class="hero-slide active" style="background-image: url('https://images.unsplash.com/photo-1528127269322-539801943592?w=1920');"></div>
+          <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=1920');"></div>
+          <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=1920');"></div>
+          <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920');"></div>
+      </div>
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+          <h1>Khám phá phiên bản tuyệt nhất của bạn!</h1>
+          <p>Mở ra chân trời mới, đam mê mới và đánh thức phiên bản rực rỡ của bạn cùng LocaGo!</p>
 
-      <div class="search-container">
-          <!-- Các tab tìm kiếm -->
-          <div class="search-tabs">
-              <div class="tab active" onclick="switchTab('keyword')">Từ khóa</div>
-              <div class="tab" onclick="switchTab('filter')">Thành phố & Thẻ</div>
-              <div class="tab" onclick="switchTab('ai')">Tìm bằng AI</div>
-              <div class="tab" onclick="switchTab('image')">Tìm bằng hình ảnh</div>
-          </div>
-
-          <!-- Tìm kiếm theo từ khóa -->
-          <div id="keyword" class="search-form active">
-              <div class="search-row">
-                  <input type="text" id="searchInput" placeholder="Nhập từ khóa: cat, dog, mountain...">
-                  <button class="search-button" onclick="searchImages()">Tìm kiếm</button>
+          <div class="search-container">
+              <div class="search-tabs">
+                  <div class="tab active" onclick="switchTab('keyword')">Từ khóa</div>
+                  <div class="tab" onclick="switchTab('filter')">Thành phố & Thẻ</div>
+                  <div class="tab" onclick="switchTab('ai')">Tìm bằng AI</div>
+                  <div class="tab" onclick="switchTab('image')">Tìm bằng hình ảnh</div>
               </div>
-          </div>
 
-          <!-- Tìm kiếm theo bộ lọc -->
-          <div id="filter" class="search-form">
-              <div class="search-row">
-                  <input type="text" id="cityInput" placeholder="Thành phố (VD: Hà Nội)">
-                  <input type="text" id="tagInput" placeholder="Thẻ (VD: lịch sử, biển)">
-                  <input type="number" id="ratingInput" min="0" max="5" step="0.5" placeholder="Điểm đánh giá">
-                  <button class="search-button" onclick="searchFilter()">Lọc</button>
+              <div id="keyword" class="search-form active">
+                  <div class="search-row">
+                      <input type="text" id="searchInput" placeholder="Nhập từ khóa: cat, dog, mountain...">
+                      <button class="search-button" onclick="searchImages()">Tìm kiếm</button>
+                  </div>
               </div>
-          </div>
 
-          <!-- Tìm kiếm bằng AI -->
-          <div id="ai" class="search-form">
-              <div class="search-row">
-                  <input type="text" id="queryText" placeholder="VD: địa điểm có nhiều cây xanh, gần biển...">
-                  <button class="search-button" onclick="searchText()">Tìm bằng AI</button>
+              <div id="filter" class="search-form">
+                  <div class="search-row">
+                      <input type="text" id="cityInput" placeholder="Thành phố (VD: Hà Nội)">
+                      <input type="text" id="tagInput" placeholder="Thẻ (VD: lịch sử, biển)">
+                      <input type="number" id="ratingInput" min="0" max="5" step="0.5" placeholder="Điểm đánh giá">
+                      <button class="search-button" onclick="searchFilter()">Lọc</button>
+                  </div>
               </div>
-          </div>
 
-          <!-- Tìm kiếm bằng hình ảnh -->
-          <div id="image" class="search-form">
-              <div class="search-row">
-                  <input type="file" id="imageUpload" accept="image/*" style="padding: 12px;">
-                  <button class="search-button" onclick="searchByImage()">Tìm bằng ảnh</button>
+              <div id="ai" class="search-form">
+                  <div class="search-row">
+                      <input type="text" id="queryText" placeholder="VD: địa điểm có nhiều cây xanh, gần biển...">
+                      <button class="search-button" onclick="searchText()">Tìm bằng AI</button>
+                  </div>
               </div>
-          </div>
 
-          <!-- Gợi ý tag -->
-          <div class="suggestion-tags">
-              <p>💡 Gợi ý tìm kiếm phổ biến:</p>
-              <div class="tags-container">
-                  <span class="tag-item" onclick="quickSearch('nghỉ dưỡng')">nghỉ dưỡng</span>
-                  <span class="tag-item" onclick="quickSearch('miền Tây')">miền Tây</span>
-                  <span class="tag-item" onclick="quickSearch('thiên nhiên')">thiên nhiên</span>
-                  <span class="tag-item" onclick="quickSearch('biển')">biển</span>
-                  <span class="tag-item" onclick="quickSearch('núi')">núi</span>
-                  <span class="tag-item" onclick="quickSearch('văn hóa')">văn hóa</span>
-                  <span class="tag-item" onclick="quickSearch('ẩm thực')">ẩm thực</span>
-                  <span class="tag-item" onclick="quickSearch('lịch sử')">lịch sử</span>
+              <div id="image" class="search-form">
+                  <div class="search-row">
+                      <input type="file" id="imageUpload" accept="image/*" style="padding: 12px;">
+                      <button class="search-button" onclick="searchByImage()">Tìm bằng ảnh</button>
+                  </div>
+              </div>
+
+              <div class="suggestion-tags">
+                  <p>💡 Gợi ý tìm kiếm phổ biến:</p>
+                  <div class="tags-container">
+                      <span class="tag-item" onclick="quickSearch('nghỉ dưỡng')">nghỉ dưỡng</span>
+                      <span class="tag-item" onclick="quickSearch('miền Tây')">miền Tây</span>
+                      <span class="tag-item" onclick="quickSearch('thiên nhiên')">thiên nhiên</span>
+                      <span class="tag-item" onclick="quickSearch('biển')">biển</span>
+                      <span class="tag-item" onclick="quickSearch('núi')">núi</span>
+                      <span class="tag-item" onclick="quickSearch('văn hóa')">văn hóa</span>
+                      <span class="tag-item" onclick="quickSearch('ẩm thực')">ẩm thực</span>
+                      <span class="tag-item" onclick="quickSearch('lịch sử')">lịch sử</span>
+                  </div>
               </div>
           </div>
       </div>
   </section>
 
-  <!-- Nội dung chính -->
-<div class="container">
-    <h2 class="section-title">Khám phá điểm đến</h2>
-    
-    <div id="results" class="image-grid">
-        <div class="image-card fixed-favorite-card" onclick="window.location.href='/favorite/list'">
-            <img src="https://via.placeholder.com/280x220?text=Yeu+Thich" 
-                 alt="Danh sách yêu thích"
-                 style="filter: grayscale(10%);">
-            <div class="image-info">
-                <h3 style="color: #1C6758;">❤️ Danh sách yêu thích</h3>
-                <div class="tags">Truy cập nhanh</div>
-                <div class="rating">Xem các địa điểm đã lưu</div>
-            </div>
-        </div>
-        </div>
-</div>
+  <div class="container">
+      <h2 class="section-title">Khám phá điểm đến</h2>
+      
+      <div class="content-layout">
+          <div>
+              <div class="destinations-grid" id="results">
+                  <div class="no-results">Đang tải dữ liệu...</div>
+              </div>
+              
+              <div class="pagination">
+                  <button id="prevBtn" onclick="previousPage()" disabled>
+                      <i class="fas fa-chevron-left"></i> Trước
+                  </button>
+                  <span class="page-info">
+                      Trang <span id="currentPage">1</span> / <span id="totalPages">1</span>
+                  </span>
+                  <button id="nextBtn" onclick="nextPage()">
+                      Tiếp <i class="fas fa-chevron-right"></i>
+                  </button>
+              </div>
+          </div>
 
-  <!-- Footer -->
+          <div class="sidebar">
+              <div class="sidebar-card">
+                  <h3><i class="fas fa-user-friends"></i> Bạn bè Online</h3>
+                  <div class="friends-list" id="friendsList">
+                      <div class='friend-item'>Đang tải dữ liệu bạn bè...</div>
+                  </div>
+              </div>
+
+              <div class="sidebar-card">
+                  <h3><i class="fas fa-map-marked-alt"></i> Bản đồ Việt Nam</h3>
+                  <div class="map-container">
+                      <div id="miniMap"></div>
+                      <button class="map-link-btn" onclick="window.location.href='/MapRouting'">
+                          <i class="fas fa-expand"></i> Xem đầy đủ
+                      </button>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+
   <footer>
       <div class="footer-container">
           <div class="footer-section">
               <h3>Về LocaGo!</h3>
-              <p>24127552 - Nguyễn Võ Nhật Thuận </p>
-              <p>24127386 - Vũ Đỗ Mạnh Hùng </p>
-              <p>24127248 - Nguyễn Trần Phương Thúy </p>
-              <p>24127086 - Trần Hoàng Khánh My </p>
-              <p>24127302 - Nguyễn Xuân Quyên </p>
-              <p>24127106 - Lai Phạm Như Phúc  </p>
-              <p>24127207 - Nguyễn Thục Nghi  </p>
+              <p>24127552 - Nguyễn Võ Nhật Thuận</p>
+              <p>24127386 - Vũ Đỗ Mạnh Hùng</p>
+              <p>24127248 - Nguyễn Trần Phương Thúy</p>
+              <p>24127086 - Trần Hoàng Khánh My</p>
+              <p>24127302 - Nguyễn Xuân Quyên</p>
+              <p>24127106 - Lai Phạm Như Phúc</p>
+              <p>24127207 - Nguyễn Thục Nghi</p>
               <p style="margin-top: 15px;">Hãy để chúng tôi đồng hành cùng bạn trong mọi hành trình!</p>
           </div>
 
@@ -541,15 +829,17 @@
               <h3>Thông tin môn học</h3>
               <p><strong>Môn:</strong> Tư duy tính toán</p>
               <p><strong>Mã môn:</strong> CSC10014</p>
-              <p><strong>Giảng viên:</strong> TS. Lê Ngọc Thành</p>
+              <p><strong>Giảng viên:</strong> Lê Ngọc Thành</p>
+              <p><strong>           </strong> Huỳnh Lâm Hải Đăng</p>
+              <p><strong>           </strong> Nguyễn Thanh Tình</p>
               <p><strong>Trường:</strong> Đại học Khoa học Tự nhiên, ĐHQG-HCM</p>
           </div>
 
           <div class="footer-section">
               <h3>Liên hệ</h3>
-              <p>📧 Email: locago@hcmus.edu.vn</p>
-              <p>📱 Hotline: 1900 xxxx</p>
-              <p>🏢 Địa chỉ: 227, Nguyễn Văn Cừ, P.Chợ Quán, TP.HCM</p>
+              <p>Email: locago@hcmus.edu.vn</p>
+              <p>Hotline: 1900 1010</p>
+              <p>Địa chỉ: 227, Nguyễn Văn Cừ, P.Chợ Quán, TP.HCM</p>
           </div>
       </div>
 
@@ -558,11 +848,43 @@
       </div>
   </footer>
 
-  <!-- Nút cuộn lên đầu trang -->
   <button id="scrollTop" onclick="scrollToTop()">↑</button>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-      // Chuyển đổi giữa các tab tìm kiếm
+      /* --- GLOBAL VARIABLES & CONFIG --- */
+      let ALL_DESTINATIONS = []; // Lưu trữ tất cả kết quả tìm kiếm
+      const DESTINATIONS_PER_PAGE = 9; // 3 hàng x 3 cột
+      let CURRENT_PAGE = 1;
+      // Dùng 1 ID giả định vì không có session ở đây, nhưng vẫn gọi API thực tế
+      const CURRENT_USER_ID = 1; 
+
+      /* --- SLIDESHOW & MENU FUNCTIONS (Giữ nguyên) --- */
+
+      let currentSlide = 0;
+      const slides = document.querySelectorAll('.hero-slide');
+      
+      function nextSlide() {
+          slides[currentSlide].classList.remove('active');
+          currentSlide = (currentSlide + 1) % slides.length;
+          slides[currentSlide].classList.add('active');
+      }
+      
+      setInterval(nextSlide, 3000);
+
+      function toggleMenu() {
+          const menu = document.getElementById('dropdownMenu');
+          menu.classList.toggle('show');
+      }
+
+      document.addEventListener('click', function(event) {
+          const menu = document.getElementById('dropdownMenu');
+          const hamburger = document.querySelector('.hamburger-btn');
+          if (!menu.contains(event.target) && !hamburger.contains(event.target)) {
+              menu.classList.remove('show');
+          }
+      });
+
       function switchTab(tabName) {
           document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
           document.querySelectorAll('.search-form').forEach(f => f.classList.remove('active'));
@@ -571,48 +893,115 @@
           document.getElementById(tabName).classList.add('active');
       }
 
-      // Tìm kiếm nhanh từ các tag gợi ý
       function quickSearch(keyword) {
           document.getElementById('searchInput').value = keyword;
-          // Chuyển sang tab keyword
           document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
           document.querySelectorAll('.search-form').forEach(f => f.classList.remove('active'));
           document.querySelector('.tab').classList.add('active');
           document.getElementById('keyword').classList.add('active');
-          // Thực hiện tìm kiếm
           searchImages();
       }
+      
+      /* --- PAGINATION CORE FUNCTIONS (ĐÃ THÊM) --- */
 
-      // Các hàm tìm kiếm
+      // Hàm hiển thị kết quả cho trang hiện tại (Thay thế displayResults cũ)
+      function renderPage() {
+          const container = document.getElementById('results');
+          const totalPages = Math.ceil(ALL_DESTINATIONS.length / DESTINATIONS_PER_PAGE);
+          
+          // Cập nhật thông tin phân trang
+          document.getElementById('totalPages').textContent = totalPages || 1;
+          document.getElementById('currentPage').textContent = CURRENT_PAGE;
+          
+          // Vô hiệu hóa/Kích hoạt nút
+          document.getElementById('prevBtn').disabled = CURRENT_PAGE === 1;
+          document.getElementById('nextBtn').disabled = CURRENT_PAGE >= totalPages;
+          document.querySelector('.pagination').style.display = ALL_DESTINATIONS.length > 0 ? 'flex' : 'none';
+
+          if (!ALL_DESTINATIONS || ALL_DESTINATIONS.length === 0) {
+              container.innerHTML = '<div class="no-results">Không tìm thấy kết quả nào.</div>';
+              return;
+          }
+
+          // Tính toán index bắt đầu và kết thúc
+          const startIndex = (CURRENT_PAGE - 1) * DESTINATIONS_PER_PAGE;
+          const endIndex = startIndex + DESTINATIONS_PER_PAGE;
+          const destinationsToShow = ALL_DESTINATIONS.slice(startIndex, endIndex);
+
+          // Hiển thị kết quả (3 cột, tối đa 3 hàng)
+          container.innerHTML = destinationsToShow.map(place => `
+              <div class="image-card" onclick="viewDetail(${place.id})">
+                  <img src="/static/images/${place.filename || 'default.jpg'}" 
+                       alt="${place.name || 'Hình ảnh'}"
+                       onerror="this.src='https://via.placeholder.com/280x220?text=LocaGo'">
+                  <div class="image-info">
+                      <h3>${place.name || 'Chưa có tên'}</h3>
+                      <div class="tags">${place.city || ''} ${place.tags ? '- ' + place.tags : ''}</div>
+                      <div class="rating">⭐ ${place.rating || '0'}</div>
+                  </div>
+              </div>
+          `).join('');
+          
+          // Cuộn lên đầu phần địa danh sau khi chuyển trang
+          const contentLayout = document.querySelector('.content-layout');
+          if (contentLayout) {
+              contentLayout.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+      }
+
+      function nextPage() {
+          const totalPages = Math.ceil(ALL_DESTINATIONS.length / DESTINATIONS_PER_PAGE);
+          if (CURRENT_PAGE < totalPages) {
+              CURRENT_PAGE++;
+              renderPage();
+          }
+      }
+
+      function previousPage() {
+          if (CURRENT_PAGE > 1) {
+              CURRENT_PAGE--;
+              renderPage();
+          }
+      }
+
+      /* --- SEARCH FUNCTIONS (ĐÃ SỬA ĐỂ TÍCH HỢP PHÂN TRANG) --- */
+
+      async function processSearch(apiCall, errorMessage) {
+          try {
+              const res = await apiCall();
+              const data = await res.json();
+              
+              ALL_DESTINATIONS = data; // Lưu tất cả kết quả
+              CURRENT_PAGE = 1; // Reset về trang 1
+              renderPage(); // Hiển thị trang đầu tiên
+              
+          } catch (error) {
+              console.error(`Lỗi tìm kiếm (${errorMessage}):`, error);
+              document.getElementById('results').innerHTML = 
+                  `<div class="no-results">${errorMessage}. Vui lòng thử lại.</div>`;
+              ALL_DESTINATIONS = [];
+              renderPage(); // Hiển thị trang trống và ẩn nút phân trang
+          }
+      }
+
       async function searchImages() {
           const query = document.getElementById('searchInput').value.trim();
-          
-          try {
-              const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-              const data = await res.json();
-              displayResults(data, query);
-          } catch (error) {
-              console.error('Lỗi tìm kiếm:', error);
-              document.getElementById('results').innerHTML = 
-                  '<div class="no-results">Đã xảy ra lỗi khi tìm kiếm. Vui lòng thử lại.</div>';
-          }
+          await processSearch(
+              () => fetch(`/api/search?q=${encodeURIComponent(query)}`),
+              'Đã xảy ra lỗi khi tìm kiếm từ khóa'
+          );
       }
 
       async function searchFilter() {
           const city = document.getElementById('cityInput').value.trim();
           const tag = document.getElementById('tagInput').value.trim();
           const rating = document.getElementById('ratingInput').value.trim() || 0;
-
-          try {
-              const url = `/search_filter?city=${encodeURIComponent(city)}&tag=${encodeURIComponent(tag)}&rating=${rating}`;
-              const res = await fetch(url);
-              const data = await res.json();
-              displayResults(data);
-          } catch (error) {
-              console.error('Lỗi lọc:', error);
-              document.getElementById('results').innerHTML = 
-                  '<div class="no-results">Đã xảy ra lỗi khi lọc. Vui lòng thử lại.</div>';
-          }
+          const url = `/search_filter?city=${encodeURIComponent(city)}&tag=${encodeURIComponent(tag)}&rating=${rating}`;
+          
+          await processSearch(
+              () => fetch(url),
+              'Đã xảy ra lỗi khi lọc'
+          );
       }
 
       async function searchText() {
@@ -621,16 +1010,10 @@
               alert('Vui lòng nhập nội dung tìm kiếm!');
               return;
           }
-
-          try {
-              const res = await fetch(`/search_text?query=${encodeURIComponent(query)}`);
-              const data = await res.json();
-              displayResults(data);
-          } catch (error) {
-              console.error('Lỗi tìm kiếm AI:', error);
-              document.getElementById('results').innerHTML = 
-                  '<div class="no-results">Đã xảy ra lỗi khi tìm kiếm. Vui lòng thử lại.</div>';
-          }
+          await processSearch(
+              () => fetch(`/search_text?query=${encodeURIComponent(query)}`),
+              'Đã xảy ra lỗi khi tìm kiếm AI'
+          );
       }
 
       async function searchByImage() {
@@ -657,44 +1040,117 @@
               }
               
               const data = await res.json();
-              displayResults(data);
+              ALL_DESTINATIONS = data;
+              CURRENT_PAGE = 1;
+              renderPage();
           } catch (error) {
               console.error('Lỗi tìm kiếm ảnh:', error);
               document.getElementById('results').innerHTML = 
-                  '<div class="no-results">Đã xảy ra lỗi khi tìm kiếm. Vui lòng thử lại.</div>';
+                  '<div class="no-results">Đã xảy ra lỗi khi tìm kiếm bằng ảnh. Vui lòng thử lại.</div>';
           }
       }
+      
+      /* --- FRIENDS FUNCTION (ĐÃ CHUYỂN VÀO SCRIPT) --- */
 
-      // Hiển thị kết quả tìm kiếm
-      function displayResults(data, query = '') {
-          const container = document.getElementById('results');
-          if (!container) return;
+      async function loadFriendsForSidebar() {
+          const container = document.getElementById("friendsList");
+          container.innerHTML = "<div class='friend-item'>Đang tải dữ liệu bạn bè...</div>";
 
-          if (!data || data.length === 0) {
-              container.innerHTML = `<div class="no-results">Không tìm thấy kết quả ${query ? 'cho "' + query + '"' : ''}</div>`;
+          const userId = CURRENT_USER_ID || 0;
+          if (!userId) {
+              container.innerHTML = "<div class='friend-item'>Chưa đăng nhập</div>";
               return;
           }
 
-          container.innerHTML = data.map(place => `
-              <div class="image-card" onclick="viewDetail(${place.id})">
-                  <img src="${place.filename?.includes('://') ? place.filename : `/static/images/${place.filename || 'default.jpg'}`}"
-                       alt="${place.name || 'Hình ảnh'}"
-                       onerror="this.src='https://via.placeholder.com/280x220?text=No+Image'">
-                  <div class="image-info">
-                      <h3>${place.name || 'Chưa có tên'}</h3>
-                      <div class="tags">${place.city || ''} ${place.tags ? '- ' + place.tags : ''}</div>
-                      <div class="rating">⭐ ${place.rating || '0'}</div>
-                  </div>
-              </div>
-          `).join('');
+          try {
+              // Gọi API đã có trong backend của bạn
+              const res = await fetch(`/friends/list/${userId}`);
+              
+              if (!res.ok) {
+                   // Xử lý lỗi hoặc trả về danh sách rỗng nếu không có dữ liệu
+                   container.innerHTML = "<div class='friend-item'>Lỗi tải dữ liệu bạn bè.</div>";
+                   return;
+              }
+              
+              const data = await res.json();
+              const friends = data.friends || []; // Lấy danh sách bạn bè
+
+              container.innerHTML = "";
+
+              if (friends.length === 0) {
+                  container.innerHTML = "<div class='friend-item'>Không có bạn bè</div>";
+              } else {
+                  friends.forEach(f => {
+                      const initial = (f.username && f.username.charAt(0)) ? f.username.charAt(0).toUpperCase() : '?';
+                      container.innerHTML += `
+                          <div class="friend-item">
+                              <div class="friend-avatar">
+                                  ${initial}
+                                  <span class="status-dot ${f.is_online ? 'online' : 'offline'}"></span>
+                              </div>
+                              <span class="friend-name">${f.username || 'Người dùng ẩn'}</span>
+                          </div>
+                      `;
+                  });
+              }
+
+          } catch (e) {
+              console.error("Lỗi tải bạn bè:", e);
+              container.innerHTML = "<div class='friend-item'>Lỗi kết nối server</div>";
+          }
       }
 
-      // Xem chi tiết địa điểm
+      /* --- MAP FUNCTIONS (Giữ nguyên) --- */
+      function initMiniMap() {
+          const miniMap = L.map('miniMap', {
+              zoomControl: true,
+              scrollWheelZoom: false
+          }).setView([16.0544, 108.2022], 6);
+
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '© OpenStreetMap contributors',
+              maxZoom: 18
+          }).addTo(miniMap);
+
+          const popularPlaces = [
+              { name: 'Hà Nội', lat: 21.0285, lon: 105.8542 },
+              { name: 'Hạ Long', lat: 20.9601, lon: 107.0432 },
+              { name: 'Sa Pa', lat: 22.3364, lon: 103.8438 },
+              { name: 'Đà Nẵng', lat: 16.0544, lon: 108.2022 },
+              { name: 'Hội An', lat: 15.8801, lon: 108.3380 },
+              { name: 'Nha Trang', lat: 12.2388, lon: 109.1967 },
+              { name: 'Đà Lạt', lat: 11.9404, lon: 108.4583 },
+              { name: 'TP.HCM', lat: 10.7769, lon: 106.7009 },
+              { name: 'Phú Quốc', lat: 10.2897, lon: 103.9839 }
+          ];
+
+          const greenIcon = L.divIcon({
+              html: '<i class="fas fa-map-marker-alt" style="color: #1C6758; font-size: 24px;"></i>',
+              className: 'custom-marker',
+              iconSize: [24, 24],
+              iconAnchor: [12, 24]
+          });
+
+          popularPlaces.forEach(place => {
+              L.marker([place.lat, place.lon], { icon: greenIcon })
+                  .addTo(miniMap)
+                  .bindPopup(`<b>${place.name}</b><br><small>Click để xem chi tiết</small>`);
+          });
+
+          const bounds = L.latLngBounds(
+              [8.5, 102.1],
+              [23.4, 109.5]
+          );
+          miniMap.fitBounds(bounds);
+      }
+
       function viewDetail(imageId) {
+          // Giữ nguyên logic cũ của bạn là chuyển hướng sang trang chi tiết
           window.location.href = '/image/' + imageId;
       }
+      
+      /* --- UTILS (Giữ nguyên) --- */
 
-      // Xử lý hiển thị nút cuộn lên
       window.onscroll = function() {
           const scrollBtn = document.getElementById('scrollTop');
           if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
@@ -704,7 +1160,6 @@
           }
       };
 
-      // Cuộn lên đầu trang
       function scrollToTop() {
           window.scrollTo({
               top: 0,
@@ -712,7 +1167,6 @@
           });
       }
 
-      // Hỗ trợ phím Enter để tìm kiếm
       document.getElementById('searchInput').addEventListener('keypress', e => {
           if (e.key === 'Enter') searchImages();
       });
@@ -721,17 +1175,16 @@
           if (e.key === 'Enter') searchText();
       });
 
-      // Tải dữ liệu ban đầu khi mở trang
+      /* --- INITIAL LOAD (ĐÃ SỬA) --- */
       window.onload = async function() {
-          try {
-              const res = await fetch('/api/search?q=');
-              const data = await res.json();
-              displayResults(data);
-          } catch (error) {
-              console.error('Lỗi tải dữ liệu:', error);
-              document.getElementById('results').innerHTML = 
-                  '<div class="no-results">Đang tải dữ liệu...</div>';
-          }
+          // 1. Tải địa danh (sẽ gọi searchImages() -> renderPage() để hiển thị trang 1)
+          await searchImages(); 
+
+          // 2. Tải danh sách bạn bè
+          loadFriendsForSidebar(); 
+          
+          // 3. Initialize mini map
+          initMiniMap();
       };
   </script>
 
