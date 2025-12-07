@@ -23,18 +23,28 @@ def register():
 # ---------------- LOGIN ----------------
 @login_bp.route("/login", methods=["GET", "POST"])
 def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
+    login_form = LoginForm()
+    register_form = RegisterForm()
 
-        if user and bcrypt.check_password_hash(user.password, form.password.data):
+    if login_form.submit.data and login_form.validate_on_submit():
+        user = User.query.filter_by(username=login_form.username.data).first()
+        if user and bcrypt.check_password_hash(user.password, login_form.password.data):
             login_user(user)
-            session['username'] = user.username
-            session['user_id'] = user.id
             return redirect(url_for("index"))
-        flash("Sai tên đăng nhập hoặc mật khẩu!", "danger")
+        flash("Sai tài khoản hoặc mật khẩu", "danger")
 
-    return render_template("login.html", form=form)
+    if register_form.submit.data and register_form.validate_on_submit():
+        hashed_pw = bcrypt.generate_password_hash(register_form.password.data).decode("utf-8")
+        user = User(username=register_form.username.data, password=hashed_pw)
+        db.session.add(user)
+        db.session.commit()
+        flash("Đăng ký thành công!", "success")
+
+    return render_template(
+        "login.html",
+        login_form=login_form,
+        register_form=register_form
+    )
 
 # ---------------- LOGOUT ----------------
 @login_bp.route("/logout")
