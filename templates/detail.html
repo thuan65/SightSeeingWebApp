@@ -69,6 +69,27 @@
     <div id="feedbackList">Đang tải...</div>
   </div>
 
+  <!-- ===== WEATHER WIDGET ===== -->
+  <div id="weatherWidget" 
+     style="position: fixed; bottom: 20px; right: 20px; width: 200px; 
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); 
+            border-radius: 16px; padding: 12px; text-align: center; cursor: pointer; z-index:999;">
+    <div id="w-icon" class="text-4xl mb-1"></div>
+    <div id="w-temp" class="font-bold text-xl"></div>
+    <div id="w-wind" class="text-sm opacity-80 mb-1"></div>
+    <div id="w-time" class="text-sm opacity-80 mb-1"></div>
+    <div style="font-size:12px; opacity:0.7;">Nhấn để xem dự báo</div>
+  </div>
+
+<!-- DỰ BÁO 7 NGÀY (ẩn mặc định) -->
+  <div id="weatherForecast" 
+     style="display:none; position: fixed; bottom: 20px; right: 240px; width: 300px; 
+            max-height: 400px; overflow-y:auto; background: rgba(255,255,255,0.2); 
+            backdrop-filter: blur(10px); border-radius:16px; padding:12px; z-index:999;">
+    <h3 style="text-align:center; margin-bottom:10px;">Dự báo 7 ngày</h3>
+    <div id="forecastContent"></div>
+  </div>
+
   <script>
     // ===== SELECT RATING =====
     let currentRating = 0;
@@ -182,6 +203,80 @@
         }
       }
     });
+
+  </script>
+
+  <script>
+
+    function getWeatherIcon(code) {
+        if (code == 0) return "☀️";
+        if (code <= 3) return "☁️";
+        if (code <= 48) return "🌫️";
+        if (code <= 57) return "🌦️";
+        if (code <= 67) return "🌧️";
+        if (code <= 77) return "❄️";
+        if (code <= 99) return "⛈️";
+        return "❓";
+    }
+
+      // ===== LOAD CURRENT WEATHER =====
+  async function loadCurrentWeather(placeId) {
+    try {
+        const res = await fetch(`/weather/${placeId}`);
+        const data = await res.json();
+
+        if (!res.ok || !data.current_weather) {
+            console.error("Weather data missing", data);
+            document.getElementById("w-icon").innerHTML = "❓";
+            document.getElementById("w-temp").innerHTML = "--";
+            document.getElementById("w-wind").innerHTML = "--";
+            document.getElementById("w-time").innerHTML = "--";
+            return;
+        }
+
+        const c = data.current_weather;
+        document.getElementById("w-icon").innerHTML = getWeatherIcon(c.weathercode);
+        document.getElementById("w-temp").innerHTML = `${c.temperature}°C`;
+        document.getElementById("w-wind").innerHTML = `💨 Gió: ${c.windspeed} km/h`;
+        document.getElementById("w-time").innerHTML = `⏱ ${c.time}`;
+
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+
+
+    // ===== LOAD FORECAST =====
+    function loadForecast(placeId) {
+        fetch(`/forecast/{{ image.id }}`)
+        .then(r => r.json())
+        .then(data => {
+            let html = "";
+            for (let i = 0; i < data.daily.time.length; i++) {
+                html += `
+                    <div style="padding:6px; margin-bottom:6px; border-radius:10px; background: rgba(255,255,255,0.1);">
+                        <div><b>${data.daily.time[i]}</b></div>
+                        <div>🌡 Max: ${data.daily.temperature_2m_max[i]}°C</div>
+                        <div>🌡 Min: ${data.daily.temperature_2m_min[i]}°C</div>
+                        <div>💧 Mưa: ${data.daily.precipitation_sum[i]} mm</div>
+                    </div>
+                `;
+            }
+            document.getElementById("forecastContent").innerHTML = html;
+        });
+    }
+
+  document.getElementById("weatherWidget").addEventListener("click", () => {
+      const f = document.getElementById("weatherForecast");
+      f.style.display = f.style.display === "none" ? "block" : "none";
+      if (f.style.display === "block") {
+          loadForecast({{ image.id }});
+      }
+  });
+
+  loadCurrentWeather({{ image.id }});
+
 
   </script>
 

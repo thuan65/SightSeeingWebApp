@@ -23,4 +23,4 @@ def grant_admin(username):
     print(f"✔️ Đã cấp quyền admin cho user: {username}")
 
 if __name__ == "__main__":
-    grant_admin("kera")     # ⚠️ sửa tên user vào đây
+    grant_admin("123456")     # ⚠️ sửa tên user vào đây

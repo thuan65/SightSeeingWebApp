@@ -11,6 +11,7 @@ from MapRouting.MapRoutingRoute import MapRouting_bp
 from Search_Filter.search_filter import search_filter
 from Search_Text.search_text import search_text
 from imageSearch.imageSearchRoute import search_image_bp
+from Weather.weather import weatherForecast_bp
 from SuggestionsFeedback.feedback import feedback_bp
 from friends import friends_bp
 from add_favorites.routes import favorite_bp
@@ -45,7 +46,7 @@ def create_app(config_class="config.Config"):
     app.register_blueprint(forum)
     app.register_blueprint(search_image_bp)
     app.register_blueprint(login_bp)
-
+    app.register_blueprint(weatherForecast_bp)
     app.register_blueprint(friends_bp)
     app.register_blueprint(favorite_bp)
     app.register_blueprint(MapRouting_bp, url_prefix= "/MapRouting")
