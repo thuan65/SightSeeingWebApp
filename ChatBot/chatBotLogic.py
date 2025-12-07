@@ -4,17 +4,24 @@ import google.generativeai as genai
 import torch
 import os
 from dotenv import load_dotenv
+from sentence_transformers.util import cos_sim
 
-from flask import current_app
-from models import ConversationHistory, Image
+from flask import Flask, current_app, copy_current_request_context, has_app_context, has_request_context
+from models import ConversationHistory, Image, FaissMapping
+import faiss_loader
 from extensions import db
+
+import faiss
+import numpy as np
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(BASE_DIR, "system_prompt.txt")
 
+
 with open(file_path, 'r', encoding='utf-8') as file:
     SYSTEM_PROMPT = file.read()
+
 
 # ======================================================
 #Load môi trường & cấu hình API key
@@ -32,9 +39,11 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 gemini_model = genai.GenerativeModel("gemini-2.5-flash")
 # gemini_model = genai.GenerativeModel("gemini-live-2.5-flash")
 
-# ======================================================
-#Kết nối database
-# ======================================================
+def aTemporaryCreateApp():
+    app = Flask(__name__)
+    app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///FlaskDataBase.db"
+    db.init_app(app)
+    return app
 
 # ======================================================
 # Phân loại ý định người dùng
@@ -59,19 +68,34 @@ def detect_intent(text: str) -> str:
 # ======================================================
 #Gợi ý địa điểm từ cơ sở dữ liệu
 # ======================================================
-def suggest_place(user_query: str) -> dict:
-    with current_app.app_context():
-        results = Image.query.all()
-    # Chuẩn bị embedding cho toàn bộ địa điểm
-        place_sentences = [f"{r.name} - {r.description}" for r in results]
-        place_embeddings = sbert_model.encode(place_sentences, convert_to_tensor=True)
-    """
-    Trả về địa điểm có mô tả gần nhất với truy vấn người dùng.
-    """
-    query_embedding = sbert_model.encode(user_query, convert_to_tensor=True)
-    scores = util.cos_sim(query_embedding, place_embeddings)[0]
-    best_idx = scores.argmax().item()
-    return dict(results[best_idx])
+
+def suggest_place(user_query: str, top_k: int = 3) -> dict:
+    # Encode query
+    query_emb = sbert_model.encode([user_query], convert_to_numpy=True)
+    query_emb = query_emb.astype('float32')
+    faiss.normalize_L2(query_emb)  # nếu index đã normalize
+
+    distances, indices = faiss_loader.faiss_Text_index.search(query_emb, top_k)
+
+    results = []
+
+    app = aTemporaryCreateApp()
+
+    with app.app_context():
+        for idx in indices[0]:  # indices[0] là mảng các index của top_k
+            image_id = faiss_loader.index_to_image_id[idx]
+            image = Image.query.get(image_id)
+            if image:  # an toàn nếu record tồn tại
+                results.append({
+                    "id": image.id,
+                    "name": image.name,
+                    "tag": image.tags,
+                    "address": image.address,
+                    "description": image.description
+                })
+
+    return results
+
 
 # ======================================================
 #Kiểm tra câu hỏi có nằm trong phạm vi sightseeing
@@ -117,6 +141,7 @@ def gemini_reply(user_message: str) -> str:
         return f"Lỗi khi gọi Gemini API: {e}"
     
 def gemini_stream(user_message: str):
+ 
     try:
         response = gemini_model.generate_content(
             user_message, 
@@ -151,12 +176,16 @@ def gemini_stream(user_message: str):
 
 #     return reply
 
+
+
 def chatbot_reply(user_message: str):
     intent = detect_intent(user_message)
 
+   
+
     if intent == "suggest":
-        place = suggest_place(user_message)
-        raw_info = f"Gợi ý cho bạn: {place['name']} — {place['description']}"
+        places = suggest_place(user_message)
+        raw_info = "\n".join([f"{p['name']} — {p['description']}" for p in places])
 
         prompt = f"""
         # SYSTEM INSTRUCTION
@@ -192,4 +221,4 @@ def chatbot_reply(user_message: str):
 
     return reply
 
-print("Ai runningnn...")
+print("Chat Bot loaded")

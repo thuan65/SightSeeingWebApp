@@ -10,7 +10,7 @@ import torch, os, json
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(BASE_DIR) #Ra 1 cấp thư mục 
-file_path_vectorDatabase = os.path.join(PARENT_DIR, "instance", "faiss_index.index")
+file_path_vectorDatabase = os.path.join(PARENT_DIR, "instance", "a.index")
 index = faiss.read_index(file_path_vectorDatabase)
 file_path_metadata = os.path.join(PARENT_DIR, "instance", "metadata.json")
 

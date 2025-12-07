@@ -1,7 +1,10 @@
-import requests
-import json
+from flask import Flask, render_template, request, jsonify
+import requests, json
 
-def get_weather(lat, lon):
+app = Flask(__name__, template_folder= "weatheringWithYou")
+
+
+def get_current_weather(lat, lon):
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": lat,#Vĩ độ
@@ -13,7 +16,18 @@ def get_weather(lat, lon):
     response = requests.get(url, params=params)
     return response.json()
 
-data = get_weather(21.03, 105.85)  # Hà Nội
+def get_weather_forecast(lat, lon):
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "daily": ["temperature_2m_max", "temperature_2m_min", "precipitation_sum"],
+        "timezone": "Asia/Bangkok",
+    }
+    response = requests.get(url, params=params)
+    return response.json()
+
+
 
 # Get Place Coordinates
 def get_address_coordinates(address):
@@ -28,3 +42,28 @@ def get_address_coordinates(address):
         return lat, lon
     else:
         return None, None
+    
+
+@app.route("/")
+def index():
+    return render_template("weather.html")
+
+
+@app.route("/weather")
+def weather():
+    lat = float(request.args.get("lat"))
+    lon = float(request.args.get("lon"))
+    data = get_current_weather(lat, lon)
+    return jsonify(data)
+
+
+@app.route("/forecast")
+def forecast():
+    lat = float(request.args.get("lat"))
+    lon = float(request.args.get("lon"))
+    data = get_weather_forecast(lat, lon)
+    return jsonify(data)
+
+
+if __name__ == "__main__":
+    app.run(debug=False)

@@ -143,3 +143,9 @@ class Favorite(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     __table_args__ = (UniqueConstraint("user_id", "image_id", name="uq_user_image"),)
+
+class FaissMapping(db.Model):
+    __tablename__ = "faiss_mapping"
+
+    id = db.Column(db.Integer, primary_key=True)    # index trong FAISS
+    image_id = db.Column(db.Integer, db.ForeignKey("images.id"))

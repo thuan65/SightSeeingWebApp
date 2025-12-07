@@ -434,9 +434,10 @@ if __name__ == "__main__":
     with app.app_context():
         # db.create_all()  # Uncomment nếu bạn muốn tạo bảng mới (cẩn thận mất dữ liệu cũ)
         pass
-
+    
+    print(print(app.config["SQLALCHEMY_DATABASE_URI"]))
     print(f"🚀 Server đang chạy tại: http://localhost:5000")
     print(f"🗺️  MapRouting module tại: http://localhost:5000/MapRouting/")
 
     # app.run(debug=True, use_reloader=False)
-    socketio.run(app, debug=True, use_reloader=False)
+    socketio.run(app, debug=False, use_reloader=False)

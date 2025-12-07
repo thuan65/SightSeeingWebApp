@@ -1,4 +1,4 @@
-﻿from flask import Blueprint, request, jsonify, Response, current_app
+﻿from flask import Blueprint, request, jsonify, Response, current_app, copy_current_request_context
 from flask_login import current_user 
 from models import db, ConversationHistory 
 from .chatBotLogic import chatbot_reply
@@ -40,12 +40,17 @@ def stream():
     full_bot_reply = []
     real_app = current_app._get_current_object()
     try:
+        @copy_current_request_context
         def generate():
 
             for chunk in chatbot_reply(user_message):
                 clean = chunk.replace("data: ", "").strip()
+                # Ví dụ wrap text 80 ký tự
+                import textwrap
+                clean = "\n".join(textwrap.wrap(clean, width=80))
                 full_bot_reply.append(clean)
-                yield chunk
+                yield f"data: {clean}\n\n"
+
 
             # Ghép bot trả lời
             bot_response = "".join(full_bot_reply)

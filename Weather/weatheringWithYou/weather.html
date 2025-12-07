@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather App</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Weather Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons.min.css">
+</head>
+
+<body class="bg-gradient-to-br from-blue-600 to-blue-300 min-h-screen p-5 text-white">
+
+    <div class="max-w-lg mx-auto">
+
+        <!-- TITLE -->
+        <h1 class="text-3xl font-bold text-center mb-4">🌤 Thời tiết hiện tại</h1>
+
+        <!-- Current Weather Card -->
+        <div class="bg-white/20 backdrop-blur-lg rounded-2xl shadow-lg p-6 text-center">
+            <div id="current-icon" class="text-6xl mb-3"></div>
+            <div id="current-temp" class="text-4xl font-bold"></div>
+            <div id="current-wind" class="mt-2"></div>
+            <div id="current-time" class="mt-1 opacity-80"></div>
+        </div>
+
+        <!-- Button -->
+        <button onclick="loadForecast()"
+            class="mt-6 w-full py-3 rounded-xl bg-white/30 hover:bg-white/40 font-bold text-lg shadow-lg transition">
+            📅 Xem dự báo 7 ngày
+        </button>
+
+        <!-- Forecast Section -->
+        <h2 class="text-2xl font-bold mt-8 mb-2 text-center">📆 Dự báo 7 ngày</h2>
+        <div id="forecast" class="grid grid-cols-1 gap-4"></div>
+
+    </div>
+
+
+<script>
+
+// Map weather code → icon class
+function getWeatherIcon(code) {
+    if (code == 0) return "wi wi-day-sunny";
+    if (code <= 3) return "wi wi-cloudy";
+    if (code <= 48) return "wi wi-fog";
+    if (code <= 57) return "wi wi-sprinkle";
+    if (code <= 67) return "wi wi-showers";
+    if (code <= 77) return "wi wi-snow";
+    if (code <= 99) return "wi wi-thunderstorm";
+    return "wi wi-na";
+}
+
+
+// Load current weather
+function loadCurrent() {
+    fetch("/weather?lat=21.03&lon=105.85")
+    .then(r => r.json())
+    .then(data => {
+        let c = data.current_weather;
+
+        document.getElementById("current-icon").innerHTML =
+            `<i class="${getWeatherIcon(c.weathercode)}"></i>`;
+
+        document.getElementById("current-temp").innerHTML =
+            `${c.temperature}°C`;
+
+        document.getElementById("current-wind").innerHTML =
+            `💨 Gió: ${c.windspeed} km/h`;
+
+        document.getElementById("current-time").innerHTML =
+            `⏱ ${c.time}`;
+    });
+}
+
+
+// Load forecast
+function loadForecast() {
+    fetch("/forecast?lat=21.03&lon=105.85")
+    .then(r => r.json())
+    .then(data => {
+        let html = "";
+
+        for (let i = 0; i < data.daily.time.length; i++) {
+            html += `
+                <div class="bg-white/20 backdrop-blur-md p-4 rounded-2xl shadow-lg flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-lg">${data.daily.time[i]}</div>
+                        <div class="opacity-90">🌡 Max: ${data.daily.temperature_2m_max[i]}°C</div>
+                        <div class="opacity-90">🌡 Min: ${data.daily.temperature_2m_min[i]}°C</div>
+                        <div class="opacity-90">💧 Mưa: ${data.daily.precipitation_sum[i]} mm</div>
+                    </div>
+                    <i class="wi wi-cloud text-4xl"></i>
+                </div>
+            `;
+        }
+
+        document.getElementById("forecast").innerHTML = html;
+    });
+}
+
+
+// Load on start
+loadCurrent();
+
+</script>
+
+</body>
+</html>

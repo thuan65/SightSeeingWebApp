@@ -1,5 +1,8 @@
 from flask import Flask
+from flask_migrate import Migrate
 from extensions import init_extensions
+
+from faiss_loader import load_faiss_index
 
 from Login.login import login_bp  
 from Forum.forum import forum
@@ -27,6 +30,10 @@ def create_app(config_class="config.Config"):
 
     # Khởi tạo extensions
     init_extensions(app)
+
+    with app.app_context():
+        load_faiss_index()
+
 
     # ---------------------------------------------------------
     # KẾT NỐI DB ẢNH VÀ REGISTER BLUEPRINT

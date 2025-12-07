@@ -19,4 +19,4 @@ VI_MODEL = "visolex/phobert-hsd"
 
 end = time.time()
 
-print("Thời gian chạy:", end - start, "giây")
+print("Thời gian Khởi chạy model:", end - start, "giây")
