@@ -143,12 +143,13 @@
 # print(is_toxic("vl"))  # True
 
 
-from flask import Blueprint, render_template, request, redirect, session, flash
+from flask import Blueprint, render_template, request, redirect, session, flash, jsonify
 from sentence_transformers import SentenceTransformer, util
 from .toxic_filter import is_toxic
 from models_loader import sbert_model
 from flask_login import current_user
 from sqlalchemy import or_, and_
+from sqlalchemy.orm import joinedload
 from models import User, Post, Answer, Friendship 
 from extensions import db
 from werkzeug.utils import secure_filename
@@ -445,3 +446,70 @@ def my_posts():
         })
 
     return render_template("my_posts.html", posts=result)
+
+# --- ROUTE LẤY POSTS CỦA BẠN BÈ (API MỚI) ---
+@forum.route("/posts/<int:user_id>", methods=["GET"])
+def get_friend_posts(user_id):
+    """
+    Lấy 3 post gần nhất của người dùng, giới hạn privacy là public hoặc friends.
+    Route này sẽ được truy cập qua URL prefix của forum (ví dụ: /forum/posts/<id>).
+    """
+    try:
+        posts_query = (
+            db.session.query(Post)
+            # .options(joinedload(Post.images)) # Load đối tượng images
+            .filter(Post.questioner_id == user_id)
+            .filter(
+                or_(
+                    Post.privacy == 'public',
+                    Post.privacy == 'friends'
+                )
+            )
+            .order_by(Post.created_at.desc())
+            .limit(3)
+            # db.session.query(
+            #     Post.id, 
+            #     Post.title, 
+            #     Post.content, 
+            #     Post.privacy,
+            #     Post.created_at,
+            #     Post.images # <--- Truy vấn trực tiếp cột 'images'
+            # ) 
+            # .filter(Post.questioner_id == user_id)
+            # .filter(
+            #     or_(
+            #         Post.privacy == 'public',
+            #         Post.privacy == 'friends'
+            #     )
+            # )
+            # .order_by(Post.created_at.desc())
+            # .limit(3)
+        )
+        posts = posts_query.all()
+
+        if not posts:
+            return jsonify({"message": "No visible posts found for this user."}), 200
+
+        results = []
+        for post in posts:
+            content_snippet = post.content
+            if post.content and len(post.content) > 150:
+                content_snippet = post.content[:150] + "..."
+            
+            # image_filename = post.images
+                
+            results.append({
+                "id": post.id,
+                "title": post.title,
+                "content_snippet": content_snippet,
+                "created_at": post.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "privacy": post.privacy,
+                # "image_filename": image_filename
+            })
+        # print(results[0].image_filename)
+        # print(results[1].image_filename)
+        return jsonify(results), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500

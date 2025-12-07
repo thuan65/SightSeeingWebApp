@@ -1,122 +1,56 @@
+# geocoding.py
 import requests
-from urllib.parse import quote
+import time
+import os
 
-NOMINATIM_API = "https://nominatim.openstreetmap.org/search"
+# Tốt nhất nên lấy từ biến môi trường, hoặc config.py
+# MAPS_CO_API_KEY = os.environ.get("MAPS_CO_API_KEY", "YOUR_DEFAULT_KEY")
+MAPS_CO_API_KEY = "6934fa9ead70c273351403whx21d101"
 
 
 def geocode_address(address):
-    """
-    Convert address to coordinates
+    if not address: return None
 
-    Args:
-        address: Address to convert
+    url = "https://geocode.maps.co/search"
 
-    Returns:
-        dict: {lat, lon, display_name} or None if not found
-    """
+    # Xử lý từ khóa tìm kiếm
+    search_query = address if "vietnam" in address.lower() else f"{address}, Vietnam"
 
-    # Add "Vietnam" to address for better accuracy
-    if "việt nam" not in address.lower() and "vietnam" not in address.lower():
-        address = address + ", Vietnam"
-
-    params = {
-        'q': address,
-        'format': 'json',
-        'limit': 1,
-        'countrycodes': 'vn',  # Limit to Vietnam
-        'addressdetails': 1
-    }
-
-    headers = {
-        'User-Agent': 'SonnaGuide/1.0'
-    }
+    params = {'q': search_query, 'api_key': MAPS_CO_API_KEY}
 
     try:
-        response = requests.get(NOMINATIM_API, params=params, headers=headers)
-        response.raise_for_status()
+        time.sleep(1)  # Rate limiting
+        response = requests.get(url, params=params, timeout=10)
 
-        data = response.json()
+        if response.status_code == 200:
+            data = response.json()
+            if data:
+                result = data[0]
+                return {
+                    'lat': float(result['lat']),
+                    'lng': float(result['lon']),
+                    'display_name': result['display_name']
+                }
+    except Exception as e:
+        print(f"❌ Geocoding Error: {e}")
 
-        if data and len(data) > 0:
-            result = data[0]
-            return {
-                'lat': float(result['lat']),
-                'lon': float(result['lon']),
-                'display_name': result['display_name'],
-                'address': result.get('address', {})
-            }
-        else:
-            return None
-
-    except requests.exceptions.RequestException as e:
-        print(f"Error calling Geocoding API: {e}")
-        return None
+    return None
 
 
-def reverse_geocode(lat, lon):
-    """
-    Convert coordinates to address
-
-    Args:
-        lat: Latitude
-        lon: Longitude
-
-    Returns:
-        dict: Address information or None
-    """
-
-    url = "https://nominatim.openstreetmap.org/reverse"
-
-    params = {
-        'lat': lat,
-        'lon': lon,
-        'format': 'json',
-        'addressdetails': 1
-    }
-
-    headers = {
-        'User-Agent': 'SonnaGuide/1.0'
-    }
+def reverse_geocode(lat, lng):
+    url = "https://geocode.maps.co/reverse"
+    params = {'lat': lat, 'lon': lng, 'api_key': MAPS_CO_API_KEY}
 
     try:
-        response = requests.get(url, params=params, headers=headers)
-        response.raise_for_status()
-
-        data = response.json()
-
-        if data:
+        time.sleep(1)
+        response = requests.get(url, params=params, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
             return {
-                'display_name': data['display_name'],
+                'name': data.get('display_name', ''),
                 'address': data.get('address', {})
             }
-        else:
-            return None
+    except Exception as e:
+        print(f"❌ Reverse Geocoding Error: {e}")
 
-    except requests.exceptions.RequestException as e:
-        print(f"Error calling Reverse Geocoding API: {e}")
-        return None
-
-
-if __name__ == "__main__":
-    # Test geocoding
-    test_addresses = [
-        "Ben Thanh, District 1, HCMC",
-        "Notre Dame Cathedral, Saigon",
-        "Hoan Kiem Lake, Hanoi",
-        "My Khe Beach, Da Nang"
-    ]
-
-    for address in test_addresses:
-        print(f"\nAddress: {address}")
-        result = geocode_address(address)
-        if result:
-            print(f"  Coordinates: {result['lat']}, {result['lon']}")
-            print(f"  Full name: {result['display_name']}")
-        else:
-            print("  Not found!")
-
-    # Test reverse geocoding
-    print("\n\n=== Reverse Geocoding ===")
-    result = reverse_geocode(10.7769, 106.7009)
-    if result:
-        print(f"Address: {result['display_name']}")
+    return None
