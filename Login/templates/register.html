@@ -331,15 +331,16 @@
             <div class="slideshow-content">
                 <h3>Welcome Back!</h3>
                 <p>Bạn đã có tài khoản rồi chứ? Đăng nhập để tiếp tục khám phá!</p>
-                <button class="btn transparent" onclick="window.location.href='{{ url_for('login_bp.login') }}'">
+                <a href="{{ url_for('login_bp.login') }}" class="btn transparent">
                     Đăng nhập
-                </button>
+                </a>
             </div>
         </div>
 
         <!-- FORM - Bên phải -->
         <div class="forms-container">
             <form method="POST" action="{{ url_for('login_bp.register') }}">
+                {{ form.hidden_tag() }}
                 <h2 class="title">Tạo tài khoản</h2>
 
                 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -381,13 +382,13 @@
                 <div class="input-field">
                     <i class="fas fa-lock"></i>
                     {% if form %}
-                        {{ form.confirm_password(placeholder="Xác nhận mật khẩu", required=true) }}
+                        {{ form.confirm(placeholder="Xác nhận mật khẩu", required=true) }}
                     {% else %}
                         <input type="password" placeholder="Xác nhận mật khẩu" name="confirm_password" required />
                     {% endif %}
                 </div>
-                {% if form and form.confirm_password.errors %}
-                    {% for error in form.confirm_password.errors %}
+                {% if form and form.confirm.errors %}
+                    {% for error in form.confirm.errors %}
                         <div class="error-message">{{ error }}</div>
                     {% endfor %}
                 {% endif %}

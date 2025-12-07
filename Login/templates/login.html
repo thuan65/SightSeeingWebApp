@@ -143,6 +143,12 @@
         .btn:active {
             transform: translateY(0);
         }
+        
+        .btn.transparent {
+            background: transparent;
+            border: 2px solid white;
+            color: white;
+        }
 
         .link-text {
             padding: 0.7rem 0;
@@ -273,6 +279,12 @@
             grid-column: 1 / 2;
         }
 
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin: 5px 0 10px 15px;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .container {
@@ -331,56 +343,67 @@
             <!-- SIGN IN FORM -->
             <div class="form-wrapper" id="signInForm">
                 <form method="POST" action="{{ url_for('login_bp.login') }}">
+                    {{ login_form.hidden_tag() }}
+
                     <h2 class="title">Welcome back!</h2>
-                    
+
                     <div class="input-field">
                         <i class="fas fa-user"></i>
-                        <input type="text" placeholder="Tên đăng nhập" name="username" required />
+                        {{ login_form.username(placeholder="Tên đăng nhập", class="form-control") }}
                     </div>
-                    
-                    <div class="input-field">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" placeholder="Mật khẩu" name="password" required />
-                    </div>
+                    {% for error in login_form.username.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
 
-                    <button type="submit" class="btn">Đăng nhập</button>
+                    <div class="input-field">
+                       <i class="fas fa-lock"></i>
+                        {{ login_form.password(placeholder="Mật khẩu", class="form-control") }}
+                    </div>
+                   {% for error in login_form.password.errors %}
+                      <div class="error-message">{{ error }}</div>
+                  {% endfor %}
+
+                   {{ login_form.submit(class="btn") }}
 
                     <p class="link-text">
-                        Chưa có tài khoản? <a href="#" class="switch-to-signup">Đăng ký ngay</a>
+                       Chưa có tài khoản? <a href="#" class="switch-to-signup">Đăng ký ngay</a>
                     </p>
                 </form>
             </div>
 
+
             <!-- SIGN UP FORM -->
             <div class="form-wrapper hidden" id="signUpForm">
                 <form method="POST" action="{{ url_for('login_bp.register') }}">
+                    {{ register_form.hidden_tag() }}
+
                     <h2 class="title">Tạo tài khoản</h2>
 
                     <div class="input-field">
                         <i class="fas fa-user"></i>
-                        <input type="text" placeholder="Tên đăng nhập" name="username" required />
+                        {{ register_form.username(placeholder="Tên đăng nhập") }}
                     </div>
+                    {% for error in register_form.username.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
 
-                    <div class="input-field">
-                        <i class="fas fa-envelope"></i>
-                        <input type="email" placeholder="Email" name="email" required />
-                    </div>
-                    
                     <div class="input-field">
                         <i class="fas fa-lock"></i>
-                        <input type="password" placeholder="Mật khẩu" name="password" required />
+                        {{ register_form.password(placeholder="Mật khẩu") }}
                     </div>
-                    
+                    {% for error in register_form.password.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+
                     <div class="input-field">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" placeholder="Xác nhận mật khẩu" name="confirm_password" required />
-                    </div>
+                       <i class="fas fa-lock"></i>
+                      {{ register_form.confirm(placeholder="Xác nhận mật khẩu") }}
+                   </div>
+                    {% for error in register_form.confirm.errors %}
+                        <div class="error-message">{{ error }}</div>
+                   {% endfor %}
 
-                    <button type="submit" class="btn">Đăng ký</button>
-
-                    <p class="link-text">
-                        Đã có tài khoản? <a href="#" class="switch-to-signin">Đăng nhập</a>
-                    </p>
+                    {{ register_form.submit(class="btn") }}
                 </form>
             </div>
         </div>
