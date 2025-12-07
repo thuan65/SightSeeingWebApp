@@ -201,7 +201,7 @@ def get_friends_ids(user_id):
     
     # # Chuyển đổi kết quả sang list ID đơn giản
     # return [id[0] for id in online_friend_ids]
-    print(f"\n[DEBUG CORE] Tìm bạn bè cho ID {user_id}. Kết quả: {final_ids}")
+    # print(f"\n[DEBUG CORE] Tìm bạn bè cho ID {user_id}. Kết quả: {final_ids}")
     
     return final_ids
 
@@ -211,11 +211,11 @@ def get_friends_ids(user_id):
 
 @socketio.on('connect')
 def handle_connect():
-    print(f"\n[DEBUG SOCKET] FUNC CALLED: Bắt đầu xử lý CONNECT.") 
+    # print(f"\n[DEBUG SOCKET] FUNC CALLED: Bắt đầu xử lý CONNECT.") 
     
     if current_user.is_authenticated:
         user_id = current_user.id
-        print(f"[DEBUG CONNECT] User {current_user.username} (ID: {user_id}) ĐÃ KẾT NỐI.")
+        # print(f"[DEBUG CONNECT] User {current_user.username} (ID: {user_id}) ĐÃ KẾT NỐI.")
         try:
             with db.session.no_autoflush:
                 user = db.session.query(User).filter_by(id=user_id).first()
@@ -225,15 +225,15 @@ def handle_connect():
                     
                     room_name = f'user_{user_id}'
                     join_room(room_name)
-                    print(f"[DEBUG CONNECT] DB commit OK. User {user_id} đã tham gia phòng: {room_name}")
+                    # print(f"[DEBUG CONNECT] DB commit OK. User {user_id} đã tham gia phòng: {room_name}")
                  
         except Exception as e:
-            print(f"[DEBUG CONNECT] 🚨 LỖI DB trong connect: {e}")
+            # print(f"[DEBUG CONNECT] 🚨 LỖI DB trong connect: {e}")
             traceback.print_exc()
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    print(f"\n[DEBUG SOCKET] FUNC CALLED: Bắt đầu xử lý DISCONNECT.")
+    # print(f"\n[DEBUG SOCKET] FUNC CALLED: Bắt đầu xử lý DISCONNECT.")
     if current_user.is_authenticated:
         # user_id = current_user.id
         # username = current_user.username
@@ -243,7 +243,7 @@ def handle_disconnect():
                 if user:
                     user.online = False
                     db.session.commit()
-                    print(f"[DEBUG DISCONNECT] Cập nhật User.online = False cho ID: {user.id}")
+                    # print(f"[DEBUG DISCONNECT] Cập nhật User.online = False cho ID: {user.id}")
 
                     # # 2. Lấy danh sách bạn bè online và thông báo cho họ
                     # # Lấy danh sách các đối tượng User của bạn bè đang online
@@ -259,15 +259,15 @@ def handle_disconnect():
 
                     # print(f"[DEBUG DISCONNECT] Đã thông báo ngắt kết nối cho bạn bè của User ID: {user_id}")
         except Exception as e:
-            print(f"[DEBUG DISCONNECT] 🚨 LỖI DB trong disconnect: {e}")
+            # print(f"[DEBUG DISCONNECT] 🚨 LỖI DB trong disconnect: {e}")
             traceback.print_exc()
 
 @socketio.on('update_location')
 def handle_update_location(data):
-    print(f"\n[DEBUG SOCKET] FUNC CALLED: Bắt đầu xử lý update vị trí.") 
+    # print(f"\n[DEBUG SOCKET] FUNC CALLED: Bắt đầu xử lý update vị trí.") 
 
     if not current_user.is_authenticated:
-        print("[DEBUG SOCKET] WARNING: Update từ user chưa đăng nhập bị bỏ qua.")
+        # print("[DEBUG SOCKET] WARNING: Update từ user chưa đăng nhập bị bỏ qua.")
         return
         
     user_id = current_user.id
@@ -280,10 +280,10 @@ def handle_update_location(data):
             ).filter_by(id=user_id).first() 
 
             if not user:
-                print(f"[DEBUG SOCKET] CẢNH BÁO: User ID {user_id} không tìm thấy trong DB.")
+                # print(f"[DEBUG SOCKET] CẢNH BÁO: User ID {user_id} không tìm thấy trong DB.")
                 return
 
-            print(f"[DEBUG SOCKET] BƯỚC 1: User object tải thành công. Username: {user.username}")
+            # print(f"[DEBUG SOCKET] BƯỚC 1: User object tải thành công. Username: {user.username}")
 
             # CẬP NHẬT LIVE LOCATION
             location = db.session.query(LiveLocation).filter_by(user_id=user_id).first()
@@ -296,7 +296,7 @@ def handle_update_location(data):
                 db.session.add(location)
                 
             db.session.commit()
-            print(f"[DEBUG SOCKET] BƯỚC 2: DB Commit LiveLocation thành công.")
+            # print(f"[DEBUG SOCKET] BƯỚC 2: DB Commit LiveLocation thành công.")
 
             # EMIT DỮ LIỆU
             friend_ids = get_friends_ids(user_id)
@@ -310,22 +310,22 @@ def handle_update_location(data):
                 "share_mode": share_mode_val
             }
             
-            print(f"[DEBUG SOCKET] BƯỚC 3: Chuẩn bị gửi vị trí của {user.username} đến {len(friend_ids)} người bạn. IDs: {friend_ids}")
+            # print(f"[DEBUG SOCKET] BƯỚC 3: Chuẩn bị gửi vị trí của {user.username} đến {len(friend_ids)} người bạn. IDs: {friend_ids}")
 
             for friend_id in friend_ids:
                 room_name = f'user_{friend_id}'
                 
                 if share_mode_val == 'friends': 
-                    print(f"[DEBUG SOCKET] Gửi vị trí đến Room: {room_name}")
+                    # print(f"[DEBUG SOCKET] Gửi vị trí đến Room: {room_name}")
                     socketio.emit('friend_location_update', location_data, room=room_name)
                 else:
                     print(f"[DEBUG SOCKET] Bỏ qua gửi vị trí đến Room: {room_name} vì share_mode là {share_mode_val}")
         
     except Exception as e:
-        print(f"\n\n🚨🚨🚨 LỖI CRITICAL TRONG handle_update_location 🚨🚨🚨")
-        print(f"LỖI: {e}")
+        # print(f"\n\n🚨🚨🚨 LỖI CRITICAL TRONG handle_update_location 🚨🚨🚨")
+        # print(f"LỖI: {e}")
         traceback.print_exc()
-        print(f"🚨🚨🚨 KẾT THÚC LỖI 🚨🚨🚨\n")
+        # print(f"🚨🚨🚨 KẾT THÚC LỖI 🚨🚨🚨\n")
 
 
 # ---------------------------------------------------------
@@ -345,7 +345,7 @@ def friends_map_test():
 def get_friends_list_api():
     user_id = current_user.id
     friends_ids = get_friends_ids(user_id)
-    print(f"[DEBUG ROUTES] API /api/friends_list trả về ID: {friends_ids}")
+    # print(f"[DEBUG ROUTES] API /api/friends_list trả về ID: {friends_ids}")
     return jsonify({"friends_ids": friends_ids}), 200
 
 # Route API để JavaScript lấy thông tin người dùng (Đã có trong app.py)
