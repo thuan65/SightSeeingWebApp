@@ -129,7 +129,7 @@ def get_user_favorites():
             if geo_data:
                 item.update({
                     'lat': geo_data['lat'],
-                    'lon': geo_data['lng'],  # Lưu ý geocoding trả về 'lng'
+                    'lon': geo_data['lon'],  # Lưu ý geocoding trả về 'lng'
                     'display_name': geo_data['display_name']
                 })
             else:

@@ -647,14 +647,37 @@
                 });
                 const data = await response.json();
 
-                if (data.success) {
-                    geocodedCoords[prefix] = { lat: data.data.lat, lon: data.data.lon };
+                if (data.success && data.data) {
+                    // --- ĐOẠN CODE FIX LỖI: Kiểm tra kỹ lưỡng ---
+                    // Tự động nhận diện 'lon' hoặc 'lng'
+                    const rawLat = data.data.lat;
+                    const rawLon = (data.data.lon !== undefined) ? data.data.lon : data.data.lng;
+
+                    // Ép kiểu sang số (float) để tránh lỗi text
+                    const lat = parseFloat(rawLat);
+                    const lon = parseFloat(rawLon);
+
+                    // Nếu không phải số hợp lệ thì báo lỗi thay vì crash trang web
+                    if (isNaN(lat) || isNaN(lon)) {
+                        console.error("Dữ liệu tọa độ lỗi:", data.data);
+                        showError("Lỗi dữ liệu tọa độ từ Server");
+                        return;
+                    }
+
+                    geocodedCoords[prefix] = { lat: lat, lon: lon };
+
                     const coordDiv = document.getElementById(prefix + '-coords');
-                    coordDiv.innerHTML = `> LOC: [${data.data.lat.toFixed(4)}, ${data.data.lon.toFixed(4)}]<br><small>${data.data.display_name}</small>`;
+                    // Bây giờ gọi .toFixed(4) chắc chắn sẽ an toàn
+                    coordDiv.innerHTML = `> LOC: [${lat.toFixed(4)}, ${lon.toFixed(4)}]<br><small>${data.data.display_name}</small>`;
                     coordDiv.classList.add('show');
                     showError('Đã tìm thấy tọa độ!', false);
-                } else { showError(data.error); }
-            } catch (error) { showError('Lỗi kết nối: ' + error.message); }
+                } else {
+                    showError(data.error || "Không tìm thấy địa điểm");
+                }
+            } catch (error) {
+                console.error(error);
+                showError('Lỗi kết nối: ' + error.message);
+            }
             finally { btn.disabled = false; btn.textContent = '✓'; setTimeout(() => btn.textContent = '🔍', 2000); }
         }
 
@@ -673,10 +696,20 @@
                 });
                 const data = await response.json();
 
-                if (data.success) {
-                    geocodedCoords.destinations[id] = { lat: data.data.lat, lon: data.data.lon };
+                if (data.success && data.data) {
+                    // --- ĐOẠN CODE FIX LỖI TƯƠNG TỰ ---
+                    const rawLat = data.data.lat;
+                    const rawLon = (data.data.lon !== undefined) ? data.data.lon : data.data.lng;
+                    const lat = parseFloat(rawLat);
+                    const lon = parseFloat(rawLon);
+
+                    if (isNaN(lat) || isNaN(lon)) {
+                        showError("Lỗi dữ liệu tọa độ"); return;
+                    }
+
+                    geocodedCoords.destinations[id] = { lat: lat, lon: lon };
                     const coordDiv = document.getElementById(`dest-${id}-coords`);
-                    coordDiv.innerHTML = `> LOC: [${data.data.lat.toFixed(4)}, ${data.data.lon.toFixed(4)}]<br><small>${data.data.display_name}</small>`;
+                    coordDiv.innerHTML = `> LOC: [${lat.toFixed(4)}, ${lon.toFixed(4)}]<br><small>${data.data.display_name}</small>`;
                     coordDiv.classList.add('show');
                     showError('Đã tìm thấy tọa độ!', false);
                 } else { showError(data.error); }
