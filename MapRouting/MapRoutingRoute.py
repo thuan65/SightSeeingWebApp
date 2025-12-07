@@ -129,7 +129,7 @@ def get_user_favorites():
             if geo_data:
                 item.update({
                     'lat': geo_data['lat'],
-                    'lon': geo_data['lng'],  # Lưu ý geocoding trả về 'lng'
+                    'lon': geo_data['lon'],  # Lưu ý geocoding trả về 'lon'
                     'display_name': geo_data['display_name']
                 })
             else:
@@ -141,4 +141,5 @@ def get_user_favorites():
 
     except Exception as e:
         print(f"❌ [FAVORITES] Error: {str(e)}")
+
         return jsonify({'success': False, 'error': str(e)}), 500
