@@ -28,7 +28,7 @@ def geocode_address(address):
                 result = data[0]
                 return {
                     'lat': float(result['lat']),
-                    'lng': float(result['lon']),
+                    'lon': float(result['lon']),
                     'display_name': result['display_name']
                 }
     except Exception as e:
@@ -37,9 +37,9 @@ def geocode_address(address):
     return None
 
 
-def reverse_geocode(lat, lng):
+def reverse_geocode(lat, lon):
     url = "https://geocode.maps.co/reverse"
-    params = {'lat': lat, 'lon': lng, 'api_key': MAPS_CO_API_KEY}
+    params = {'lat': lat, 'lon': lon, 'api_key': MAPS_CO_API_KEY}
 
     try:
         time.sleep(1)
@@ -52,5 +52,6 @@ def reverse_geocode(lat, lng):
             }
     except Exception as e:
         print(f"❌ Reverse Geocoding Error: {e}")
+
 
     return None
