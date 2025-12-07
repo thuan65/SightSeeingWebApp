@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LocaGo! - Đăng nhập</title>
+    <title>LocaGo! - Đăng ký</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
@@ -14,9 +14,14 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --main-color: #1C6758;
+            --secondary-color: #8EB486;
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #1C6758 0%, #8EB486 100%);
+            background: linear-gradient(135deg, var(--main-color) 0%, var(--secondary-color) 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -37,123 +42,65 @@
             grid-template-columns: 1fr 1fr;
         }
 
-        .form-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 50px;
-        }
-
-        form {
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .title {
-            font-size: 2.2rem;
-            color: #1C6758;
-            margin-bottom: 30px;
-            font-weight: 700;
-            text-align: center;
-        }
-
-        .input-field {
-            width: 100%;
-            height: 55px;
-            background: #f0f0f0;
-            margin: 15px 0;
-            border-radius: 55px;
-            display: grid;
-            grid-template-columns: 15% 85%;
-            padding: 0 0.4rem;
-        }
-
-        .input-field i {
-            text-align: center;
-            line-height: 55px;
-            color: #1C6758;
-            font-size: 1.1rem;
-        }
-
-        .input-field input {
-            background: none;
-            outline: none;
-            border: none;
-            line-height: 1;
-            font-weight: 500;
-            font-size: 1.1rem;
-            color: #333;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .input-field input::placeholder {
-            color: #aaa;
-            font-weight: 400;
-        }
-
-        .btn {
-            width: 100%;
-            height: 49px;
-            border: none;
-            outline: none;
-            border-radius: 49px;
-            cursor: pointer;
-            background: linear-gradient(135deg, #1C6758, #8EB486);
-            color: white;
-            text-transform: uppercase;
-            font-weight: 600;
-            margin: 25px 0 15px;
-            transition: 0.5s;
-            font-size: 1rem;
-            box-shadow: 0 4px 15px rgba(28, 103, 88, 0.3);
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(28, 103, 88, 0.4);
-        }
-
-        .social-text {
-            padding: 0.7rem 0;
-            font-size: 1rem;
-            color: #666;
-            text-align: center;
-        }
-
-        .social-media {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .social-icon {
-            height: 46px;
-            width: 46px;
-            border: 2px solid #1C6758;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #1C6758;
-            border-radius: 50%;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .social-icon:hover {
-            background: #1C6758;
-            color: white;
-        }
-
+        /* Khu vực Panel - Bên trái */
         .panel {
-            background: linear-gradient(135deg, #1C6758, #8EB486);
+            grid-column: 1 / 2;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            border-radius: 25px 0 0 25px;
+            overflow: hidden;
+            background: var(--main-color);
+        }
+
+        /* Slideshow */
+        .slideshow-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .slideshow-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        .slideshow-slide.active {
+            opacity: 1;
+        }
+
+        .slideshow-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(28, 103, 88, 0.75);
+            z-index: 2;
+        }
+
+        .slideshow-content {
+            position: relative;
+            z-index: 3;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 50px;
-            color: white;
+            text-align: center;
+            padding: 40px;
+            max-width: 350px;
         }
 
         .panel h3 {
@@ -165,82 +112,235 @@
         .panel p {
             font-size: 0.95rem;
             margin-bottom: 30px;
-            text-align: center;
-            opacity: 0.9;
+            opacity: 0.95;
+            line-height: 1.6;
         }
 
         .panel .btn {
             background: transparent;
             border: 2px solid white;
             width: 150px;
+            height: 48px;
+            border-radius: 48px;
+            cursor: pointer;
+            color: white;
+            text-transform: uppercase;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 0.95rem;
         }
 
         .panel .btn:hover {
             background: white;
-            color: #1C6758;
+            color: var(--main-color);
+        }
+
+        /* Khu vực Form - Bên phải */
+        .forms-container {
+            grid-column: 2 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        form {
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .title {
+            font-size: 2rem;
+            color: var(--main-color);
+            margin-bottom: 25px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .input-field {
+            width: 100%;
+            height: 50px;
+            background: #f0f0f0;
+            margin: 12px 0;
+            border-radius: 50px;
+            display: grid;
+            grid-template-columns: 15% 85%;
+            padding: 0 0.4rem;
+            transition: background 0.3s;
+        }
+
+        .input-field:focus-within {
+            background: #e8e8e8;
+        }
+
+        .input-field i {
+            text-align: center;
+            line-height: 50px;
+            color: var(--main-color);
+            font-size: 1.1rem;
+        }
+
+        .input-field input {
+            background: none;
+            outline: none;
+            border: none;
+            line-height: 1;
+            font-weight: 500;
+            font-size: 1rem;
+            color: #333;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .input-field input::placeholder {
+            color: #999;
+        }
+
+        .btn {
+            width: 100%;
+            height: 48px;
+            border: none;
+            outline: none;
+            border-radius: 48px;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--main-color), var(--secondary-color));
+            color: white;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin: 15px 0;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 15px rgba(28, 103, 88, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(28, 103, 88, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
         }
 
         .link-text {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 15px;
+            font-size: 0.9rem;
             color: #666;
         }
 
         .link-text a {
-            color: #1C6758;
+            color: var(--main-color);
             font-weight: 600;
             text-decoration: none;
+            transition: color 0.3s;
         }
 
         .link-text a:hover {
-            text-decoration: underline;
+            color: var(--secondary-color);
         }
 
         .error-message {
-            color: #f44336;
+            color: #dc3545;
             font-size: 0.85rem;
-            margin-top: -10px;
+            margin-top: -8px;
             margin-bottom: 10px;
-            text-align: center;
+            padding-left: 20px;
         }
 
         .alert {
             padding: 12px 20px;
+            border-radius: 8px;
             margin-bottom: 20px;
-            border-radius: 10px;
-            font-size: 0.95rem;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            font-size: 0.9rem;
         }
 
         .alert-danger {
-            background: #f8d7da;
+            background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
 
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
+                min-height: 650px;
             }
 
             .panel {
                 display: none;
+            }
+
+            .forms-container {
+                grid-column: 1 / 2;
+                padding: 30px 20px;
+            }
+
+            .title {
+                font-size: 1.6rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                border-radius: 15px;
+            }
+
+            form {
+                max-width: 100%;
+            }
+
+            .input-field {
+                height: 45px;
+            }
+
+            .input-field i {
+                line-height: 45px;
+                font-size: 1rem;
+            }
+
+            .input-field input {
+                font-size: 0.9rem;
+            }
+
+            .btn {
+                height: 45px;
+                font-size: 0.85rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="form-container">
-            <form method="POST" action="{{ url_for('login_bp.login') }}">
-                {{ form.hidden_tag() }}
-                
-                <h2 class="title">Đăng nhập</h2>
+        
+        <!-- PANEL - Bên trái -->
+        <div class="panel">
+            <div class="slideshow-wrapper" id="slideshowPanel">
+                <div class="slideshow-slide active" style="background-image: url('https://images.unsplash.com/photo-1549488349-e16e0fdd21f6?w=1920');"></div>
+                <div class="slideshow-slide" style="background-image: url('https://images.unsplash.com/photo-1534430267215-cf6a1d821360?w=1920');"></div>
+                <div class="slideshow-slide" style="background-image: url('https://images.unsplash.com/photo-1508928014526-70e6c52a0951?w=1920');"></div>
+                <div class="slideshow-slide" style="background-image: url('https://images.unsplash.com/photo-1517454228919-813d1000632b?w=1920');"></div>
+            </div>
+            <div class="slideshow-overlay"></div>
+            <div class="slideshow-content">
+                <h3>Welcome Back!</h3>
+                <p>Bạn đã có tài khoản rồi chứ? Đăng nhập để tiếp tục khám phá!</p>
+                <button class="btn transparent" onclick="window.location.href='{{ url_for('login_bp.login') }}'">
+                    Đăng nhập
+                </button>
+            </div>
+        </div>
+
+        <!-- FORM - Bên phải -->
+        <div class="forms-container">
+            <form method="POST" action="{{ url_for('login_bp.register') }}">
+                <h2 class="title">Tạo tài khoản</h2>
 
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
@@ -252,55 +352,78 @@
 
                 <div class="input-field">
                     <i class="fas fa-user"></i>
-                    {{ form.username(placeholder="Tên đăng nhập") }}
+                    {% if form %}
+                        {{ form.username(placeholder="Tên đăng nhập", required=true) }}
+                    {% else %}
+                        <input type="text" placeholder="Tên đăng nhập" name="username" required />
+                    {% endif %}
                 </div>
-                {% if form.username.errors %}
+                {% if form and form.username.errors %}
                     {% for error in form.username.errors %}
                         <div class="error-message">{{ error }}</div>
                     {% endfor %}
                 {% endif %}
-
+                
                 <div class="input-field">
                     <i class="fas fa-lock"></i>
-                    {{ form.password(placeholder="Mật khẩu") }}
+                    {% if form %}
+                        {{ form.password(placeholder="Mật khẩu", required=true) }}
+                    {% else %}
+                        <input type="password" placeholder="Mật khẩu" name="password" required />
+                    {% endif %}
                 </div>
-                {% if form.password.errors %}
+                {% if form and form.password.errors %}
                     {% for error in form.password.errors %}
                         <div class="error-message">{{ error }}</div>
                     {% endfor %}
                 {% endif %}
-
-                {{ form.submit(class="btn") }}
-
-                <p class="social-text">Hoặc đăng nhập với</p>
-                <div class="social-media">
-                    <a href="#" class="social-icon">
-                        <i class="fab fa-google"></i>
-                    </a>
-                    <a href="#" class="social-icon">
-                        <i class="fab fa-facebook-f"></i>
-                    </a>
-                    <a href="#" class="social-icon">
-                        <i class="fab fa-github"></i>
-                    </a>
-                    <a href="#" class="social-icon">
-                        <i class="fab fa-linkedin-in"></i>
-                    </a>
+                
+                <div class="input-field">
+                    <i class="fas fa-lock"></i>
+                    {% if form %}
+                        {{ form.confirm_password(placeholder="Xác nhận mật khẩu", required=true) }}
+                    {% else %}
+                        <input type="password" placeholder="Xác nhận mật khẩu" name="confirm_password" required />
+                    {% endif %}
                 </div>
+                {% if form and form.confirm_password.errors %}
+                    {% for error in form.confirm_password.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                {% if form %}
+                    {{ form.submit(class="btn", value="Đăng ký") }}
+                {% else %}
+                    <button type="submit" class="btn">Đăng ký</button>
+                {% endif %}
 
                 <p class="link-text">
-                    Chưa có tài khoản? <a href="{{ url_for('login_bp.register') }}">Đăng ký ngay</a>
+                    Đã có tài khoản? <a href="{{ url_for('login_bp.login') }}">Đăng nhập ngay</a>
                 </p>
             </form>
         </div>
 
-        <div class="panel">
-            <h3>Xin chào, bạn!</h3>
-            <p>Đăng ký với thông tin cá nhân của bạn để sử dụng tất cả các tính năng của trang web</p>
-            <button class="btn" onclick="window.location.href='{{ url_for('login_bp.register') }}'">
-                Đăng ký
-            </button>
-        </div>
     </div>
+
+    <script>
+        function initSlideshow(wrapperId) {
+            let currentSlide = 0;
+            const slides = document.querySelectorAll(`#${wrapperId} .slideshow-slide`);
+
+            function nextSlide() {
+                if (slides.length === 0) return;
+
+                slides[currentSlide].classList.remove('active');
+                currentSlide = (currentSlide + 1) % slides.length;
+                slides[currentSlide].classList.add('active');
+            }
+
+            setInterval(nextSlide, 4000);
+        }
+
+        // Khởi tạo Slideshow cho Panel Đăng ký
+        initSlideshow('slideshowPanel');
+    </script>
 </body>
 </html>
