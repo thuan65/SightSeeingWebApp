@@ -3,7 +3,10 @@
 from flask import Blueprint, request, jsonify, session as flask_session, render_template
 from datetime import datetime
 from Forum.toxic_filter import is_toxic
+from MapRouting.geocoding import geocode_address
 from extensions import db
+from models import Image, Feedback, User
+import math
 
 
 # Import từ DB
@@ -11,6 +14,29 @@ from extensions import db
 from models import Image, Feedback, User
 
 feedback_bp = Blueprint("feedback", __name__)
+
+# ---------------------------------------------------------
+# HÀM TÍNH KHOẢNG CÁCH (Haversine)
+# Trả về khoảng cách bằng mét
+# ---------------------------------------------------------
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371000 # Bán kính Trái Đất bằng mét
+    
+    # Chuyển đổi từ độ sang radian
+    phi_1 = math.radians(lat1)
+    phi_2 = math.radians(lat2)
+    
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+    
+    # Công thức Haversine
+    a = math.sin(delta_phi / 2.0)**2 + \
+        math.cos(phi_1) * math.cos(phi_2) * \
+        math.sin(delta_lambda / 2.0)**2
+    
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    
+    return R * c # Khoảng cách bằng mét
 
 
 # ---------------------------------------------------------
@@ -24,6 +50,13 @@ def submit_feedback(image_id):
     comment = data.get("comment", "")
     user_id = data.get("user_id") or flask_session.get("user_id")
 
+    # 1. Lấy tọa độ từ frontend
+    user_lat = data.get("lat")
+    user_lng = data.get("lng")
+
+    print(f"\n[DEBUG FEEDBACK] Image ID: {image_id}, User ID: {user_id}")
+    print(f"[DEBUG FEEDBACK] Tọa độ User nhận được: Lat={user_lat}, Lng={user_lng}")
+
     # Kiểm tra toxic
     if is_toxic(comment):
         return render_template("detail.html", error="Nội dung bình luận không phù hợp. Vui lòng viết lại.") 
@@ -32,14 +65,55 @@ def submit_feedback(image_id):
         return jsonify({"error": "User not logged in"}), 401
     if rating is None:
         return jsonify({"error": "Rating is required"}), 400
-
+    
+    # Kiểm tra bắt buộc có tọa độ user
+    if user_lat is None or user_lng is None:
+        return jsonify({"error": "Vui lòng cấp quyền truy cập vị trí để đánh giá."}), 400
 
     try:
         # Tìm ảnh trong DB
         image = db.session.query(Image).filter_by(id=image_id).first()
         if not image:
             return jsonify({"error": "Image not found"}), 404
+        
+        # 2. Lấy địa chỉ của địa điểm và Geocoding 
+        location_address = image.address
 
+        print(f"[DEBUG FEEDBACK] Địa chỉ địa điểm: {location_address}") 
+        
+        if not location_address:
+            # Nếu địa điểm không có địa chỉ, không có cơ sở để từ chối
+            print(f"DEBUG: Địa điểm ID {id} không có địa chỉ. Bỏ qua kiểm tra vị trí.")
+        else:
+            # Chuyển đổi địa chỉ sang Lat/Lng
+            geo_result = geocode_address(location_address)
+            
+            if not geo_result:
+                print(f"DEBUG: Geocoding thất bại cho {location_address}. Bỏ qua kiểm tra vị trí.")
+            else:
+                image_lat = geo_result['lat']
+                image_lng = geo_result['lon'] 
+                
+                # 3. Tính khoảng cách và kiểm tra (2km = 2000m)
+                distance = haversine(
+                    float(user_lat), float(user_lng), 
+                    image_lat, image_lng
+                )
+                
+                # GIỚI HẠN BÁN KÍNH
+                RADIUS_KM = 2 # Đặt là 2km
+                RADIUS_METER = RADIUS_KM * 1000
+
+                print(f"[DEBUG FEEDBACK] Khoảng cách tính được: {distance:.2f} mét. Giới hạn: {RADIUS_METER} mét.")
+                
+                if distance > RADIUS_METER:
+                    print(f"[DEBUG FEEDBACK] TỪ CHỐI: Khoảng cách > {RADIUS_KM} km.") # <--- DEBUG
+                    return jsonify({
+                        "error": f"Bạn quá xa để đánh giá. Khoảng cách: {distance:.2f} mét. Yêu cầu: dưới {RADIUS_KM} km."
+                    }), 403
+                else: print(f"[DEBUG FEEDBACK] CHẤP NHẬN: Khoảng cách OK.") # <--- DEBUG
+            
+        # --- LOGIC SUBMIT THÀNH CÔNG ---
         # Update rating
         old_rating = image.rating or 0
         old_count = image.rating_count or 0
@@ -68,6 +142,7 @@ def submit_feedback(image_id):
 
     except Exception as e:
         db.session.rollback()
+        print(f"🚨 LỖI NGOẠI LỆ TRONG SUBMIT: {e}")
         return jsonify({"error": str(e)}), 500
 
 

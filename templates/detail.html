@@ -56,6 +56,7 @@
       <span data-value="4">★</span>
       <span data-value="5">★</span>
     </div>
+    <input type="hidden" id="ratingInput" value="0">
 
         <textarea id="comment" placeholder="Viết cảm nhận..."
               rows="3" style="width:100%; margin-top:10px; padding:10px"></textarea>
@@ -94,10 +95,15 @@
     // ===== SELECT RATING =====
     let currentRating = 0;
     const stars = document.querySelectorAll("#ratingSelect span");
-
+    const ratingInput = document.getElementById("ratingInput");
     stars.forEach(s => {
       s.addEventListener("click", () => {
         currentRating = parseInt(s.dataset.value);
+
+        if (ratingInput) {
+            ratingInput.value = currentRating;
+        }
+
         stars.forEach(x => x.classList.remove("active"));
         for (let i = 0; i < currentRating; i++) stars[i].classList.add("active");
       });
@@ -105,46 +111,100 @@
 
 
     // ===== SUBMIT FEEDBACK (ĐÃ SỬA) =====
-    document.getElementById("sendBtn").addEventListener("click", async () => {
-      if (currentRating === 0) {
-        alert("Bạn chưa chọn số sao!");
-        return;
-      }
-
-      const comment = document.getElementById("comment").value;
-      const imageId = Number("{{ image.id }}");  /* FIXED */
-      const currentUserId = Number(document.getElementById("userInfo").dataset.user);
-
-
-      const res = await fetch(`/feedback/${imageId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: currentUserId,
-          rating: currentRating,
-          comment: comment
-        })
-      });
-
-      const result = await res.json();   /* FIXED */
-
-      if (res.ok) {
-        alert("Gửi đánh giá thành công!");
-        
-        // 1. Tải lại danh sách feedback mới nhất
-        loadFeedback(); 
-        
-        // 2. Cập nhật chỉ số rating tổng thể
-        updateRatingStats(result.new_rating, result.rating_count);
-        
-        // 3. Dọn dẹp giao diện
-        document.getElementById("comment").value = "";
-        stars.forEach(x => x.classList.remove("active"));
-        currentRating = 0;
-      } else {
-        alert("Lỗi: " + result.error);
-      }
+    document.getElementById("sendBtn").addEventListener("click", () => {
+      initiateFeedbackSubmission();
     });
+
+    // ===== HÀM MỚI: XIN CẤP QUYỀN VÀ GỬI TỌA ĐỘ =====
+    function initiateFeedbackSubmission() {
+        const imageId = Number("{{ image.id }}");
+        const userId = Number(document.getElementById("userInfo").dataset.user);
+        const rating = Number(document.getElementById("ratingInput").value);
+        const comment = document.getElementById("comment").value;
+
+        console.log("[DEBUG FE] 1. Hàm submit được gọi."); // <--- DEBUG 1
+
+        if (!userId) {
+            alert("Vui lòng đăng nhập để đánh giá.");
+            window.location.href = "/login";
+            return;
+        }
+
+        if (rating === 0 || isNaN(rating)) {
+          console.log("[DEBUG FE] 2. Lỗi: Rating bị thiếu hoặc bằng 0."); // <--- DEBUG 2
+            alert("Vui lòng chọn số sao (đánh giá) bắt buộc trước khi gửi.");
+            return;
+        }
+        
+        // Bắt đầu quá trình lấy vị trí
+        if (navigator.geolocation) {
+          console.log("[DEBUG FE] 3. Geolocation được hỗ trợ."); // <--- DEBUG 3
+            alert("Web sẽ yêu cầu quyền truy cập vị trí của bạn để xác minh. Vui lòng chấp nhận.");
+            navigator.geolocation.getCurrentPosition(
+                // Success: Có được vị trí
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // Gửi feedback với tọa độ
+                    sendFeedbackToServer(imageId, userId, rating, comment, lat, lng);
+                },
+                // Error: Không có được vị trí (người dùng từ chối/timeout)
+                (error) => {
+                    let errorMessage = "Không thể lấy vị trí của bạn. ";
+                    if (error.code === 1) {
+                        errorMessage += "Vui lòng cấp quyền truy cập vị trí (Location) để đánh giá.";
+                    } else {
+                        errorMessage += "Lỗi kỹ thuật GPS. Vui lòng thử lại.";
+                    }
+                    alert(errorMessage);
+                    console.error("Geolocation Error:", error);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+          console.log("[DEBUG FE] 4. Lỗi: Trình duyệt không hỗ trợ Geolocation."); // <--- DEBUG 4
+            alert("Trình duyệt của bạn không hỗ trợ định vị GPS.");
+        }
+    }
+    
+    // ===== HÀM MỚI: GỬI DỮ LIỆU ĐẾN SERVER =====
+    async function sendFeedbackToServer(imageId, userId, rating, comment, lat, lng) {
+        // Gửi tọa độ người dùng lên server
+        try {
+            const res = await fetch(`/feedback/${imageId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    user_id: userId,
+                    rating: rating,
+                    comment: comment,
+                    lat: lat,
+                    lng: lng // Gửi tọa độ người dùng
+                }),
+            });
+
+            const result = await res.json();
+
+            if (res.ok) {
+                alert("Đánh giá của bạn đã được gửi thành công!");
+                loadFeedback(); 
+                updateRatingStats(result.new_rating, result.rating_count);
+                // 3. Dọn dẹp giao diện
+                document.getElementById("comment").value = "";
+                stars.forEach(x => x.classList.remove("active"));
+                currentRating = 0;
+            } else if (res.status === 400 || res.status === 403 || res.status === 404 || res.status === 401) {
+                // Xử lý các lỗi từ BE (Bao gồm lỗi 403: Quá xa)
+                alert(`Thất bại: ${result.error}`);
+            } else {
+                alert(`Lỗi hệ thống không xác định: ${res.statusText}`);
+            }
+        } catch (error) {
+            console.error("Submission Error:", error);
+            alert("Có lỗi xảy ra trong quá trình gửi đánh giá.");
+        }
+    }
 
     // ===== HÀM MỚI: CẬP NHẬT CHỈ SỐ RATING TỔNG =====
     function updateRatingStats(rating, count) {
