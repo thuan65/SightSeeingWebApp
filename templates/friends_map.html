@@ -244,28 +244,31 @@
     let locationInterval = null;
     let currentShareMode = 'hidden'; // 'friends' hoặc 'hidden'
     const socket = io.connect('http://' + document.domain + ':' + location.port);
-    const map = L.map('map').setView([10.7769, 106.7009], 13);
+    const map = L.map('map', { 
+            // Thêm dòng này để tắt control ghi nhận của Leaflet
+            attributionControl: false 
+        }).setView([10.7769, 106.7009], 13);
     const markers = {};
 
     // Sử dụng đường dẫn tĩnh (Đã sửa theo gợi ý trước)
-    const ICON_BASE_URL = '/location_sharing/static/img/'; // Đảm bảo đường dẫn này đúng
+    const ICON_BASE_URL = '/static/locationshare_img/'; // Đảm bảo đường dẫn này đúng
     
     const selfIcon = L.icon({
         iconUrl: ICON_BASE_URL + 'user-icon.png', 
-        iconSize: [32, 32],
+        iconSize: [40, 40],
         iconAnchor: [16, 32],
         popupAnchor: [0, -32]
     });
 
     const friendIcon = L.icon({
         iconUrl: ICON_BASE_URL + 'friend-icon.png', 
-        iconSize: [24, 24], 
+        iconSize: [50, 50], 
         iconAnchor: [12, 24],
         popupAnchor: [0, -24]
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+        attribution: ''
     }).addTo(map);
 
     // --- DOM Elements ---

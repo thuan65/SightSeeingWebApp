@@ -3,10 +3,12 @@
 from flask import Blueprint, request, jsonify, session as flask_session, render_template
 from datetime import datetime
 from Forum.toxic_filter import is_toxic
-from MapRouting.geocoding import geocode_address
 from extensions import db
 from models import Image, Feedback, User
 import math
+import requests
+import time
+import traceback
 
 
 # Import từ DB
@@ -14,6 +16,43 @@ import math
 from models import Image, Feedback, User
 
 feedback_bp = Blueprint("feedback", __name__)
+
+# ---------------------------------------------------------
+# HÀM GEOCDING (Đã thêm Debug)
+# ---------------------------------------------------------
+
+MAPS_CO_API_KEY = "6934fa9ead70c273351403whx21d101"
+
+def geocode_address(address):
+    if not address: return None
+
+    url = "https://geocode.maps.co/search"
+    search_query = address if "vietnam" in address.lower() else f"{address}, Vietnam"
+    params = {'q': search_query, 'api_key': MAPS_CO_API_KEY}
+
+    print(f"[DEBUG GEO] Gọi API: {search_query}") # <--- DEBUG
+    
+    try:
+        time.sleep(1) 
+        response = requests.get(url, params=params, timeout=10)
+
+        if response.status_code == 200:
+            data = response.json()
+            if data:
+                result = data[0]
+                print(f"[DEBUG GEO] KẾT QUẢ: Lat={result['lat']}, Lon={result['lon']}") # <--- DEBUG
+                return {
+                    'lat': float(result['lat']),
+                    'lon': float(result['lon']),
+                    'display_name': result['display_name']
+                }
+            else:
+                print("[DEBUG GEO] API trả về kết quả rỗng (không tìm thấy địa chỉ).") # <--- DEBUG
+    except Exception as e:
+        print(f"❌ Geocoding Error: {e}")
+        traceback.print_exc() # In chi tiết lỗi nếu có
+
+    return None
 
 # ---------------------------------------------------------
 # HÀM TÍNH KHOẢNG CÁCH (Haversine)

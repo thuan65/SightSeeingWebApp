@@ -442,9 +442,12 @@
         }
 
         function initMap() {
-            map = L.map('map').setView([16.0544, 108.2022], 6);
+            map = L.map('map', { 
+            // Thêm dòng này để tắt control ghi nhận của Leaflet
+            attributionControl: false 
+            }).setView([16.0544, 108.2022], 6);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
+                attribution: ''
             }).addTo(map);
             markersLayer = L.layerGroup().addTo(map);
         }
