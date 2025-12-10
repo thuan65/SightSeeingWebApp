@@ -3,29 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sonna Guide</title>
+    <title>Map</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
-        /* --- RETRO THEME VARIABLES (UPDATED: BLUE - ORANGE) --- */
+        /* --- RETRO THEME VARIABLES: BLUE & ORANGE EDITION --- */
         :root {
-            /* Nền chính: Xanh dương nhạt (Retro Blue) */
+            /* Nền chính: Xanh dương nhạt (Sky Blue) */
             --bg-color: #85C1E9;
-            /* Nền panel: Cam nhạt (Retro Orange/Peach) */
+            /* Nền bảng/Panel: Cam phấn (Peach/Orange) */
             --panel-bg: #F8C471;
-            /* Chữ/Viền: Xanh dương đậm (Navy Blue) để tương phản tốt */
+            /* Màu chữ/Viền: Xanh than đậm (Navy) */
             --text-color: #154360;
             
             --border-width: 4px;
             --shadow-offset: 6px;
             
-            /* Nền ô nhập liệu: Cam sáng hơn */
+            /* Nền ô nhập liệu: Cam đậm hơn panel một chút */
             --input-bg: #F0B27A;
-            /* Highlight: Xanh rất nhạt */
-            --highlight: #EBF5FB;
+            /* Màu highlight khi hover: Xanh rất nhạt */
+            --highlight: #D6EAF8;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -36,11 +36,11 @@
             color: var(--text-color);
             height: 100vh;
             font-size: 20px;
+            /* Grid nền giữ nguyên hiệu ứng, chỉ đổi màu nhẹ */
             background-image:
-                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+                linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px);
             background-size: 20px 20px;
-            /* Layout Flex cho Sidebar + Main */
             display: flex;
             overflow: hidden;
         }
@@ -70,15 +70,10 @@
             text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
         }
 
-        /* --- CẬP NHẬT FONT CHO SIDEBAR (DỄ ĐỌC HƠN) --- */
-
         .fav-item {
-            /* Đổi sang font không chân, hỗ trợ tiếng Việt tốt */
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 16px; /* Giảm size xuống 1 chút cho gọn (VT323 thường phải để to) */
+            font-size: 16px; 
             line-height: 1.5;
-
-            /* Các thuộc tính cũ giữ nguyên để giữ style thẻ bài */
             background: var(--input-bg);
             border: 3px solid var(--text-color);
             margin-bottom: 15px;
@@ -105,29 +100,29 @@
             margin-right: 12px;
             font-size: 1.5em;
             margin-top: 2px;
+            color: #E67E22; /* Icon ngôi sao màu cam đậm */
         }
 
         .fav-item h3 {
-            /* Bỏ font 'Press Start 2P' ở đây để tên địa điểm dễ đọc hơn */
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-weight: 800; /* In đậm đậm đà */
+            font-weight: 800;
             font-size: 1.1em;
             text-transform: uppercase;
             margin-bottom: 5px;
             line-height: 1.3;
-            color: #000;
+            color: var(--text-color);
         }
 
         .fav-tag {
             display: inline-block;
             background: var(--text-color);
-            color: #fff; /* Chữ trắng trên nền xanh đậm */
+            color: #fff; /* Chữ trắng trên nền xanh than */
             padding: 3px 8px;
             font-size: 0.75em;
             margin-top: 8px;
             font-weight: bold;
-            border-radius: 4px; /* Bo góc nhẹ cho mềm mại hơn */
-            font-family: 'VT323', monospace; /* Giữ tag là font retro cho phong cách */
+            border-radius: 4px;
+            font-family: 'VT323', monospace;
         }
 
         /* --- MAIN CONTENT --- */
@@ -172,7 +167,7 @@
             cursor: pointer; display: flex; justify-content: space-between; align-items: center;
             font-weight: bold; font-size: 1.1em; text-transform: uppercase;
         }
-        .selector-header:hover { background: #0E2F44; }
+        .selector-header:hover { background: #2E86C1; /* Hover sáng hơn chút */ }
         .status-text { margin-left: 10px; opacity: 0.8; font-family: 'VT323', monospace; font-weight: normal; color: #AED6F1; }
         .selector-content { max-height: 0; overflow: hidden; border-top: 0; }
         .selector-box.expanded .selector-content { max-height: 400px; border-top: var(--border-width) solid var(--text-color); }
@@ -187,7 +182,7 @@
             color: var(--text-color);
         }
         .option-btn:hover, .use-location-btn:hover, .add-dest-btn:hover, .calculate-btn:hover {
-            background: var(--bg-color); transform: translate(-2px, -2px); box-shadow: 6px 6px 0px rgba(0,0,0,0.2);
+            background: var(--highlight); transform: translate(-2px, -2px); box-shadow: 6px 6px 0px rgba(0,0,0,0.2);
         }
         .option-btn:active, .use-location-btn:active, .add-dest-btn:active, .calculate-btn:active {
             transform: translate(2px, 2px); box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
@@ -209,17 +204,17 @@
             padding: 5px 15px; font-size: 1.2em; box-shadow: none; border-width: 3px;
         }
         .calculate-btn { width: 100%; padding: 20px; font-size: 1.8em; background: var(--text-color); color: white; margin-top: 20px; justify-content: center; box-shadow: 8px 8px 0px rgba(0,0,0,0.3); }
-        .calculate-btn:hover { background: #0E2F44; color: #fff; }
+        .calculate-btn:hover { background: #2E86C1; color: #fff; }
         
-        /* Updated Button Colors for Theme */
+        /* -- CẬP NHẬT MÀU NÚT CỤ THỂ -- */
         .add-dest-btn { width: 100%; padding: 15px; margin-bottom: 15px; background: #E67E22; color: white; justify-content: center; } /* Cam đậm */
-        .use-location-btn { margin-top: 10px; padding: 10px 20px; font-size: 1em; background: #2980B9; color: white; } /* Xanh đậm */
+        .use-location-btn { margin-top: 10px; padding: 10px 20px; font-size: 1em; background: #2980B9; color: white; } /* Xanh dương đậm */
 
         /* --- MAP & RESULTS --- */
         #map {
             height: 500px; border: var(--border-width) solid var(--text-color);
             box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--text-color);
-            /* Bỏ sepia, tăng contrast để map xanh hơn */
+            /* Bỏ sepia (nâu), tăng độ bão hòa để xanh dương nổi hơn */
             filter: contrast(1.1) saturate(1.1);
         }
         .result-panel { display: none; }
@@ -243,12 +238,12 @@
         .quest-label { display: flex; align-items: center; margin-bottom: 10px; font-weight: bold; font-size: 1.3em; text-transform: uppercase; }
         .color-block { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--text-color); margin-right: 15px; box-shadow: 3px 3px 0px rgba(0,0,0,0.2); }
         .remove-dest {
-            position: absolute; top: 12px; right: 12px; background: #E74C3C; color: white;
-            border: 3px solid #154360; width: 40px; height: 40px; font-family: 'Press Start 2P';
-            cursor: pointer; box-shadow: 4px 4px 0px #154360; font-size: 20px;
+            position: absolute; top: 12px; right: 12px; background: #E74C3C; color: white; /* Đỏ cam */
+            border: 3px solid var(--text-color); width: 40px; height: 40px; font-family: 'Press Start 2P';
+            cursor: pointer; box-shadow: 4px 4px 0px var(--text-color); font-size: 20px;
             display: flex; align-items: center; justify-content: center;
         }
-        .remove-dest:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #154360; }
+        .remove-dest:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--text-color); }
 
         .coord-display { font-family: monospace; background: var(--text-color); color: #85C1E9; padding: 10px; margin-top: 10px; display: none; }
         .coord-display.show { display: block; }
@@ -294,8 +289,8 @@
 
     <div id="main-content">
         <div class="header">
-            <h1>SONNA GUIDE</h1>
-            <p>Bản đồ Việt Nam</p>
+            <h1></h1>
+            <p></p>
         </div>
 
         <div class="container">
@@ -415,7 +410,7 @@
             destinations: {}
         };
 
-        // Cập nhật mảng màu cho phù hợp với theme Xanh/Cam
+        // --- CẬP NHẬT: Palette màu Xanh/Cam ---
         const routeColors = ['#E67E22', '#3498DB', '#D35400', '#2980B9', '#F39C12', '#5DADE2', '#CA6F1E', '#AED6F1'];
         const destinationColors = ['#E67E22', '#3498DB', '#D35400'];
 
@@ -437,10 +432,10 @@
 
             if (type === 'start') {
                 char = '☖';
-                iconColor = '#27AE60'; // Green remains for Start (Safe)
+                iconColor = '#2ECC71'; // Green (Safe)
             } else if (type === 'end') {
                 char = '⚑';
-                iconColor = '#C0392B'; // Red for End
+                iconColor = '#C0392B'; // Red (Danger/Target)
             } else if (type === 'waypoint') {
                 char = '⚑';
                 badge = `<span style="position:absolute; bottom:-5px; right:-10px; font-family:'Press Start 2P'; font-size:12px; background:#000; color:#fff; padding:2px 4px; border:2px solid #fff;">${number}</span>`;
@@ -456,7 +451,6 @@
 
         function initMap() {
             map = L.map('map', { 
-            // Thêm dòng này để tắt control ghi nhận của Leaflet
             attributionControl: false 
             }).setView([16.0544, 108.2022], 6);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -465,16 +459,14 @@
             markersLayer = L.layerGroup().addTo(map);
         }
 
-        // --- FAVORITES LOGIC (NEW) ---
+        // --- FAVORITES LOGIC ---
         async function loadFavorites() {
             const listDiv = document.getElementById('favorites-list');
             listDiv.innerHTML = '<p style="text-align: center; padding-top: 20px;">READING SAVE DATA...</p>';
 
             try {
-                // Gọi API lấy danh sách yêu thích
                 const res = await fetch(`/MapRouting/api/favorites`);
 
-                // Kiểm tra lỗi 401/403 (Chưa đăng nhập)
                 if (res.status === 401 || res.status === 403) {
                     listDiv.innerHTML = `
                         <div style="text-align:center; padding: 10px; background: #C0392B; color: white; border: 3px solid #154360;">
@@ -485,9 +477,7 @@
                     return;
                 }
 
-                // Kiểm tra nếu response không OK
                 if (!res.ok) {
-                    // Thử parse JSON error message
                     let errorMsg = 'Unknown error';
                     try {
                         const errorData = await res.json();
@@ -505,7 +495,6 @@
                     return;
                 }
 
-                // Kiểm tra content-type trước khi parse JSON
                 const contentType = res.headers.get("content-type");
                 if (!contentType || !contentType.includes("application/json")) {
                     const text = await res.text();
@@ -521,7 +510,6 @@
                 const data = await res.json();
                 listDiv.innerHTML = '';
 
-                // Kiểm tra nếu API trả về success = false
                 if (!data.success) {
                     const errorMsg = data.error || 'Unknown error';
                     listDiv.innerHTML = `
@@ -533,10 +521,8 @@
                     return;
                 }
 
-                // Kiểm tra nếu có dữ liệu
                 if(data.data && data.data.length > 0) {
                     data.data.forEach(item => {
-                        // Bỏ qua items có lỗi geocode
                         if (item.error) {
                             console.warn("Skipping favorite with geocode error:", item.name);
                             return;
@@ -558,7 +544,6 @@
                         listDiv.appendChild(div);
                     });
                     
-                    // Nếu không có item nào hợp lệ sau khi filter
                     if (listDiv.children.length === 0) {
                         listDiv.innerHTML = '<p style="text-align:center; padding-top:20px;">NO VALID LOCATIONS FOUND.</p>';
                     }
@@ -578,21 +563,14 @@
         }
 
         function routeToFavorite(dest) {
-            // Chuyển về chế độ đơn
             selectMode('single');
-
-            // Điền thông tin vào ô Đích Đến
-            document.getElementById('end-address').value = dest.name; // Hoặc dest.address
+            document.getElementById('end-address').value = dest.name;
             geocodedCoords.end = { lat: dest.lat, lon: dest.lon };
-
-            // Hiển thị tọa độ đã load
             const coordDiv = document.getElementById('end-coords');
             coordDiv.innerHTML = `> LOADED: [${dest.lat.toFixed(4)}, ${dest.lon.toFixed(4)}]`;
             coordDiv.classList.add('show');
-
             showLoading(true);
 
-            // Tự động lấy vị trí hiện tại làm điểm đi
             if(navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
@@ -603,7 +581,6 @@
                         const startDiv = document.getElementById('start-coords');
                         startDiv.innerHTML = `> GPS: [${lat.toFixed(4)}, ${lon.toFixed(4)}]`;
                         startDiv.classList.add('show');
-
                         calculateSingleRoute();
                     },
                     (err) => {
@@ -617,8 +594,6 @@
                 showLoading(false);
             }
         }
-
-        // --- END FAVORITES LOGIC ---
 
         function toggleSelector(boxId) {
             const box = document.getElementById(boxId);
@@ -664,16 +639,11 @@
                 const data = await response.json();
 
                 if (data.success && data.data) {
-                    // --- ĐOẠN CODE FIX LỖI: Kiểm tra kỹ lưỡng ---
-                    // Tự động nhận diện 'lon' hoặc 'lng'
                     const rawLat = data.data.lat;
                     const rawLon = (data.data.lon !== undefined) ? data.data.lon : data.data.lng;
-
-                    // Ép kiểu sang số (float) để tránh lỗi text
                     const lat = parseFloat(rawLat);
                     const lon = parseFloat(rawLon);
 
-                    // Nếu không phải số hợp lệ thì báo lỗi thay vì crash trang web
                     if (isNaN(lat) || isNaN(lon)) {
                         console.error("Dữ liệu tọa độ lỗi:", data.data);
                         showError("Lỗi dữ liệu tọa độ từ Server");
@@ -683,7 +653,6 @@
                     geocodedCoords[prefix] = { lat: lat, lon: lon };
 
                     const coordDiv = document.getElementById(prefix + '-coords');
-                    // Bây giờ gọi .toFixed(4) chắc chắn sẽ an toàn
                     coordDiv.innerHTML = `> LOC: [${lat.toFixed(4)}, ${lon.toFixed(4)}]<br><small>${data.data.display_name}</small>`;
                     coordDiv.classList.add('show');
                     showError('Đã tìm thấy tọa độ!', false);
@@ -713,7 +682,6 @@
                 const data = await response.json();
 
                 if (data.success && data.data) {
-                    // --- ĐOẠN CODE FIX LỖI TƯƠNG TỰ ---
                     const rawLat = data.data.lat;
                     const rawLon = (data.data.lon !== undefined) ? data.data.lon : data.data.lng;
                     const lat = parseFloat(rawLat);
@@ -851,7 +819,7 @@
             const latlngs = route.coordinates.map(coord => [coord[1], coord[0]]);
 
             if (isMulti && route.ordered_destinations) {
-                // Đổi màu đường thành Xanh Đậm để hợp theme
+                // Đổi đường đi sang màu Xanh Than (Navy)
                 L.polyline(latlngs, { color: '#154360', weight: 6, opacity: 0.8, dashArray: '10, 10' }).addTo(markersLayer);
                 L.marker(latlngs[0], {icon: createCustomIcon('start')}).addTo(markersLayer);
                 route.ordered_destinations.forEach((dest, i) => {
@@ -897,8 +865,8 @@
         function showError(message, isError = true) {
             const errorDiv = document.getElementById('error-message');
             errorDiv.textContent = (isError ? '> ERROR: ' : '> SUCCESS: ') + message;
-            // Màu thông báo: Đỏ cho lỗi, Xanh lá cho thành công (Giữ nguyên hoặc chỉnh cho hợp theme)
-            errorDiv.style.background = isError ? '#E74C3C' : '#27AE60';
+            // Xanh lá cho thành công, Đỏ cam cho lỗi
+            errorDiv.style.background = isError ? '#E74C3C' : '#2ECC71';
             errorDiv.classList.add('show');
             setTimeout(() => errorDiv.classList.remove('show'), 5000);
         }
@@ -907,7 +875,7 @@
             console.log('SYSTEM BOOTING...');
             initMap();
             addDestination();
-            loadFavorites(); // Load Favorites khi khởi động
+            loadFavorites(); 
         };
     </script>
 </body>
