@@ -15,7 +15,7 @@
     <div style="text-align: center;">
         <p>Trạng thái Socket: <strong id="socket_status" style="color: red;">Disconnected</strong></p>
         <p>GPS Status: <strong id="gps_status" style="color: orange;">Đang tìm vị trí...</strong></p>
-        <p>Cập nhật vị trí thật mỗi: <strong>5 giây</strong></p>
+        <p>Cập nhật vị trí: <strong>Liên tục (WatchPosition)</strong></p>
     </div>
     <hr>
     <div style="text-align: center; margin-top: 10px;">
@@ -235,23 +235,54 @@
             });
 
     </script> -->
+
+<style>
+    #map { height: 600px; width: 80%; margin: 20px auto; }
+
+    /* ⭐ CSS MỚI CHO TÊN VĨNH VIỄN ⭐ */
+    .leaflet-tooltip {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0;
+        font-weight: bold;
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    /* Màu xanh cho chữ "Bạn" */
+    .leaflet-tooltip.self-label {
+        color: #007bff; /* Màu xanh nổi bật */
+        text-shadow: 1px 1px 1px #fff; /* Viền chữ trắng để dễ đọc */
+    }
+
+    /* Màu đen/xám cho bạn bè */
+    .leaflet-tooltip.friend-label {
+        color: #333;
+        text-shadow: 1px 1px 1px #fff;
+    }
+</style>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
     // --- Cấu hình Ban đầu ---
     let user_id = null; 
     let username = 'Unknown';
-    let locationInterval = null;
-    let currentShareMode = 'hidden'; // 'friends' hoặc 'hidden'
+    let locationWatcherId = null; // ⭐ BIẾN MỚI: Dùng để lưu ID của watchPosition
+    //let locationInterval = null;
+    let currentShareMode = 'friends'; // 'friends' hoặc 'hidden'
     const socket = io.connect('http://' + document.domain + ':' + location.port);
     const map = L.map('map', { 
             // Thêm dòng này để tắt control ghi nhận của Leaflet
             attributionControl: false 
         }).setView([10.7769, 106.7009], 13);
     const markers = {};
+    let initialFitDone = false; // Cờ để kiểm tra fitBounds lần đầu
 
     // Sử dụng đường dẫn tĩnh (Đã sửa theo gợi ý trước)
     const ICON_BASE_URL = '/static/locationshare_img/'; // Đảm bảo đường dẫn này đúng
+    
     const selfIcon = L.icon({
         iconUrl: ICON_BASE_URL + 'user-icon.png', 
         iconSize: [40, 40],
@@ -274,78 +305,234 @@
     const shareToggleButton = document.getElementById('shareToggle');
     const currentModeSpan = document.getElementById('currentMode');
 
-    // --- Hàm Gửi Vị trí Thật (Geolocation) ---
-    function getAndSendLocation() {
-        if (user_id === null || currentShareMode === 'hidden') return;
+    // // --- Hàm Gửi Vị trí Thật (Geolocation) ---
+    // function getAndSendLocation() {
+    //     if (user_id === null || currentShareMode === 'hidden') return;
         
-        document.getElementById('gps_status').innerText = 'Đang tìm vị trí...';
+    //     document.getElementById('gps_status').innerText = 'Đang tìm vị trí...';
+    //     document.getElementById('gps_status').style.color = 'orange';
+
+    //     if (navigator.geolocation) {
+    //         navigator.geolocation.getCurrentPosition(
+    //             function(position) {
+    //                 const lat = position.coords.latitude;
+    //                 const lng = position.coords.longitude;
+                    
+    //                 document.getElementById('gps_status').innerText = 'OK';
+    //                 document.getElementById('gps_status').style.color = 'green';
+                    
+    //                 socket.emit('update_location', { lat: lat, lng: lng });
+
+    //                 updateMarker(user_id, username, lat, lng, true);
+    //             },
+    //             function(error) {
+    //                 let errorMessage = (error.code === 1) ? "LỖI: Từ chối cấp quyền GPS." : "LỖI GPS: Timeout/Không xác định.";
+    //                 document.getElementById('gps_status').innerText = errorMessage;
+    //                 document.getElementById('gps_status').style.color = 'red';
+    //             },
+    //             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    //         );
+    //     } else {
+    //         document.getElementById('gps_status').innerText = 'Trình duyệt không hỗ trợ Geolocation.';
+    //         document.getElementById('gps_status').style.color = 'red';
+    //     }
+    // }
+
+    // -------------------------------------------------------------
+    // ⭐ LOGIC WATCH POSITION (Thay thế cho getAndSendLocation và setInterval) ⭐
+    // -------------------------------------------------------------
+    
+    // --- Hàm xử lý thành công (Gửi dữ liệu) ---
+    function sendLocationHandler(position) {
+        if (currentShareMode === 'hidden') return; // An toàn: Dù watchPosition vẫn chạy, không gửi
+
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
+        document.getElementById('gps_status').innerText = 'OK';
+        document.getElementById('gps_status').style.color = 'green';
+        
+        socket.emit('update_location', { lat: lat, lng: lng });
+
+        updateMarker(user_id, username, lat, lng, true);
+    }
+    
+    // --- Hàm xử lý lỗi Geolocation ---
+    function geolocationErrorHandler(error) {
+        let errorMessage;  //= (error.code === 1) ? "LỖI: Từ chối cấp quyền GPS." : "LỖI GPS: Timeout/Không xác định.";
+
+        if (error.code === 1) {
+            errorMessage = "LỖI: Từ chối cấp quyền GPS.";
+            // Chỉ dừng và chuyển sang hidden khi người dùng từ chối quyền (Error Code 1)
+            stopLocationTracking();
+            setShareMode('hidden'); 
+            alert("Bạn đã từ chối quyền truy cập vị trí. Chế độ chia sẻ tự động tắt.");
+        } else if (error.code === 2) {
+            errorMessage = "LỖI GPS: Không thể xác định vị trí.";
+        } else if (error.code === 3) {
+            errorMessage = "LỖI GPS: Timeout (Quá thời gian chờ).";
+        } else {
+            errorMessage = "LỖI GPS: Không xác định.";
+        }
+
+        document.getElementById('gps_status').innerText = errorMessage;
+        document.getElementById('gps_status').style.color = 'red';
+        console.error("Geolocation error:", error);
+        
+        // Cần dừng theo dõi nếu lỗi nghiêm trọng (như từ chối quyền)
+        // if (error.code === 1) {
+        //     stopLocationTracking();
+        //     setShareMode('hidden'); // Tự động chuyển sang hidden
+        //     alert("Bạn đã từ chối quyền truy cập vị trí. Chế độ chia sẻ tự động tắt.");
+        // }
+    }
+
+    // --- Hàm Bắt đầu theo dõi (watchPosition) ---
+    function startLocationTracking() {
+        if (user_id === null || currentShareMode === 'hidden') return;
+        if (locationWatcherId !== null) return; // Đã chạy rồi thì thôi
+
+        document.getElementById('gps_status').innerText = 'Đang BẮT ĐẦU theo dõi vị trí...';
         document.getElementById('gps_status').style.color = 'orange';
 
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    
-                    document.getElementById('gps_status').innerText = 'OK';
-                    document.getElementById('gps_status').style.color = 'green';
-                    
-                    socket.emit('update_location', { lat: lat, lng: lng });
-
-                    updateMarker(user_id, username, lat, lng, true);
-                },
-                function(error) {
-                    let errorMessage = (error.code === 1) ? "LỖI: Từ chối cấp quyền GPS." : "LỖI GPS: Timeout/Không xác định.";
-                    document.getElementById('gps_status').innerText = errorMessage;
-                    document.getElementById('gps_status').style.color = 'red';
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            // ⭐ SỬ DỤNG watchPosition ⭐
+            locationWatcherId = navigator.geolocation.watchPosition(
+                sendLocationHandler,
+                geolocationErrorHandler,
+                { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 } // Tăng timeout cho watchPosition
             );
+            console.log("[DEBUG TRACKING] Bắt đầu theo dõi vị trí (Watcher ID:", locationWatcherId, ")");
+            
+            // Lấy vị trí lần đầu ngay lập tức để vẽ marker của mình ngay khi map load
+            // navigator.geolocation.getCurrentPosition(
+            //     (position) => updateMarker(user_id, username, position.coords.latitude, position.coords.longitude, true), 
+            //     geolocationErrorHandler,
+            //     { enableHighAccuracy: true, timeout: 5000 }
+            // );
         } else {
             document.getElementById('gps_status').innerText = 'Trình duyệt không hỗ trợ Geolocation.';
             document.getElementById('gps_status').style.color = 'red';
+        }
+    }
+    
+    // --- Hàm Dừng theo dõi (clearWatch) ---
+    function stopLocationTracking() {
+        if (locationWatcherId !== null) {
+            // ⭐ SỬ DỤNG clearWatch ⭐
+            navigator.geolocation.clearWatch(locationWatcherId);
+            console.log("[DEBUG TRACKING] Đã dừng theo dõi vị trí (Cleared Watcher ID:", locationWatcherId, ")");
+            locationWatcherId = null;
+            document.getElementById('gps_status').innerText = 'Đã dừng theo dõi GPS.';
+            document.getElementById('gps_status').style.color = 'grey';
         }
     }
 
     // --- Hàm xử lý cập nhật Marker trên Map ---
     function updateMarker(id, user_name, lat, lng, is_self = false) {
         const latlng = [lat, lng];
-        
-        // YÊU CẦU 3: Hiển thị tên người dùng
-        const displayName = is_self ? "Tôi" : user_name;
-        // YÊU CẦU 3: Cập nhật popup để hiển thị vị trí cuối (Last Known)
-        const popupText = `<b>${displayName}</b><br>${is_self ? 'Vị trí hiện tại' : 'Vị trí cuối'}`;
-        
-        if (markers[id]) {
-            markers[id].setLatLng(latlng);
-            markers[id].getPopup().setContent(popupText);
-            // Đặt opacity về 1.0 khi nhận được update (vì người này đang online/share)
-            markers[id].setOpacity(1.0); 
+
+        // ⭐ TẠO TEXT HIỂN THỊ ⭐
+        const labelText = is_self ? "Bạn" : user_name;
+        const labelClassName = is_self ? 'self-label' : 'friend-label';
+
+        // Cấu hình Tooltip để luôn hiển thị
+        const tooltipOptions = {
+            permanent: true, // Luôn hiển thị
+            direction: 'top', // Hiển thị phía trên marker
+            className: 'leaflet-tooltip ' + labelClassName, // Áp dụng CSS
+            offset: [0, -15] // Điều chỉnh vị trí (lên trên một chút so với mặc định)
+        };
+
+        const popupText = `<b>${labelText}</b><br>${is_self ? 'Vị trí của bạn' : 'Bạn bè'}`;
+
+        if (id in markers) {
+            const currentMarker = markers[id].marker;
+
+            currentMarker.setLatLng(latlng);
+            currentMarker.setOpacity(current_is_online ? 1.0 : 0.5); // Đồng bộ opacity
+            currentMarker.getTooltip().setContent(labelText); 
+            currentMarker.getPopup().setContent(popupText);
         } else {
-            const marker = L.marker(latlng, { icon: is_self ? selfIcon : friendIcon }).addTo(map);
+            const marker = L.marker(latlng, {
+                icon: is_self ? selfIcon : friendIcon
+            }).addTo(map);
+
+            marker.bindTooltip(labelText, tooltipOptions).openTooltip();
             marker.bindPopup(popupText);
 
-            // Lưu ID và tên vào đối tượng marker để sử dụng trong event click
-            marker.userId = id; // <--- LƯU ID
-            marker.userName = user_name; // <--- LƯU TÊN
-            
-            markers[id] = marker;
+            markers[id] = {
+                marker: marker,
+                username: user_name,
+            };
 
-            // Chỉ thêm event listener cho bạn bè (is_self=false)
+            // Gắn sự kiện
+            marker.userId = id;
+            marker.userName = user_name;
+
             if (!is_self) {
-                // Thêm event listener để gọi hàm hiển thị posts khi click
                 marker.on('click', function(e) {
-                    showFriendPostsPopup(e.target.userId, e.target.userName, e.target);
+                    // Giả định hàm này được định nghĩa ở đâu đó
+                    showFriendPostsPopup(e.target.userId, e.target.userName, e.target); 
                 });
             }
         }
-        if (is_self) {
-            //map.setView(latlng, map.getZoom() > 13 ? map.getZoom() : 13);
-            document.getElementById('username_display').innerText = username + " (Tôi)";
+        
+        if (is_self && document.getElementById('username_display').innerText.indexOf('Loading') !== -1) {
+            document.getElementById('username_display').innerText = user_name + " (ID: " + id + ")";
         }
+
+        if (!initialFitDone && markers[id]) {
+            setTimeout(fitMapToAllMarkers, 100); 
+        }
+        
+        // // YÊU CẦU 3: Hiển thị tên người dùng
+        // const displayName = is_self ? "Tôi" : user_name;
+        // // YÊU CẦU 3: Cập nhật popup để hiển thị vị trí cuối (Last Known)
+        // const popupText = `<b>${displayName}</b><br>${is_self ? 'Vị trí hiện tại' : 'Vị trí cuối'}`;
+        
+        // if (markers[id]) {
+        //     markers[id].setLatLng(latlng);
+        //     markers[id].marker.getTooltip().setContent(labelText);
+        //     markers[id].marker.getPopup().setContent(`<b>${user_name}</b><br>${is_self ? 'Vị trí của bạn' : 'Bạn bè'}`); // Cập nhật popup nếu click vào
+        //     // Đặt opacity về 1.0 khi nhận được update (vì người này đang online/share)
+        //     markers[id].setOpacity(1.0); 
+        // } else {
+        //     const marker = L.marker(latlng, { icon: is_self ? selfIcon : friendIcon }).addTo(map);
+
+        //     // ⭐ THAY THẾ POPUP BẰNG TOOLTIP PERMANENT ⭐
+        //     marker.bindTooltip(labelText, tooltipOptions).openTooltip();
+            
+        //     // Vẫn giữ bindPopup nếu cần chi tiết khi click
+        //     marker.bindPopup(`<b>${user_name}</b><br>${is_self ? 'Vị trí của bạn' : 'Bạn bè'}`);
+
+        //     //marker.bindPopup(popupText);
+
+        //     // Lưu ID và tên vào đối tượng marker để sử dụng trong event click
+        //     marker.userId = id; // <--- LƯU ID
+        //     marker.userName = user_name; // <--- LƯU TÊN
+            
+        //     markers[id] = marker;
+
+        //     // Chỉ thêm event listener cho bạn bè (is_self=false)
+        //     if (!is_self) {
+        //         // Thêm event listener để gọi hàm hiển thị posts khi click
+        //         marker.on('click', function(e) {
+        //             showFriendPostsPopup(e.target.userId, e.target.userName, e.target);
+        //         });
+        //     }
+        // }
+        // if (is_self) {
+        //     //map.setView(latlng, map.getZoom() > 13 ? map.getZoom() : 13);
+        //     document.getElementById('username_display').innerText = username + " (Tôi)";
+        // }
+        // if (!initialFitDone) {
+        //     //initialFitDone = true; // Chỉ fitBounds lần đầu
+        //     setTimeout(fitMapToAllMarkers, 100);
+        // }
         // Gọi hàm fitBounds sau khi marker đã được vẽ/cập nhật
         // Dùng setTimeout để đảm bảo tất cả các event SocketIO đã kịp thời xử lý
-        setTimeout(fitMapToAllMarkers, 100);
+        //setTimeout(fitMapToAllMarkers, 100);
     }
 
     // --- HÀM MỚI: XỬ LÝ POPUP BÀI VIẾT BẠN BÈ ---
@@ -376,7 +563,7 @@
                             : '';
                         popupContent += `
                             <div style="margin-bottom: 10px; border: 1px solid #eee; padding: 8px; border-radius: 4px; background-color: #f9f9f9;">
-                                 ${imageHtml} <h4 style="margin: 0; font-size: 1.1em;">
+                                ${imageHtml} <h4 style="margin: 0; font-size: 1.1em;">
                                     <a href="/forum/post/${post.id}" target="_blank" title="Xem thêm trong Forum" style="color: #007bff; text-decoration: none; font-weight: bold;">
                                         ${post.title}
                                     </a>
@@ -410,19 +597,24 @@
 
     // --- Hàm điều chỉnh view map để bao trùm tất cả markers ---
     function fitMapToAllMarkers() {
+        if (initialFitDone) return; // Chỉ fitBounds lần đầu tiên
         const latLngs = [];
-        let needsAdjustment = false;
+        //let needsAdjustment = false;
         
         // 1. Thu thập tất cả tọa độ từ đối tượng markers
         for (const id in markers) {
             if (markers.hasOwnProperty(id)) {
-                const marker = markers[id];
-                latLngs.push(marker.getLatLng());
-                needsAdjustment = true;
+                //latLngs.push(markers[id].marker.getLatLng());
+                // ⭐ LẤY ĐỐI TƯỢNG MARKER THẬT: truy cập qua .marker ⭐
+                const leafletMarker = markers[id].marker; 
+
+                if (leafletMarker) {
+                    latLngs.push(leafletMarker.getLatLng()); // Gọi hàm getLatLng() trên đối tượng Marker
+                }
             }
         }
 
-        if (needsAdjustment && latLngs.length > 0) {
+        if (latLngs.length > 0) {
             try {
                 // 2. Tạo đối tượng Bounding Box từ các tọa độ
                 const bounds = L.latLngBounds(latLngs);
@@ -430,12 +622,14 @@
                 // 3. Áp dụng fitBounds lên map
                 // Padding: thêm một chút khoảng trống (ví dụ: 50 pixels) xung quanh các markers
                 map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+                initialFitDone = true; // Đánh dấu đã fitBounds lần đầu
                 console.log("[CLIENT] Map view đã được điều chỉnh để bao trùm tất cả markers.");
 
             } catch (error) {
                 // Bắt lỗi nếu chỉ có một điểm (Leaflet đôi khi lỗi với chỉ một điểm)
                 if (latLngs.length === 1) {
-                     map.setView(latLngs[0], 13); // Nếu chỉ có 1 điểm, chỉ cần setView
+                    map.setView(latLngs[0], 13); // Nếu chỉ có 1 điểm, chỉ cần setView
+                    initialFitDone = true;
                 } else {
                     console.error("Lỗi khi điều chỉnh fitBounds:", error);
                 }
@@ -457,13 +651,14 @@
 
         if (mode === 'friends') {
             // Bắt đầu gửi vị trí
-            if (locationInterval) clearInterval(locationInterval);
-            getAndSendLocation(); 
-            locationInterval = setInterval(getAndSendLocation, 5000);
+            stopLocationTracking(); 
+            startLocationTracking(); // ⭐ BẮT ĐẦU watchPosition ⭐
         } else {
             // Dừng gửi vị trí
-            if (locationInterval) clearInterval(locationInterval);
+            //if (locationInterval) clearInterval(locationInterval);
+            stopLocationTracking(); // ⭐ DỪNG watchPosition ⭐
         }
+
 
         // Gửi trạng thái mới lên server qua API
         fetch('/api/share_mode', {
@@ -550,7 +745,8 @@
     socket.on('disconnect', function() {
         document.getElementById('socket_status').innerText = 'Disconnected';
         document.getElementById('socket_status').style.color = 'red';
-        if (locationInterval) clearInterval(locationInterval);
+        //if (locationInterval) clearInterval(locationInterval);
+        stopLocationTracking(); // ⭐ DỪNG watchPosition ⭐
     });
 
     // Nhận cập nhật vị trí từ bạn bè
@@ -565,6 +761,30 @@
     // YÊU CẦU 2: LOẠI BỎ logic xóa marker hoàn toàn. Marker sẽ tồn tại mãi mãi 
     // trừ khi người dùng load lại trang (và không có API lấy vị trí ban đầu)
     // hoặc có một sự kiện xóa rõ ràng từ server (đã loại bỏ).
+
+    socket.on('friend_status_update', function(data) {
+        console.log(`Status update: User ${data.user_id} is_online: ${data.is_online}`);
+        if (data.user_id in markers) {
+            markers[data.user_id].marker.setOpacity(data.is_online ? 1.0 : 0.5); 
+        }
+    });
+
+    socket.on("friend:disconnected", data => {
+        const disconnectedUserId = data.userId;
+
+        if (markers[disconnectedUserId]) {
+            map.removeLayer(markers[disconnectedUserId].marker); // ⭐ ĐÃ SỬA: Dùng .marker
+            delete markers[disconnectedUserId];
+            
+            console.log(`[CLIENT] Đã xóa marker của User ID: ${disconnectedUserId} (ngắt kết nối)`);
+        }
+    });
+
+    fetch('/location_sharing/friends_list')
+        .then(res => res.json())
+        .then(data => {
+            console.log('Friend IDs for initialization:', data.friends_ids);
+        });
 
 </script>
 </body>
