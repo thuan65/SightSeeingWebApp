@@ -72,6 +72,20 @@
           background: #f0f0f0;
       }
 
+      .nav-user {
+        color: #333;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 500;
+        font-family: 'Poppins', sans-serif;
+        cursor: default;
+      }
+
+      .nav-user:hover {
+        background: #f0f0f0;
+      }
+
       .btn-primary {
           background: linear-gradient(135deg, #1C6758, #8EB486) !important;
           color: white !important;
@@ -688,14 +702,23 @@
               <a href="/chat_ui">Chatbot du lịch</a>
               <a href="/forum">Forum</a>
               <a href="/friends_map">Friends map</a>
-              <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
+              <div class="nav-links">
+                {% if current_user.is_authenticated %}
+                    <span class="nav-user">
+                        Xin chào, {{ current_user.username }}
+                    </span>
+                {%else %}
+                    <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
+                {% endif %}
               <button class="hamburger-btn" onclick="toggleMenu()">
                   <i class="fas fa-bars"></i>
               </button>
               <div class="dropdown-menu" id="dropdownMenu">
                   <a href="{{ url_for('favorite_bp.list_favorites') }}"><i class="fas fa-heart"></i> Danh sách yêu thích</a>
                   <a href="/friends"><i class="fas fa-user-friends"></i> Bạn bè</a>
-                  <a href="{{ url_for('login_bp.logout') }}"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                  {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('login_bp.logout') }}"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                  {% endif %}
               </div>
           </div>
       </div>
@@ -791,12 +814,12 @@
           </div>
 
           <div class="sidebar">
-              <div class="sidebar-card">
+              <!-- <div class="sidebar-card">
                   <h3><i class="fas fa-user-friends"></i> Bạn bè Online</h3>
                   <div class="friends-list" id="friendsList">
                       <div class='friend-item'>Đang tải dữ liệu bạn bè...</div>
                   </div>
-              </div>
+              </div> -->
 
               <div class="sidebar-card">
                   <h3><i class="fas fa-map-marked-alt"></i> Bản đồ Việt Nam</h3>

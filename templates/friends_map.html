@@ -252,7 +252,6 @@
 
     // Sử dụng đường dẫn tĩnh (Đã sửa theo gợi ý trước)
     const ICON_BASE_URL = '/static/locationshare_img/'; // Đảm bảo đường dẫn này đúng
-    
     const selfIcon = L.icon({
         iconUrl: ICON_BASE_URL + 'user-icon.png', 
         iconSize: [40, 40],
@@ -377,7 +376,7 @@
                             : '';
                         popupContent += `
                             <div style="margin-bottom: 10px; border: 1px solid #eee; padding: 8px; border-radius: 4px; background-color: #f9f9f9;">
-                                ${imageHtml} <h4 style="margin: 0; font-size: 1.1em;">
+                                 ${imageHtml} <h4 style="margin: 0; font-size: 1.1em;">
                                     <a href="/forum/post/${post.id}" target="_blank" title="Xem thêm trong Forum" style="color: #007bff; text-decoration: none; font-weight: bold;">
                                         ${post.title}
                                     </a>
