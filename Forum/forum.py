@@ -248,8 +248,30 @@ def get_visible_posts_orm():
 # --- ROUTE HIỂN THỊ FORUM (Bổ sung lại hàm này) ---
 @forum.route("/forum")
 def show_forum():
-    posts_with_answers = get_visible_posts_orm()
-    return render_template("forum.html", posts=posts_with_answers)
+    mode = request.args.get("mode")  # public / friends / private / None
+
+    # Lấy toàn bộ bài được phép xem
+    posts = get_visible_posts_orm()
+
+    # Áp filter theo mode (sau khi đã xử lý quyền)
+    if mode in ["public", "friends", "private"]:
+        if mode == "private":
+            # private: chỉ xem bài của chính mình
+            if current_user.is_authenticated:
+                posts = [
+                    p for p in posts
+                    if p["privacy"] == "private" and p["questioner_id"] == current_user.id
+                ]
+            else:
+                posts = []  # chưa login thì không xem được private
+        else:
+            posts = [p for p in posts if p["privacy"] == mode]
+
+    return render_template(
+        "forum.html",
+        posts=posts,
+        mode=mode
+    )
 
 @forum.route("/post/new", methods=["GET", "POST"])
 def new_post():
@@ -323,7 +345,6 @@ def new_post():
         return redirect("/forum")
 
     return render_template("new_post.html")
-
 
 
 @forum.route("/post/<int:post_id>/reply", methods=["GET","POST"])

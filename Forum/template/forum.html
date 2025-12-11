@@ -72,6 +72,17 @@
             color: white !important;
         }
 
+        .btn-primary-2 {
+            background: linear-gradient(135deg, #1C6758, #8EB486) !important;
+            color: white !important;
+            font-weight: 600;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+
         /* HERO BANNER */
         .hero-banner {
             background: linear-gradient(135deg, #8EB486 0%, #1C6758 100%);
@@ -127,6 +138,41 @@
             border-radius: 50px;
             font-size: 15px;
         }
+
+        .filter-container {
+            max-width: 320px;
+            margin: 0 auto 40px;
+            text-align: center;
+        }   
+
+        .filter-container select {
+            width: 100%;
+            padding: 14px 42px 14px 30px; /* chừa chỗ cho arrow mới */
+            border-radius: 40px;
+            border: 2px solid #e0e0e0;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            background-color: white;
+
+            /* Ẩn arrow mặc định */
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+
+            /* Arrow custom */
+            background-image: url("data:image/svg+xml;utf8,\
+            <svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'>\
+            <path d='M1 1l5 5 5-5' stroke='%231C6758' stroke-width='2' fill='none'/>\
+            </svg>");
+            background-repeat: no-repeat;
+            background-position: right 22px center; /* 👈 DỊCH QUA TRÁI */
+        }
+
+        .filter-container select:hover {
+            border-color: #1C6758;
+        }
+
 
         /* MAIN CONTENT */
         .container {
@@ -276,6 +322,7 @@
             <a href="/MapRouting">Bản đồ</a>
             <a href="/chat_ui">Chatbot du lịch</a>
             <a href="{{ url_for('forum.show_forum') }}">Forum</a>
+            <a href="/friends_map">Friends map</a>
 
             {% if current_user.is_authenticated %}
                 <a href="{{ url_for('login_bp.logout') }}" class="btn-danger">Đăng xuất</a>
@@ -299,6 +346,30 @@
             <button type="submit" class="search-button btn-primary">Tìm kiếm</button>
         </div>
     </form>
+</div>
+
+<div class="filter-container">
+    <form method="get" action="{{ url_for('forum.show_forum') }}">
+        <select name="mode" onchange="this.form.submit()">
+            <option value="">📌 Tất cả bài viết</option>
+            <option value="public" {% if mode == 'public' %}selected{% endif %}>🌐 Công khai</option>
+            <option value="friends" {% if mode == 'friends' %}selected{% endif %}>👥 Bạn bè</option>
+            <option value="private" {% if mode == 'private' %}selected{% endif %}>🔒 Riêng tư</option>
+        </select>
+    </form>
+</div>
+
+
+<div style="text-align: center;">
+    {% if current_user.is_authenticated %}
+        <a href="{{ url_for('forum.new_post') }}" class="btn-primary-2">
+            Đặt câu hỏi ngay
+        </a>
+    {% else %}
+        <a href="{{ url_for('login_bp.login') }}" class="btn-primary-2">
+            Đăng nhập để đặt câu hỏi
+        </a>
+    {% endif %}
 </div>
 
 <div class="container">
@@ -375,12 +446,12 @@ function deletePost(postId, owner) {
     }
 
     if (currentUser !== owner && isAdmin !== "True") {
-        alert("❌ Bạn không có quyền xóa bài viết này!");
+        alert("Bạn không có quyền xóa bài viết này!");
         return;
     }
 
     let msg = (isAdmin === "True")
-        ? "⚠️ Admin muốn xóa bài này?"
+        ? "Admin muốn xóa bài này?"
         : "Bạn chắc chắn muốn xóa bài viết?";
 
     if (confirm(msg)) {
@@ -396,15 +467,4 @@ function deletePost(postId, owner) {
 </script>
 
 </body>
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, msg in messages %}
-      <div class="alert alert-{{ category }}" 
-           style="padding: 12px; margin: 15px 0; background: #d4edda; color:#155724; border-radius:10px;">
-        {{ msg }}
-      </div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
-
 </html>

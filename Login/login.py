@@ -30,6 +30,8 @@ def login():
         user = User.query.filter_by(username=login_form.username.data).first()
         if user and bcrypt.check_password_hash(user.password, login_form.password.data):
             login_user(user)
+            session['username'] = user.username
+            session['user_id'] = user.id
             return redirect(url_for("index"))
         flash("Sai tài khoản hoặc mật khẩu", "danger")
 
