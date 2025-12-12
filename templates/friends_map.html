@@ -701,13 +701,13 @@
                 
                 // Khởi tạo UI và logic dựa trên share_mode
                 // YÊU CẦU 1: Hỏi consent lần đầu nếu share_mode chưa được set
-                if (currentShareMode !== 'hidden' && !localStorage.getItem('locationConsentShown')) {
+                if (currentShareMode !== 'hidden') {
                     if (confirm("Bạn có muốn chia sẻ vị trí của mình với bạn bè không?")) {
                         currentShareMode = 'friends';
                     } else {
                         currentShareMode = 'hidden';
                     }
-                    localStorage.setItem('locationConsentShown', 'true');
+                    //localStorage.setItem('locationConsentShown', 'true');
                 }
 
                 setShareMode(currentShareMode); // Cập nhật trạng thái lần đầu
