@@ -235,7 +235,7 @@ def handle_connect():
 def handle_disconnect():
     # print(f"\n[DEBUG SOCKET] FUNC CALLED: Bắt đầu xử lý DISCONNECT.")
     if current_user.is_authenticated:
-        # user_id = current_user.id
+        user_id = current_user.id
         # username = current_user.username
         try:
             with db.session.no_autoflush:
@@ -245,17 +245,18 @@ def handle_disconnect():
                     db.session.commit()
                     # print(f"[DEBUG DISCONNECT] Cập nhật User.online = False cho ID: {user.id}")
 
-                    # # 2. Lấy danh sách bạn bè online và thông báo cho họ
-                    # # Lấy danh sách các đối tượng User của bạn bè đang online
-                    # online_friends = get_friends_ids(user_id)
+                    # 2. Lấy danh sách bạn bè online và thông báo cho họ
+                    # Lấy danh sách các đối tượng User của bạn bè đang online
+                    online_friends = get_friends_ids(user_id)
                     
-                    # # 3. Gửi thông báo 'friend:disconnected' đến từng người bạn online
-                    # for friend in online_friends:
+                    # 3. GỬI LỆNH XÓA MARKER ĐẾN BẠN BÈ
+                    data_to_send = {'userId': user_id}
+                    
+                    for friend_id in online_friends:
                     #     # Gửi sự kiện 'friend:disconnected' đến room của người bạn
-                    #     friend_room = str(friend.id)
-                    #     emit('friend:disconnected', 
-                    #         {'userId': user_id}, # Chỉ cần gửi ID của người ngắt kết nối
-                    #         room=friend_room)
+                        room_name = f'user_{friend_id}'
+                        socketio.emit('friend:disconnected', data_to_send, room=room_name)
+                        print(f"[DEBUG DISCONNECT] Đã gửi lệnh xóa marker của ID {user_id} đến phòng: {room_name}")
 
                     # print(f"[DEBUG DISCONNECT] Đã thông báo ngắt kết nối cho bạn bè của User ID: {user_id}")
         except Exception as e:

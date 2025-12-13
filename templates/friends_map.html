@@ -800,7 +800,8 @@
         const disconnectedUserId = data.userId;
 
         if (markers[disconnectedUserId]) {
-            map.removeLayer(markers[disconnectedUserId].marker); // ⭐ ĐÃ SỬA: Dùng .marker
+            const markerToRemove = markers[disconnectedUserId].marker || markers[disconnectedUserId];
+            map.removeLayer(markerToRemove); // ⭐ ĐÃ SỬA: Dùng .marker
             delete markers[disconnectedUserId];
             
             console.log(`[CLIENT] Đã xóa marker của User ID: ${disconnectedUserId} (ngắt kết nối)`);
