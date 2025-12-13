@@ -272,7 +272,11 @@
     let locationWatcherId = null; // ⭐ BIẾN MỚI: Dùng để lưu ID của watchPosition
     //let locationInterval = null;
     let currentShareMode = 'friends'; // 'friends' hoặc 'hidden'
-    const socket = io.connect('http://' + document.domain + ':' + location.port);
+    //const socket = io.connect('http://' + document.domain + ':' + location.port);
+    let protocol = (window.location.protocol === 'https:') ? 'wss://' : 'http://';
+    let socketUrl = protocol + document.domain + ':' + location.port;
+
+    const socket = io.connect(socketUrl);
     const map = L.map('map', { 
             // Thêm dòng này để tắt control ghi nhận của Leaflet
             attributionControl: false 
@@ -400,7 +404,7 @@
             locationWatcherId = navigator.geolocation.watchPosition(
                 sendLocationHandler,
                 geolocationErrorHandler,
-                { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 } // Tăng timeout cho watchPosition
+                { enableHighAccuracy: true, timeout: 50000, maximumAge: 0 } // Tăng timeout cho watchPosition
             );
             console.log("[DEBUG TRACKING] Bắt đầu theo dõi vị trí (Watcher ID:", locationWatcherId, ")");
             
@@ -642,6 +646,11 @@
     // --- Quản lý Consent và Toggle ---
     
     function setShareMode(mode) {
+        if (currentShareMode === mode && locationWatcherId !== null && mode === 'friends') {
+            return; // Tránh cập nhật chế độ đã đúng
+        }
+        stopLocationTracking();
+
         currentShareMode = mode;
         const btnText = (mode === 'friends') ? "Đang Chia Sẻ (Friends)" : "Đã Ẩn (Hidden)";
         shareToggleButton.innerText = btnText;
@@ -651,7 +660,7 @@
 
         if (mode === 'friends') {
             // Bắt đầu gửi vị trí
-            stopLocationTracking(); 
+            //stopLocationTracking(); 
             startLocationTracking(); // ⭐ BẮT ĐẦU watchPosition ⭐
         } else {
             // Dừng gửi vị trí
@@ -686,6 +695,22 @@
         }
     });
 
+    // ⭐ Đã sửa đổi: Dừng chia sẻ khi người dùng rời khỏi trang ⭐ 
+    window.addEventListener('beforeunload', () => {
+        if (locationWatcherId !== null) {
+            stopLocationTracking(); 
+
+            const data = JSON.stringify({ mode: 'hidden' });
+            try {
+                // Gửi beacon để đảm bảo server nhận được lệnh dừng chia sẻ
+                navigator.sendBeacon('/api/share_mode', new Blob([data], { type: 'application/json' }));
+                console.log("[CLIENT UNLOAD] Đã gửi beacon dừng chia sẻ.");
+            } catch (e) {
+                console.error("[CLIENT UNLOAD] Lỗi khi gửi sendBeacon:", e);
+            }
+        }
+    });
+
     // --- Xử lý sự kiện SocketIO ---
     socket.on('connect', function() {
         document.getElementById('socket_status').innerText = 'Connected';
@@ -697,18 +722,20 @@
             .then(data => {
                 user_id = data.user_id;
                 username = data.username;
-                currentShareMode = data.share_mode || 'friends'; 
+                //currentShareMode = data.share_mode || 'friends'; 
+
+                let newShareMode = 'hidden';
                 
                 // Khởi tạo UI và logic dựa trên share_mode
                 // YÊU CẦU 1: Hỏi consent lần đầu nếu share_mode chưa được set
-                if (currentShareMode !== 'hidden') {
+                //if (currentShareMode !== 'hidden') {
                     if (confirm("Bạn có muốn chia sẻ vị trí của mình với bạn bè không?")) {
                         currentShareMode = 'friends';
-                    } else {
-                        currentShareMode = 'hidden';
-                    }
+                    } //else {
+                        //currentShareMode = 'hidden';
+                    //}
                     //localStorage.setItem('locationConsentShown', 'true');
-                }
+                //}
 
                 setShareMode(currentShareMode); // Cập nhật trạng thái lần đầu
 
