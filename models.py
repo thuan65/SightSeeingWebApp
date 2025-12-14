@@ -125,6 +125,8 @@ class Image(db.Model):
     rating = db.Column(db.Float)
     rating_count = db.Column(db.Integer, default=1) # So luong nguoi danh gia
     address = db.Column(db.String)   # <── thêm dòng này
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
 
 class Feedback(db.Model):
     __tablename__ = "feedback"
@@ -149,3 +151,4 @@ class FaissMapping(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)    # index trong FAISS
     image_id = db.Column(db.Integer, db.ForeignKey("images.id"))
+
