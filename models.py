@@ -152,3 +152,21 @@ class FaissMapping(db.Model):
     id = db.Column(db.Integer, primary_key=True)    # index trong FAISS
     image_id = db.Column(db.Integer, db.ForeignKey("images.id"))
 
+class Message(db.Model):
+    __tablename__ = 'message'
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Người gửi
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    # Người nhận
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=func.datetime("now", "localtime"))
+    is_read = db.Column(db.Boolean, default=False)
+
+    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
+    receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')
+
+    def __repr__(self):
+        return f"<Message from {self.sender_id} to {self.receiver_id}>"

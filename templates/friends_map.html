@@ -12,6 +12,18 @@
 
     <h1 style="text-align: center;">Vị trí của User: <span id="username_display">Loading...</span></h1>
     <div id="map"></div>
+    <div id="chat-box" style="display: none;">
+        <div id="chat-header">
+            <span id="chat-title">Chat với [Tên Bạn Bè]</span>
+            <button id="close-chat-btn">X</button>
+        </div>
+        <div id="messages-container">
+            </div>
+        <div id="chat-input-area">
+            <input type="text" id="chat-message-input" placeholder="Nhập tin nhắn...">
+            <button id="chat-send-btn">Gửi</button>
+        </div>
+    </div>
     <div style="text-align: center;">
         <p>Trạng thái Socket: <strong id="socket_status" style="color: red;">Disconnected</strong></p>
         <p>GPS Status: <strong id="gps_status" style="color: orange;">Đang tìm vị trí...</strong></p>
@@ -53,6 +65,76 @@
         color: #333;
         text-shadow: 1px 1px 1px #fff;
     }
+
+    /* CSS cho Chat Box */
+    #chat-box {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 350px; /* Chiều rộng box chat */
+        height: 100vh;
+        background: #f0f2f5;
+        box-shadow: -4px 0 12px rgba(0, 0, 0, 0.2);
+        z-index: 1000; /* Đảm bảo nằm trên cùng */
+        display: flex;
+        flex-direction: column;
+    }
+
+    #chat-header {
+        padding: 15px;
+        background: #007bff;
+        color: white;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    #close-chat-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2em;
+        cursor: pointer;
+    }
+    
+    #messages-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 10px;
+        background-color: #e5ddd5;
+    }
+
+    /* Message Bubbles (Tương tự như chat_interface.html) */
+    .message-container { margin-bottom: 8px; display: flex; }
+    .message-bubble { padding: 8px 12px; border-radius: 18px; max-width: 80%; line-height: 1.4; }
+    .self { justify-content: flex-end; }
+    .self .message-bubble { background-color: #dcf8c6; color: #000; border-bottom-right-radius: 4px; }
+    .other { justify-content: flex-start; }
+    .other .message-bubble { background-color: #ffffff; color: #000; border-bottom-left-radius: 4px; }
+
+
+    #chat-input-area {
+        padding: 10px;
+        background: #f0f2f5;
+        display: flex;
+        border-top: 1px solid #ccc;
+    }
+    #chat-message-input {
+        flex-grow: 1;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        margin-right: 8px;
+    }
+    #chat-send-btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 8px 15px;
+        cursor: pointer;
+    }
 </style>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -63,6 +145,7 @@
     let username = 'Unknown';
     let locationWatcherId = null; // ⭐ BIẾN MỚI: Dùng để lưu ID của watchPosition
     //let locationInterval = null;
+    let currentChatReceiverId = null; // ID người nhận chat hiện tại
     let currentShareMode = 'friends'; // 'friends' hoặc 'hidden'
     //const socket = io.connect('http://' + document.domain + ':' + location.port);
     let protocol = (window.location.protocol === 'https:') ? 'wss://' : 'http://';
@@ -100,6 +183,20 @@
     // --- DOM Elements ---
     const shareToggleButton = document.getElementById('shareToggle');
     const currentModeSpan = document.getElementById('currentMode');
+
+    // --- DOM Chat Elements ---
+    const chatBox = document.getElementById('chat-box');
+    const chatTitle = document.getElementById('chat-title');
+    const messagesContainer = document.getElementById('messages-container');
+    const messageInput = document.getElementById('chat-message-input');
+    const sendButton = document.getElementById('chat-send-btn');
+    const closeButton = document.getElementById('close-chat-btn');
+
+    closeButton.addEventListener('click', closeChatBox);
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
 
     // // --- Hàm Gửi Vị trí Thật (Geolocation) ---
     // function getAndSendLocation() {
@@ -333,6 +430,15 @@
 
     // --- HÀM MỚI: XỬ LÝ POPUP BÀI VIẾT BẠN BÈ ---
     function showFriendPostsPopup(friendId, friendName, marker) {
+        // ⭐ THÊM NÚT CHAT VÀO ĐẦU POPUP ⭐
+        const chatButtonHtml = `
+            <button onclick="openChatBox(${friendId}, '${friendName}')" 
+                    style="margin-bottom: 10px; background-color: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; display: block; width: 100%;">
+                <i class="fas fa-comment"></i> Nhắn tin
+            </button>
+            <hr style="margin: 5px 0; border-top: 1px dashed #ccc;">
+        `;
+        
         // Tạm thời hiển thị trạng thái tải
         const loadingContent = `<b>${friendName}</b><br><hr style="margin: 5px 0;"><p>Đang tải 3 bài viết gần nhất...</p>`;
         marker.getPopup().setContent(loadingContent);
@@ -376,7 +482,9 @@
                 }
                 //postsContentDiv.innerHTML = htmlContent;
                 // Cập nhật nội dung popup
-                marker.getPopup().setContent(popupContent);
+                //marker.getPopup().setContent(popupContent);
+                const finalPopupContent = `<b>${friendName}</b><hr style="margin: 5px 0;">${chatButtonHtml} <div style="max-height: 250px; overflow-y: auto;">${popupContent}</div>`;
+                marker.getPopup().setContent(finalPopupContent);
                 // Đảm bảo popup vẫn mở sau khi cập nhật nội dung
                 if (!marker.getPopup().isOpen()) {
                     marker.openPopup();
@@ -606,6 +714,121 @@
             console.log('Friend IDs for initialization:', data.friends_ids);
         });
 
+
+
+
+    //======================= CHAT ====================
+    // friends_map.html
+
+    // --- Hàm Hỗ trợ ---
+    function getChatRoom(user1_id, user2_id) {
+        // Phải đồng bộ với logic get_chat_room trong Messaging/socket_events.py
+        const ids = sorted([user1_id, user2_id]);
+        return `chat_${ids[0]}_${ids[1]}`;
+    }
+    function sorted(array) {
+        return [...array].sort((a, b) => a - b);
+    }
+    // Lấy ID của mình sau khi connect (Cần đảm bảo user_id được gán)
+    
+    // --- Hàm Mở Chat Box ---
+    function openChatBox(friendId, friendName) {
+        if (user_id === null) {
+            alert("Vui lòng đăng nhập để chat.");
+            return;
+        }
+
+        currentChatReceiverId = friendId;
+        chatTitle.innerText = `Chat với ${friendName}`;
+        messagesContainer.innerHTML = '<p style="text-align: center; color: #777;">Đang tải lịch sử...</p>';
+        chatBox.style.display = 'flex'; // Hiển thị box chat
+
+        // 1. Tham gia phòng chat SocketIO
+        socket.emit('join_chat', { target_id: friendId });
+
+        // 2. Tải lịch sử tin nhắn
+        loadMessageHistory(friendId);
+    }
+
+    // --- Hàm Đóng Chat Box ---
+    function closeChatBox() {
+        if (currentChatReceiverId !== null) {
+            // Rời phòng chat (Nếu cần, bạn có thể implement sự kiện 'leave_chat' trong backend)
+            // socket.emit('leave_chat', { target_id: currentChatReceiverId });
+        }
+        currentChatReceiverId = null;
+        chatBox.style.display = 'none'; // Ẩn box chat
+        messagesContainer.innerHTML = '';
+        messageInput.value = '';
+    }
+
+    // --- Hàm Gửi Tin Nhắn ---
+    function sendMessage() {
+        const content = messageInput.value.trim();
+        if (content === '' || currentChatReceiverId === null) return;
+
+        // Gửi tin nhắn qua Socket
+        socket.emit('send_message', {
+            receiver_id: currentChatReceiverId,
+            content: content
+        });
+
+        messageInput.value = '';
+    }
+
+    // --- Tải Lịch sử Tin Nhắn ---
+    function loadMessageHistory(friendId) {
+        fetch(`/api/history/${friendId}`)
+            .then(res => res.json())
+            .then(data => {
+                messagesContainer.innerHTML = '';
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(msg => {
+                        appendMessage(msg.content, msg.sender_id === user_id, msg.timestamp);
+                    });
+                } else {
+                    messagesContainer.innerHTML = '<p style="text-align: center; color: #777;">Chưa có tin nhắn nào.</p>';
+                }
+                messagesContainer.scrollTop = messagesContainer.scrollHeight; 
+            })
+            .catch(err => {
+                console.error("Error loading message history:", err);
+                messagesContainer.innerHTML = '<p style="text-align: center; color: red;">Lỗi khi tải lịch sử.</p>';
+            });
+    }
+    
+    // --- Hàm Thêm Tin Nhắn vào UI (Giữ nguyên logic từ file mẫu trước) ---
+    function appendMessage(content, isSelf, timestamp) {
+        const container = document.createElement('div');
+        container.className = isSelf ? 'message-container self' : 'message-container other';
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        
+        // ... (Logic thêm nội dung và timestamp) ...
+        const contentSpan = document.createElement('span');
+        contentSpan.innerText = content;
+        
+        const timeSpan = document.createElement('div');
+        timeSpan.className = 'message-timestamp';
+        // Hiển thị giờ/phút
+        timeSpan.innerText = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); 
+
+        bubble.appendChild(contentSpan);
+        // bubble.appendChild(timeSpan); // Thường để timestamp bên ngoài bubble hoặc dùng CSS phức tạp hơn
+        container.appendChild(bubble);
+        
+        messagesContainer.appendChild(container);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight; 
+    }
+
+    // --- Lắng nghe Tin Nhắn Socket ---
+    socket.on('new_message', (data) => {
+        // Chỉ hiển thị nếu tin nhắn thuộc về cuộc hội thoại hiện tại
+        if (data.sender_id === user_id || data.sender_id === currentChatReceiverId) {
+             appendMessage(data.content, data.sender_id === user_id, data.timestamp);
+        }
+    });
 </script>
 </body>
 </html>
