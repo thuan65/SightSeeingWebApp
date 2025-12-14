@@ -98,8 +98,7 @@ def get_user_favorites():
         return jsonify({'success': False, 'error': 'Authentication required', 'code': 'UNAUTHORIZED'}), 401
 
     try:
-        # 2. Query bằng SQLAlchemy (Ngắn gọn và an toàn hơn nhiều)
-        # Lấy danh sách favorite của user, join với bảng Image để lấy thông tin
+        # 2. Query dữ liệu
         favorites = (
             db.session.query(Favorite, Image)
             .join(Image, Favorite.image_id == Image.id)
@@ -112,28 +111,29 @@ def get_user_favorites():
         print(f"📊 [FAVORITES] Tìm thấy {len(favorites)} mục cho User {current_user.id}")
 
         for fav, img in favorites:
-            # Logic tìm địa chỉ: Ưu tiên address, nếu không có thì dùng name
-            search_query = img.address if img.address else img.name
+            # --- CŨ (XÓA BỎ) ---
+            # search_query = img.address if img.address else img.name
+            # geo_data = geocode_address(search_query)
+            # -------------------
 
-            # [LƯU Ý HIỆU NĂNG]: Việc gọi geocode_address trong vòng lặp này sẽ rất chậm
-            # nếu danh sách yêu thích dài. Nên lưu lat/lon vào database khi user lưu favorite.
-            geo_data = geocode_address(search_query)
-
+            # --- MỚI (DÙNG TRỰC TIẾP DB) ---
             item = {
                 'id': fav.id,
                 'name': img.name,
-                'address': img.address,
+                'address': img.address, # Vẫn gửi address để hiển thị text trên UI
                 'tags': img.tags
             }
 
-            if geo_data:
+            # Kiểm tra xem trong DB đã có tọa độ chưa
+            if img.latitude is not None and img.longitude is not None:
                 item.update({
-                    'lat': geo_data['lat'],
-                    'lon': geo_data['lon'],  # Lưu ý geocoding trả về 'lng'
-                    'display_name': geo_data['display_name']
+                    'lat': img.latitude,
+                    'lon': img.longitude,
+                    'display_name': img.name # Hoặc dùng address nếu muốn
                 })
             else:
-                item['error'] = 'Không tìm thấy tọa độ'
+                # Trường hợp dữ liệu cũ chưa chạy tool update tọa độ
+                item['error'] = 'Chưa cập nhật tọa độ trong hệ thống'
 
             results.append(item)
 

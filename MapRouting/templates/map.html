@@ -562,38 +562,58 @@
             }
         }
 
-        function routeToFavorite(dest) {
-            selectMode('single');
-            document.getElementById('end-address').value = dest.name;
-            geocodedCoords.end = { lat: dest.lat, lon: dest.lon };
-            const coordDiv = document.getElementById('end-coords');
-            coordDiv.innerHTML = `> LOADED: [${dest.lat.toFixed(4)}, ${dest.lon.toFixed(4)}]`;
-            coordDiv.classList.add('show');
-            showLoading(true);
+        // map.html - script section
 
-            if(navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        const lat = pos.coords.latitude;
-                        const lon = pos.coords.longitude;
-                        document.getElementById('start-address').value = "CURRENT LOCATION";
-                        geocodedCoords.start = { lat: lat, lon: lon };
-                        const startDiv = document.getElementById('start-coords');
-                        startDiv.innerHTML = `> GPS: [${lat.toFixed(4)}, ${lon.toFixed(4)}]`;
-                        startDiv.classList.add('show');
-                        calculateSingleRoute();
-                    },
-                    (err) => {
-                        showError("GPS FAILED. PLEASE ENTER START POINT.");
-                        showLoading(false);
-                        document.getElementById('start-address').focus();
-                    }
-                );
+        function routeToFavorite(dest) {
+            // Chuyển về chế độ chỉ đường đơn
+            selectMode('single');
+
+            // 1. Điền tên vào ô input (để người dùng thấy)
+            document.getElementById('end-address').value = dest.name;
+
+            // 2. Gán trực tiếp tọa độ từ dữ liệu Favorite (không cần gọi geocodeAddress nữa)
+            if (dest.lat && dest.lon) {
+                geocodedCoords.end = { lat: dest.lat, lon: dest.lon };
+
+                const coordDiv = document.getElementById('end-coords');
+                // Hiển thị tọa độ lấy từ DB
+                coordDiv.innerHTML = `> DATABASE: [${dest.lat.toFixed(4)}, ${dest.lon.toFixed(4)}]`;
+                coordDiv.classList.add('show');
             } else {
-                showError("NO GPS DEVICE DETECTED.");
-                showLoading(false);
-            }
+                showError("Địa điểm này chưa có tọa độ trong dữ liệu.");
+                return;
         }
+
+    showLoading(true);
+
+    // 3. Lấy vị trí hiện tại (Start Point) và tính toán lộ trình
+    if(navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+
+                document.getElementById('start-address').value = "CURRENT LOCATION";
+                geocodedCoords.start = { lat: lat, lon: lon };
+
+                const startDiv = document.getElementById('start-coords');
+                startDiv.innerHTML = `> GPS: [${lat.toFixed(4)}, ${lon.toFixed(4)}]`;
+                startDiv.classList.add('show');
+
+                // Gọi hàm tính toán lộ trình ngay lập tức
+                calculateSingleRoute();
+            },
+            (err) => {
+                showError("GPS FAILED. VUI LÒNG NHẬP ĐIỂM XUẤT PHÁT.");
+                showLoading(false);
+                document.getElementById('start-address').focus();
+            }
+        );
+    } else {
+        showError("KHÔNG TÌM THẤY THIẾT BỊ GPS.");
+        showLoading(false);
+    }
+}
 
         function toggleSelector(boxId) {
             const box = document.getElementById(boxId);
