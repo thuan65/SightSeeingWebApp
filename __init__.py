@@ -11,7 +11,7 @@ from MapRouting.MapRoutingRoute import MapRouting_bp
 from Search_Filter.search_filter import search_filter
 from Search_Text.search_text import search_text
 from imageSearch.imageSearchRoute import search_image_bp
-from Weather.weather import weatherForecast_bp
+from Weather.Weather import weatherForecast_bp
 from SuggestionsFeedback.feedback import feedback_bp
 from friends import friends_bp
 from add_favorites.routes import favorite_bp
