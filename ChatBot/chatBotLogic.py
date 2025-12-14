@@ -69,20 +69,35 @@ def detect_intent(text: str) -> str:
 #Gợi ý địa điểm từ cơ sở dữ liệu
 # ======================================================
 
-def suggest_place(user_query: str, top_k: int = 3) -> dict:
+# ======================================================
+# COSINE SIMILARITY HELPER
+# ======================================================
+
+# Trả về danh sách địa điểm giống trên một tiêu chí nhất định
+def threshold_search(query_emb):
+    top_k = 50
+    threshold = 0.75
+    distances, indices = faiss_loader.faiss_Text_index.search(query_emb, top_k)
+    results = [
+        {"id": idx, "score": score}
+        for idx, score in zip(indices[0], distances[0])
+        if score >= threshold
+]
+    return results
+# ======================================================
+
+def suggest_place(user_query: str) -> dict:
     # Encode query
     query_emb = sbert_model.encode([user_query], convert_to_numpy=True)
     query_emb = query_emb.astype('float32')
     faiss.normalize_L2(query_emb)  # nếu index đã normalize
-
-    distances, indices = faiss_loader.faiss_Text_index.search(query_emb, top_k)
-
-    results = []
+    topK_Similarity_List = threshold_search(query_emb)
+    results = [] 
 
     app = aTemporaryCreateApp()
 
     with app.app_context():
-        for idx in indices[0]:  # indices[0] là mảng các index của top_k
+        for idx in [item["id"] for item in topK_Similarity_List]:
             image_id = faiss_loader.index_to_image_id[idx]
             image = Image.query.get(image_id)
             if image:  # an toàn nếu record tồn tại
@@ -93,7 +108,6 @@ def suggest_place(user_query: str, top_k: int = 3) -> dict:
                     "address": image.address,
                     "description": image.description
                 })
-
     return results
 
 

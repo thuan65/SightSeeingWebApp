@@ -436,8 +436,8 @@ if __name__ == "__main__":
         pass
     
     print(print(app.config["SQLALCHEMY_DATABASE_URI"]))
-    print(f"🚀 Server đang chạy tại: http://localhost:5000")
-    print(f"🗺️  MapRouting module tại: http://localhost:5000/MapRouting/")
+    print(f"🚀 Server đang chạy tại: http://localhost:5001")
+    print(f"🗺️  MapRouting module tại: http://localhost:5001/MapRouting/")
 
     # app.run(debug=True, use_reloader=False)
     # socketio.run(app, debug=False, use_reloader=False)

@@ -11,6 +11,13 @@ index_to_image_id = None
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 file_path_vectorDatabase = os.path.join(BASE_DIR, "instance", "PlaceDescriptionFaiss.bin")
 
+#Các description và name được encode
+def get_faiss_Text_index():
+    return faiss_Text_index
+
+def get_index_to_image_id():
+    return index_to_image_id
+
 
 def load_faiss_index(faiss_file=file_path_vectorDatabase):
 

@@ -1,8 +1,11 @@
 from flask import Blueprint, request, Response, jsonify, current_app
 from sentence_transformers import util
 from sqlalchemy import create_engine, text
+from models import Image
 from extensions import db
 from models_loader import sbert_model
+import faiss
+import faiss_loader
 import json
 import os
 
@@ -62,29 +65,85 @@ def compute_similarity(query_text, places, top_k=5):
     # Trả về top_k kết quả
     return [dict(x[1]) for x in scored[:top_k]]
 
+# ======================================================
+# FUNCTION HELPER
+# ======================================================
+# Trả về danh sách địa điểm giống trên một tiêu chí nhất định
+def threshold_search(query_emb):
+    top_k = 50
+    threshold = 0.25
+    distances, indices = faiss_loader.faiss_Text_index.search(query_emb, top_k)
+    results = [
+        {"id": idx, "similarity": score}
+        for idx, score in zip(indices[0], distances[0])
+        if score >= threshold
+]
+    return results
+# ======================================================
+
+def to_dict(model):
+    return {
+        c.name: getattr(model, c.name)
+        for c in model.__table__.columns
+    }
+# ======================================================
+
 # --- Route API ---
 
 @search_text.route("/search_text", methods=["GET"])
 def search_text_route():
-    """Endpoint tìm kiếm địa điểm dựa trên ngữ nghĩa (Semantic Search)."""
+    # Endpoint tìm kiếm địa điểm dựa trên ngữ nghĩa (Semantic Search)
     user_message = request.args.get("query", "").strip()
-    print(user_message)
     # Kiểm tra đầu vào
     if not user_message:
-        return jsonify({"message": "Vui lòng nhập từ khóa tìm kiếm."})
+        return jsonify({"message": "Vui lòng nhập từ khóa tìm kiếm."}), 400
+
+    if not hasattr(sbert_model, "encode"):
+        return jsonify({"error": "Model chưa sẵn sàng"}), 503
+
+    query_emb = sbert_model.encode([user_message], convert_to_numpy=True)
+    query_emb = query_emb.astype('float32')
+    faiss.normalize_L2(query_emb)  # nếu index đã normalize
 
     try:
-        # 1. Lấy tất cả địa điểm từ DB
-        places = get_all_places()
+        topK_Similarity_List = threshold_search(query_emb)
+        faiss_indices = [item["id"] for item in topK_Similarity_List] # Lấy các index từ trong vector embedding
+        image_ids = [faiss_loader.index_to_image_id[idx] for idx in faiss_indices if idx in faiss_loader.index_to_image_id]# Đởi mapping idex sang id trong database
 
-        # 2. Tính toán độ tương đồng ngữ nghĩa
-        top_results = compute_similarity(user_message, places)
-        
-        # 3. Trả về kết quả JSON
-        response = json.dumps(top_results, ensure_ascii=False)
-        return Response(response, content_type="application/json; charset=utf-8")
-    
+        results = [] 
+
+        if not image_ids:
+            return jsonify([])   
+        #Query Database
+        images = Image.query.filter(Image.id.in_(image_ids)).all()
+        if images: # Nếu image có tồn tại
+            results = [to_dict(img) for img in images if img in images]
+# 3. Trả về kết quả JSON
+        return jsonify(results)
     except Exception as e:
         print(f"Lỗi khi thực hiện tìm kiếm ngữ nghĩa: {e}")
-        error_response = json.dumps({"error": "Đã xảy ra lỗi hệ thống khi tìm kiếm ngữ nghĩa."}, ensure_ascii=False)
-        return Response(error_response, status=500, content_type="application/json; charset=utf-8")
+        return jsonify({"error": "Đã xảy ra lỗi hệ thống"}), 500
+
+# def search_text_route():
+#     """Endpoint tìm kiếm địa điểm dựa trên ngữ nghĩa (Semantic Search)."""
+#     user_message = request.args.get("query", "").strip()
+#     print(user_message)
+#     # Kiểm tra đầu vào
+#     if not user_message:
+#         return jsonify({"message": "Vui lòng nhập từ khóa tìm kiếm."})
+
+#     try:
+#         # 1. Lấy tất cả địa điểm từ DB
+#         places = get_all_places()
+
+#         # 2. Tính toán độ tương đồng ngữ nghĩa
+#         top_results = compute_similarity(user_message, places)
+        
+#         # 3. Trả về kết quả JSON
+#         response = json.dumps(top_results, ensure_ascii=False)
+#         return Response(response, content_type="application/json; charset=utf-8")
+    
+    # except Exception as e:
+    #     print(f"Lỗi khi thực hiện tìm kiếm ngữ nghĩa: {e}")
+    #     error_response = json.dumps({"error": "Đã xảy ra lỗi hệ thống khi tìm kiếm ngữ nghĩa."}, ensure_ascii=False)
+    #     return Response(error_response, status=500, content_type="application/json; charset=utf-8")

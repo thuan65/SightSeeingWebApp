@@ -1,3 +1,5 @@
+#Make embedding dựa trên name và description
+
 import faiss
 import numpy as np
 from models_loader import sbert_model
