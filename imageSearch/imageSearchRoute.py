@@ -1,9 +1,8 @@
 from flask import Blueprint, current_app, request, render_template
 from .imageSearchLogic import find_similar
-import os #for psth join
+import os 
 
 search_image_bp = Blueprint('image_bp', __name__)
-
 
 # ---------------------------------------------------------
 # TÌM KIẾM ẢNH BẰNG ẢNH (UPLOAD)
@@ -18,13 +17,24 @@ def search_image():
         upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], file.filename)
         file.save(upload_path)
 
-        # Gọi hàm tìm ảnh tương tự
-        best_match, score = find_similar(upload_path)
-        return render_template(
-            "search_result.html",
-            query=file.filename,
-            match=best_match,
-            score=round(score, 3)
-        )
+        # --- PHẦN ĐÃ SỬA ---
+        # 1. Nhận về danh sách kết quả (list of dicts)
+        results = find_similar(upload_path)
+        
+        # 2. Kiểm tra xem có kết quả không và lấy kết quả đầu tiên (Rank 1)
+        if results and len(results) > 0:
+            top_result = results[0] # Lấy phần tử đầu tiên
+            best_match = top_result['file_name'] # Lấy tên file
+            score = top_result['distance'] # Lấy điểm số
+            
+            return render_template(
+                "search_result.html",
+                query=file.filename,
+                match=best_match,
+                score=1-round(score, 3)
+            )
+        else:
+            return "Không tìm thấy ảnh tương tự trong cơ sở dữ liệu", 404
+        # -------------------
 
     return render_template("search_image.html")
