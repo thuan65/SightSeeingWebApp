@@ -10,19 +10,10 @@ weatherForecast_bp = Blueprint( "weather",__name__, template_folder= "weathering
 
 @weatherForecast_bp.route("/weather/<int:place_id>")
 def get_current_weather(place_id):
-    place = Image.query.get(place_id)
+    lon = Image.query.with_entities(Image.longitude).filter_by(id=place_id).scalar()
+    lat = Image.query.with_entities(Image.latitude).filter_by(id=place_id).scalar()
     print(f"Fetching weather for place_id={place_id}")
 
-
-    if not place:
-        return jsonify({"error": "Place not found"}), 404
-    
-    address = place.address
-    geo = geocode_address(address)
-    if not geo:
-        return jsonify({"error": "Không tìm thấy tọa độ"}), 404
-
-    lat, lon = geo['lat'], geo['lng']
     if lat is None or lon is None:
         return jsonify({"error": "Failed to geocode address"}), 500
     

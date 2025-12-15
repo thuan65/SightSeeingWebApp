@@ -24,7 +24,7 @@ def get_image_embedding(image_path):
         emb = model.get_image_features(**inputs)
     return emb / emb.norm(dim=-1, keepdim=True)
 
-def find_similar(image_query_path, k=5):
+def find_similar(image_query_path, k=20, THRESHOLD  = 0.3):
     # Lấy embedding của ảnh query
     query_vector = get_image_embedding(image_query_path).cpu().numpy().astype('float32')
 

@@ -127,6 +127,12 @@ class Image(db.Model):
     address = db.Column(db.String)   # <── thêm dòng này
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
+    
+    def to_dict(self):
+        return {
+            c.name: getattr(self, c.name)
+            for c in self.__table__.columns
+        }
 
 class Feedback(db.Model):
     __tablename__ = "feedback"
