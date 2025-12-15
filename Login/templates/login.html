@@ -18,6 +18,7 @@
             --main-color: #1C6758;
             --secondary-color: #8EB486;
             --transition-time: 0.8s;
+            --error-color: #e74c3c;
         }
 
         body {
@@ -43,7 +44,6 @@
             grid-template-columns: 1fr 1fr;
         }
 
-        /* FORMS CONTAINER */
         .forms-container {
             position: relative;
             grid-column: 1 / 2;
@@ -75,7 +75,7 @@
         .title {
             font-size: 2rem;
             color: var(--main-color);
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-weight: 700;
             text-align: center;
         }
@@ -112,6 +112,7 @@
             font-size: 1rem;
             color: #333;
             font-family: 'Poppins', sans-serif;
+            width: 100%;
         }
 
         .input-field input::placeholder {
@@ -140,14 +141,11 @@
             box-shadow: 0 6px 20px rgba(28, 103, 88, 0.4);
         }
 
-        .btn:active {
-            transform: translateY(0);
-        }
-        
         .btn.transparent {
             background: transparent;
             border: 2px solid white;
             color: white;
+            box-shadow: none;
         }
 
         .link-text {
@@ -165,11 +163,7 @@
             transition: color 0.3s;
         }
 
-        .link-text a:hover {
-            color: var(--secondary-color);
-        }
-
-        /* PANELS CONTAINER */
+        /* Panels */
         .panels-container {
             position: relative;
             grid-column: 2 / 3;
@@ -194,259 +188,180 @@
             pointer-events: none;
         }
 
-        /* Slideshow */
-        .slideshow-wrapper {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
+        /* Slideshow CSS (Giữ nguyên) */
+        .slideshow-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .slideshow-slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.5s ease-in-out; }
+        .slideshow-slide.active { opacity: 1; }
+        .slideshow-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(28, 103, 88, 0.75); z-index: 2; }
+        .slideshow-content { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; max-width: 350px; }
+        .panel h3 { font-size: 1.8rem; margin-bottom: 20px; font-weight: 700; }
+        .panel p { font-size: 0.95rem; margin-bottom: 30px; opacity: 0.95; line-height: 1.6; }
+        .panel .btn { background: transparent; border: 2px solid white; width: 150px; }
+        .panel .btn:hover { background: white; color: var(--main-color); }
 
-        .slideshow-slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            opacity: 0;
-            transition: opacity 1.5s ease-in-out;
-        }
+        /* Sign Up Mode */
+        .container.sign-up-mode { grid-template-columns: 1fr 1fr; }
+        .container.sign-up-mode .forms-container { grid-column: 2 / 3; }
+        .container.sign-up-mode .panels-container { grid-column: 1 / 2; }
 
-        .slideshow-slide.active {
-            opacity: 1;
-        }
-
-        .slideshow-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(28, 103, 88, 0.75);
-            z-index: 2;
-        }
-
-        .slideshow-content {
-            position: relative;
-            z-index: 3;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 40px;
-            max-width: 350px;
-        }
-
-        .panel h3 {
-            font-size: 1.8rem;
-            margin-bottom: 20px;
-            font-weight: 700;
-        }
-
-        .panel p {
-            font-size: 0.95rem;
-            margin-bottom: 30px;
-            opacity: 0.95;
-            line-height: 1.6;
-        }
-
-        .panel .btn {
-            background: transparent;
-            border: 2px solid white;
-            width: 150px;
-        }
-
-        .panel .btn:hover {
-            background: white;
-            color: var(--main-color);
-        }
-
-        /* SIGN UP MODE - Đảo ngược layout */
-        .container.sign-up-mode {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .container.sign-up-mode .forms-container {
-            grid-column: 2 / 3;
-        }
-
-        .container.sign-up-mode .panels-container {
-            grid-column: 1 / 2;
-        }
-
+        /* CSS hiển thị lỗi và thông báo */
         .error-message {
-            color: #e74c3c;
-            font-size: 0.85rem;
-            margin: 5px 0 10px 15px;
+            color: var(--error-color);
+            font-size: 0.8rem;
+            margin: -5px 0 10px 15px;
+            text-align: left;
+            font-weight: 500;
         }
+        
+        .alert {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            text-align: center;
+            width: 100%;
+        }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr !important;
-                min-height: 700px;
-            }
-
-            .forms-container {
-                grid-column: 1 / 2 !important;
-                padding: 30px 20px;
-            }
-
-            .panels-container {
-                display: none;
-            }
-
-            .title {
-                font-size: 1.6rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                border-radius: 15px;
-            }
-
-            .form-wrapper {
-                max-width: 100%;
-            }
-
-            .input-field {
-                height: 45px;
-            }
-
-            .input-field i {
-                line-height: 45px;
-                font-size: 1rem;
-            }
-
-            .input-field input {
-                font-size: 0.9rem;
-            }
-
-            .btn {
-                height: 45px;
-                font-size: 0.85rem;
-            }
+            .container { grid-template-columns: 1fr !important; min-height: 700px; }
+            .forms-container { grid-column: 1 / 2 !important; padding: 30px 20px; }
+            .panels-container { display: none; }
         }
     </style>
 </head>
 <body>
     <div class="container" id="mainContainer">
         
-        <!-- FORMS -->
         <div class="forms-container">
-            <!-- SIGN IN FORM -->
+            
             <div class="form-wrapper" id="signInForm">
                 <form method="POST" action="{{ url_for('login_bp.login') }}">
                     {{ login_form.hidden_tag() }}
 
-                    <h2 class="title">Welcome back!</h2>
+                    <h2 class="title">Đăng nhập</h2>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                {% if category != 'register_error' %}
+                                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
 
                     <div class="input-field">
                         <i class="fas fa-user"></i>
-                        {{ login_form.username(placeholder="Tên đăng nhập", class="form-control") }}
+                        {{ login_form.username(placeholder="Tên đăng nhập", required=False) }}
                     </div>
-                    {% for error in login_form.username.errors %}
-                        <div class="error-message">{{ error }}</div>
-                    {% endfor %}
+                    {% if login_form.username.errors %}
+                        {% for error in login_form.username.errors %}
+                            <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
 
                     <div class="input-field">
-                       <i class="fas fa-lock"></i>
-                        {{ login_form.password(placeholder="Mật khẩu", class="form-control") }}
+                        <i class="fas fa-lock"></i>
+                        {{ login_form.password(placeholder="Mật khẩu", required=False) }}
                     </div>
-                   {% for error in login_form.password.errors %}
-                      <div class="error-message">{{ error }}</div>
-                  {% endfor %}
+                    {% if login_form.password.errors %}
+                        {% for error in login_form.password.errors %}
+                            <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
 
-                   {{ login_form.submit(class="btn") }}
+                    {{ login_form.submit(class="btn", value="Đăng nhập") }}
 
                     <p class="link-text">
-                       Chưa có tài khoản? <a href="#" class="switch-to-signup">Đăng ký ngay</a>
+                        Chưa có tài khoản? <a href="#" class="switch-to-signup">Đăng ký ngay</a>
                     </p>
                 </form>
             </div>
 
 
-            <!-- SIGN UP FORM -->
             <div class="form-wrapper hidden" id="signUpForm">
-                <form method="POST" action="{{ url_for('login_bp.register') }}">
+                <form method="POST" action="{{ url_for('login_bp.login') }}">
                     {{ register_form.hidden_tag() }}
 
                     <h2 class="title">Tạo tài khoản</h2>
 
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages and 'Đăng ký' in messages[0][1] %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
                     <div class="input-field">
                         <i class="fas fa-user"></i>
-                        {{ register_form.username(placeholder="Tên đăng nhập") }}
+                        {{ register_form.username(placeholder="Tên đăng nhập", required=False) }}
                     </div>
-                    {% for error in register_form.username.errors %}
-                        <div class="error-message">{{ error }}</div>
-                    {% endfor %}
+                    {% if register_form.username.errors %}
+                        {% for error in register_form.username.errors %}
+                            <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
 
                     <div class="input-field">
                         <i class="fas fa-lock"></i>
-                        {{ register_form.password(placeholder="Mật khẩu") }}
+                        {{ register_form.password(placeholder="Mật khẩu", required=False) }}
                     </div>
-                    {% for error in register_form.password.errors %}
-                        <div class="error-message">{{ error }}</div>
-                    {% endfor %}
+                    {% if register_form.password.errors %}
+                        {% for error in register_form.password.errors %}
+                            <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
 
                     <div class="input-field">
-                       <i class="fas fa-lock"></i>
-                      {{ register_form.confirm(placeholder="Xác nhận mật khẩu") }}
-                   </div>
-                    {% for error in register_form.confirm.errors %}
-                        <div class="error-message">{{ error }}</div>
-                   {% endfor %}
+                        <i class="fas fa-lock"></i>
+                        {{ register_form.confirm(placeholder="Xác nhận mật khẩu", required=False) }}
+                    </div>
+                    {% if register_form.confirm.errors %}
+                        {% for error in register_form.confirm.errors %}
+                            <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
 
-                    {{ register_form.submit(class="btn") }}
+                    {{ register_form.submit(class="btn", value="Đăng ký")}}
+                    
+                    <p class="link-text">
+                        Đã có tài khoản? <a href="#" class="switch-to-signin">Đăng nhập</a>
+                    </p>
                 </form>
             </div>
         </div>
 
-        <!-- PANELS -->
         <div class="panels-container">
-            <!-- PANEL cho màn hình đăng nhập (bên phải) -->
             <div class="panel" id="signUpPanel">
                 <div class="slideshow-wrapper" id="slideshowSignUp">
                     <div class="slideshow-slide active" style="background-image: url('https://images.unsplash.com/photo-1528127269322-539801943592?w=1920');"></div>
                     <div class="slideshow-slide" style="background-image: url('https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=1920');"></div>
-                    <div class="slideshow-slide" style="background-image: url('https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=1920');"></div>
-                    <div class="slideshow-slide" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920');"></div>
                 </div>
                 <div class="slideshow-overlay"></div>
                 <div class="slideshow-content">
                     <h3>Xin chào bạn!</h3>
-                    <p>Đăng ký với thông tin cá nhân của bạn để sử dụng tất cả các tính năng của trang web</p>
-                    <button class="btn transparent" id="goToSignUp">
-                        Đăng ký
-                    </button>
+                    <p>Nhập thông tin cá nhân của bạn để bắt đầu hành trình với chúng tôi</p>
+                    <button class="btn transparent" id="goToSignUp">Đăng ký</button>
                 </div>
             </div>
 
-            <!-- PANEL cho màn hình đăng ký (bên trái) -->
             <div class="panel hidden" id="signInPanel">
                 <div class="slideshow-wrapper" id="slideshowSignIn">
                     <div class="slideshow-slide active" style="background-image: url('https://images.unsplash.com/photo-1549488349-e16e0fdd21f6?w=1920');"></div>
                     <div class="slideshow-slide" style="background-image: url('https://images.unsplash.com/photo-1534430267215-cf6a1d821360?w=1920');"></div>
-                    <div class="slideshow-slide" style="background-image: url('https://images.unsplash.com/photo-1508928014526-70e6c52a0951?w=1920');"></div>
-                    <div class="slideshow-slide" style="background-image: url('https://images.unsplash.com/photo-1517454228919-813d1000632b?w=1920');"></div>
                 </div>
                 <div class="slideshow-overlay"></div>
                 <div class="slideshow-content">
                     <h3>Welcome Back!</h3>
-                    <p>Bạn đã có tài khoản rồi chứ? Đăng nhập để tiếp tục khám phá!</p>
-                    <button class="btn transparent" id="goToSignIn">
-                        Đăng nhập
-                    </button>
+                    <p>Để duy trì kết nối với chúng tôi, vui lòng đăng nhập bằng thông tin của bạn</p>
+                    <button class="btn transparent" id="goToSignIn">Đăng nhập</button>
                 </div>
             </div>
         </div>
-
     </div>
 
     <script>
@@ -461,59 +376,46 @@
         const switchToSignup = document.querySelector('.switch-to-signup');
         const switchToSignin = document.querySelector('.switch-to-signin');
 
-        // Chuyển sang chế độ đăng ký
         function showSignUpMode() {
             container.classList.add('sign-up-mode');
-            
-            // Ẩn form đăng nhập, hiện form đăng ký
             signInForm.classList.add('hidden');
             signUpForm.classList.remove('hidden');
-            
             signUpPanel.classList.add('hidden');
             signInPanel.classList.remove('hidden');
         }
 
-        // Chuyển về chế độ đăng nhập
         function showSignInMode() {
             container.classList.remove('sign-up-mode');
-            
-            // Hiện form đăng nhập, ẩn form đăng ký
             signInForm.classList.remove('hidden');
             signUpForm.classList.add('hidden');
-            
             signUpPanel.classList.remove('hidden');
             signInPanel.classList.add('hidden');
         }
 
-        // Event listeners
         goToSignUp.addEventListener('click', showSignUpMode);
         goToSignIn.addEventListener('click', showSignInMode);
-        switchToSignup.addEventListener('click', (e) => {
-            e.preventDefault();
-            showSignUpMode();
-        });
-        switchToSignin.addEventListener('click', (e) => {
-            e.preventDefault();
-            showSignInMode();
-        });
+        switchToSignup.addEventListener('click', (e) => { e.preventDefault(); showSignUpMode(); });
+        switchToSignin.addEventListener('click', (e) => { e.preventDefault(); showSignInMode(); });
+
+        // Logic tự động chuyển tab nếu có lỗi từ Server (Jinja2 render)
+        // Nếu register_form có lỗi, tự động chuyển sang mode Đăng Ký
+        {% if register_form.errors %}
+            document.addEventListener('DOMContentLoaded', function() {
+                showSignUpMode();
+            });
+        {% endif %}
 
         // Slideshow
         function initSlideshow(wrapperId) {
             let currentSlide = 0;
             const slides = document.querySelectorAll(`#${wrapperId} .slideshow-slide`);
-
-            function nextSlide() {
+            setInterval(() => {
                 if (slides.length === 0) return;
-
                 slides[currentSlide].classList.remove('active');
                 currentSlide = (currentSlide + 1) % slides.length;
                 slides[currentSlide].classList.add('active');
-            }
-
-            setInterval(nextSlide, 4000);
+            }, 4000);
         }
-
-        // Khởi tạo Slideshow cho cả hai panel
         initSlideshow('slideshowSignUp');
         initSlideshow('slideshowSignIn');
     </script>
