@@ -1,72 +1,66 @@
 # MapRoutingRoute.py
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
-from extensions import db  # Import db của SQLAlchemy
-from models import Favorite, Image  # Import Models đã định nghĩa ở Bước 1
+from extensions import db
+from models import Favorite, Image
 
-# --- IMPORT MODULES ---
+# --- IMPORT MODULES MỚI (Đã cập nhật logic biên giới) ---
 from .routing import get_route
 from .multi_point_routing import find_shortest_route_multi_points
 from .geocoding import geocode_address, reverse_geocode
+from .vietnam_boundary import is_in_vietnam  # <--- THÊM IMPORT NÀY
 
 MapRouting_bp = Blueprint("Map_Routing_System", __name__, template_folder="templates")
 
-
-# ============================================================
-# CÁC ROUTE API
-# ============================================================
 
 @MapRouting_bp.route('/')
 def index():
     return render_template('map.html')
 
 
-@MapRouting_bp.route('/api/test', methods=['GET'])
-def test_route():
-    return jsonify({'success': True, 'message': 'MapRouting Blueprint is working!'})
+# ... (Giữ nguyên các API geocode/test cũ) ...
 
-
-# --- Geocoding Routes ---
 @MapRouting_bp.route('/api/geocode', methods=['POST'])
 def geocode():
+    # ... (Giữ nguyên code cũ) ...
     data = request.json
     address = data.get('address')
-    if not address:
-        return jsonify({'success': False, 'error': 'Address empty'}), 400
-
+    if not address: return jsonify({'success': False, 'error': 'Address empty'}), 400
     result = geocode_address(address)
-    if result:
-        return jsonify({'success': True, 'data': result})
+    if result: return jsonify({'success': True, 'data': result})
     return jsonify({'success': False, 'error': 'Not found'}), 404
 
 
 @MapRouting_bp.route('/api/reverse-geocode', methods=['POST'])
 def reverse_geo():
+    # ... (Giữ nguyên code cũ) ...
     data = request.json
     try:
         lat, lon = float(data['lat']), float(data['lon'])
         result = reverse_geocode(lat, lon)
-        if result:
-            return jsonify({'success': True, 'data': result})
+        if result: return jsonify({'success': True, 'data': result})
         return jsonify({'success': False, 'error': 'Not found'}), 404
-    except (KeyError, ValueError) as e:
+    except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
 
 
-# --- Routing Routes ---
+# --- CẬP NHẬT ROUTING API ĐỂ DÙNG LOGIC MỚI ---
 @MapRouting_bp.route('/api/route', methods=['POST'])
 def calculate_route():
     try:
         data = request.json
+        # Hàm get_route này giờ đã thông minh hơn (tự đi đường ven biển nếu cần)
         route_data = get_route(
             float(data['start_lat']), float(data['start_lon']),
             float(data['end_lat']), float(data['end_lon']),
             data.get('vehicle', 'car')
         )
+
         if route_data:
             return jsonify({'success': True, 'route': route_data})
-        return jsonify({'success': False, 'error': 'Cannot find route'}), 400
+        return jsonify({'success': False, 'error': 'Không tìm thấy đường đi hợp lệ trong lãnh thổ VN'}), 400
     except Exception as e:
+        print(f"Routing Error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -75,9 +69,7 @@ def calculate_multi_route():
     try:
         data = request.json
         destinations = data.get('destinations', [])
-        if not (1 <= len(destinations) <= 3):
-            return jsonify({'success': False, 'error': 'Destinations must be 1-3'}), 400
-
+        # ... (Giữ nguyên logic gọi hàm)
         result = find_shortest_route_multi_points(
             float(data['start_lat']), float(data['start_lon']),
             destinations,
@@ -85,20 +77,18 @@ def calculate_multi_route():
         )
         if result:
             return jsonify({'success': True, 'route': result})
-        return jsonify({'success': False, 'error': 'Cannot find route'}), 400
+        return jsonify({'success': False, 'error': 'Cannot optimize route'}), 400
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-# --- API FAVORITES (ĐÃ CHUẨN HÓA DÙNG ORM) ---
+# --- CẬP NHẬT API FAVORITES ---
 @MapRouting_bp.route('/api/favorites', methods=['GET'])
 def get_user_favorites():
-    # 1. Kiểm tra đăng nhập
     if not current_user.is_authenticated:
-        return jsonify({'success': False, 'error': 'Authentication required', 'code': 'UNAUTHORIZED'}), 401
+        return jsonify({'success': False, 'error': 'Authentication required'}), 401
 
     try:
-        # 2. Query dữ liệu
         favorites = (
             db.session.query(Favorite, Image)
             .join(Image, Favorite.image_id == Image.id)
@@ -108,37 +98,33 @@ def get_user_favorites():
         )
 
         results = []
-        print(f"📊 [FAVORITES] Tìm thấy {len(favorites)} mục cho User {current_user.id}")
-
         for fav, img in favorites:
-            # --- CŨ (XÓA BỎ) ---
-            # search_query = img.address if img.address else img.name
-            # geo_data = geocode_address(search_query)
-            # -------------------
-
-            # --- MỚI (DÙNG TRỰC TIẾP DB) ---
             item = {
                 'id': fav.id,
                 'name': img.name,
-                'address': img.address, # Vẫn gửi address để hiển thị text trên UI
-                'tags': img.tags
+                'address': img.address,
+                'tags': img.tags,
+                'valid_location': True,  # Mặc định
+                'warning': None
             }
 
-            # Kiểm tra xem trong DB đã có tọa độ chưa
             if img.latitude is not None and img.longitude is not None:
-                item.update({
-                    'lat': img.latitude,
-                    'lon': img.longitude,
-                    'display_name': img.name # Hoặc dùng address nếu muốn
-                })
+                item['lat'] = img.latitude
+                item['lon'] = img.longitude
+
+                # --- KIỂM TRA BIÊN GIỚI NGAY TẠI ĐÂY ---
+                # Nếu điểm lưu nằm ngoài VN (hoặc vùng nguy hiểm), đánh dấu ngay
+                if not is_in_vietnam(img.latitude, img.longitude):
+                    item['valid_location'] = False
+                    item['warning'] = "Nằm ngoài lãnh thổ Việt Nam"
             else:
-                # Trường hợp dữ liệu cũ chưa chạy tool update tọa độ
-                item['error'] = 'Chưa cập nhật tọa độ trong hệ thống'
+                item['valid_location'] = False
+                item['error'] = 'Chưa có tọa độ'
 
             results.append(item)
 
         return jsonify({'success': True, 'data': results})
 
     except Exception as e:
-        print(f"❌ [FAVORITES] Error: {str(e)}")
+        print(f"Favorites Error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500

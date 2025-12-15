@@ -30,7 +30,9 @@ import traceback
 # --- [QUAN TRỌNG] IMPORT MAP ROUTING ---
 # Đảm bảo bạn đã có file __init__.py trong thư mục MapRouting
 from MapRouting.MapRoutingRoute import MapRouting_bp
-from LocationSharing import location_bp, register_socket_events
+from LocationSharing import location_bp, register_socket_events as register_location_socket_events
+from Messaging import messaging_bp, register_socket_events as register_messaging_socket_events
+
 
 # =========================================================
 # 1. KHỞI TẠO APP, SOCKETIO
@@ -74,8 +76,17 @@ if blueprint2_name not in app.blueprints:
 else:
     print(f"ℹ️ Blueprint '{blueprint2_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
 
+blueprint3_name = messaging_bp.name
+if blueprint3_name not in app.blueprints:
+    app.register_blueprint(messaging_bp)
+    print(f"✅ Đã đăng ký thành công Blueprint: {blueprint3_name} tại /messaging")
+else:
+    print(f"ℹ️ Blueprint '{blueprint3_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
+
 # Đăng ký các sự kiện SocketIO từ LocationSharing
-register_socket_events(socketio)
+register_location_socket_events(socketio)
+# Đăng ký các sự kiện SocketIO từ Messaging
+register_messaging_socket_events(socketio)
 
 # =========================================================
 # 4. CÁC ROUTE CHÍNH CỦA APP

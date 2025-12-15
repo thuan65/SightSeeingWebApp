@@ -467,98 +467,59 @@
             try {
                 const res = await fetch(`/MapRouting/api/favorites`);
 
-                if (res.status === 401 || res.status === 403) {
-                    listDiv.innerHTML = `
-                        <div style="text-align:center; padding: 10px; background: #C0392B; color: white; border: 3px solid #196F3D;">
-                            ⚠ LOCKED<br>
-                            <small>LOGIN REQUIRED</small><br>
-                            <a href="/auth/login" style="color: yellow; font-weight: bold;">[INSERT COIN/LOGIN]</a>
-                        </div>`;
-                    return;
-                }
-
-                if (!res.ok) {
-                    let errorMsg = 'Unknown error';
-                    try {
-                        const errorData = await res.json();
-                        errorMsg = errorData.error || `HTTP ${res.status}`;
-                    } catch (e) {
-                        errorMsg = `HTTP ${res.status}: ${res.statusText}`;
-                    }
-
-                    listDiv.innerHTML = `
-                        <div style="text-align:center; padding: 10px; background: #C0392B; color: white; border: 3px solid #196F3D;">
-                            ⚠ ERROR<br>
-                            <small>${errorMsg}</small>
-                        </div>`;
-                    console.error("Favorites API Error:", errorMsg);
-                    return;
-                }
-
-                const contentType = res.headers.get("content-type");
-                if (!contentType || !contentType.includes("application/json")) {
-                    const text = await res.text();
-                    console.error("Favorites API returned non-JSON:", text.substring(0, 100));
-                    listDiv.innerHTML = `
-                        <div style="text-align:center; padding: 10px; background: #C0392B; color: white; border: 3px solid #196F3D;">
-                            ⚠ ERROR<br>
-                            <small>Invalid response format</small>
-                        </div>`;
+                if (res.status === 401) {
+                    listDiv.innerHTML = '<div style="text-align:center; padding:10px; background:#C0392B; color:white;">LOGIN REQUIRED</div>';
                     return;
                 }
 
                 const data = await res.json();
                 listDiv.innerHTML = '';
 
-                if (!data.success) {
-                    const errorMsg = data.error || 'Unknown error';
-                    listDiv.innerHTML = `
-                        <div style="text-align:center; padding: 10px; background: #C0392B; color: white; border: 3px solid #196F3D;">
-                            ⚠ ERROR<br>
-                            <small>${errorMsg}</small>
-                        </div>`;
-                    console.error("Favorites API returned error:", errorMsg);
-                    return;
-                }
-
-                if(data.data && data.data.length > 0) {
+                if(data.success && data.data && data.data.length > 0) {
                     data.data.forEach(item => {
-                        if (item.error) {
-                            console.warn("Skipping favorite with geocode error:", item.name);
-                            return;
-                        }
-
                         const div = document.createElement('div');
                         div.className = 'fav-item';
+
+                        // Xử lý hiển thị nếu địa điểm KHÔNG HỢP LỆ (Nằm ngoài VN)
+                        let warningHtml = '';
+                        let opacityStyle = '';
+                        let clickAction = () => routeToFavorite(item);
+
+                        if (!item.valid_location) {
+                            // Nếu lỗi do ngoài biên giới
+                            if (item.warning) {
+                                warningHtml = `<div style="color: #E74C3C; font-size: 0.8em; font-weight: bold; margin-bottom: 5px;">⚠ ${item.warning}</div>`;
+                                div.style.borderColor = '#E74C3C';
+                            }
+                            // Nếu lỗi do thiếu toạ độ
+                            else if (item.error) {
+                                warningHtml = `<div style="color: #E74C3C; font-size: 0.8em;">⚠ ${item.error}</div>`;
+                                opacityStyle = 'opacity: 0.6;';
+                                clickAction = () => showError("Địa điểm này bị lỗi dữ liệu!");
+                            }
+                        }
 
                         let tagDisplay = item.tags ? item.tags.split(',')[0] : 'LOC';
                         let addrDisplay = item.address ? `<div style="font-size:0.7em; margin-bottom:5px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:0.8;">${item.address}</div>` : '';
 
+                        div.style.cssText += opacityStyle;
                         div.innerHTML = `
+                            ${warningHtml}
                             <div class="fav-icon">★</div>
                             <h3>${item.name}</h3>
                             ${addrDisplay}
                             <span class="fav-tag">#${tagDisplay}</span>
                         `;
-                        div.onclick = () => routeToFavorite(item);
+
+                        div.onclick = clickAction;
                         listDiv.appendChild(div);
                     });
-
-                    if (listDiv.children.length === 0) {
-                        listDiv.innerHTML = '<p style="text-align:center; padding-top:20px;">NO VALID LOCATIONS FOUND.</p>';
-                    }
                 } else {
                     listDiv.innerHTML = '<p style="text-align:center; padding-top:20px;">EMPTY SAVE SLOTS.</p>';
                 }
             } catch (e) {
                 console.error("Favorite Error:", e);
-                const errorMsg = e.message || 'Network error or server unavailable';
-                listDiv.innerHTML = `
-                    <div style="text-align:center; padding: 10px; background: #C0392B; color: white; border: 3px solid #196F3D;">
-                        ⚠ MEMORY CARD ERROR<br>
-                        <small>${errorMsg}</small><br>
-                        <small style="font-size:0.7em; opacity:0.8;">Check console for details</small>
-                    </div>`;
+                listDiv.innerHTML = '<div style="text-align:center; padding:10px; background:#C0392B; color:white;">DATA CORRUPTED</div>';
             }
         }
 

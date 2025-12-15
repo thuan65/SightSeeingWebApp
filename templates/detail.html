@@ -2,268 +2,744 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>{{ image.name }}</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ image.name }} - LocaGo!</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <style>
-    body { font-family: sans-serif; max-width: 800px; margin: 40px auto; line-height: 1.6; }
-    img { width: 100%; height: auto; border-radius: 10px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3); margin-bottom: 20px; }
-    .desc { text-align: left; white-space: pre-line; }
+      /* --- COPY STYLES TỪ INDEX.HTML --- */
+      * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    .feedback-box { margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px; }
-    .feedback-item { background: #f3f3f3; padding: 12px; border-radius: 8px; margin-bottom: 10px; }
-    .rating-stars { color: #ffb400; font-size: 20px; margin-bottom: 5px; }
+      body {
+          font-family: 'Poppins', sans-serif;
+          background: #f5f5f5;
+          min-height: 100vh;
+          color: #333;
+      }
 
-    .rating-select span {
-      font-size: 28px;
-      cursor: pointer;
-      color: #ccc;
-    }
-    .rating-select span.active {
-      color: gold;
-    }
+      /* Header Styles */
+      header {
+          background: white;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          padding: 15px 30px;
+          position: sticky;
+          top: 0;
+          z-index: 1000;
+      }
+
+      .header-container {
+          max-width: 1400px;
+          margin: 0 auto;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+
+      .logo {
+          font-size: 32px;
+          font-weight: 700;
+          color: #1C6758;
+          text-decoration: none;
+      }
+
+      .logo span { color: #8EB486; }
+
+      .nav-links {
+          display: flex;
+          gap: 20px;
+          align-items: center;
+          position: relative;
+      }
+
+      .nav-links a, .nav-links button {
+          text-decoration: none;
+          color: #333;
+          padding: 10px 18px;
+          border-radius: 8px;
+          transition: 0.3s;
+          border: none;
+          background: transparent;
+          cursor: pointer;
+          font-size: 15px;
+          font-weight: 500;
+          font-family: 'Poppins', sans-serif;
+      }
+
+      .nav-links a:hover, .nav-links button:hover {
+          background: #f0f0f0;
+      }
+
+      .nav-user {
+        color: #333;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 500;
+        font-family: 'Poppins', sans-serif;
+        cursor: default;
+      }
+
+      .nav-user:hover {
+        background: #f0f0f0;
+      }
+
+      .hamburger-btn {
+          font-size: 24px;
+          padding: 8px 12px !important;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          color: #333;
+      }
+
+      .dropdown-menu {
+          position: absolute;
+          top: 60px;
+          right: 0;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+          padding: 10px;
+          min-width: 200px;
+          display: none; /* Ẩn mặc định */
+          z-index: 1001;
+      }
+
+      .dropdown-menu.show {
+          display: block;
+          animation: fadeIn 0.2s ease;
+      }
+
+      .dropdown-menu a {
+          display: block;
+          padding: 12px 16px;
+          color: #333;
+          text-decoration: none;
+          border-radius: 8px;
+      }
+
+      .dropdown-menu a:hover { background: #f0f0f0; }
+
+      @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Buttons */
+      .btn-primary {
+          background: linear-gradient(135deg, #1C6758, #8EB486) !important; 
+          color: white !important;
+          padding: 12px 24px;
+          border: none;
+          border-radius: 50px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: 0.3s;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          text-decoration: none;
+      }
+
+      .btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+      }
+
+      .btn-outline {
+          background: white;
+          border: 2px solid #1C6758;
+          color: #1C6758;
+          padding: 10px 20px;
+          border-radius: 50px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: 0.3s;
+          text-decoration: none;
+          display: inline-block;
+      }
+
+      .btn-outline:hover {
+          background: #1C6758;
+          color: white;
+      }
+
+      /* --- DETAIL PAGE SPECIFIC STYLES --- */
+      .container {
+          max-width: 1200px;
+          margin: 40px auto;
+          padding: 0 20px;
+      }
+
+      .detail-layout {
+          display: grid;
+          grid-template-columns: 1fr 350px; /* Cột trái lớn, cột phải cố định */
+          gap: 40px;
+      }
+
+      /* Left Column: Main Content */
+      .main-content {
+          background: white;
+          border-radius: 20px;
+          padding: 30px;
+          box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+      }
+
+      .dest-title {
+          font-size: 2.5em;
+          color: #1C6758;
+          margin-bottom: 10px;
+      }
+
+      .dest-meta {
+          color: #666;
+          margin-bottom: 20px;
+          font-size: 0.95em;
+          display: flex;
+          gap: 15px;
+          align-items: center;
+      }
+
+      .dest-image {
+          width: 100%;
+          height: 500px;
+          object-fit: cover;
+          border-radius: 15px;
+          margin-bottom: 30px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      }
+
+      .dest-desc {
+          font-size: 1.1em;
+          line-height: 1.8;
+          color: #444;
+          white-space: pre-line;
+          margin-bottom: 40px;
+      }
+
+      /* Feedback Section */
+      .feedback-section {
+          border-top: 1px solid #eee;
+          padding-top: 30px;
+      }
+
+      .section-header {
+          font-size: 1.5em;
+          color: #333;
+          margin-bottom: 20px;
+          font-weight: 600;
+      }
+
+      .rating-box {
+          background: #f9f9f9;
+          padding: 20px;
+          border-radius: 15px;
+          margin-bottom: 30px;
+          border: 1px solid #eee;
+      }
+
+      .rating-select {
+          display: flex;
+          gap: 10px;
+          margin: 15px 0;
+      }
+
+      .rating-select span {
+          font-size: 32px;
+          cursor: pointer;
+          color: #ddd;
+          transition: 0.2s;
+      }
+
+      .rating-select span.active, .rating-select span:hover {
+          color: #FFB800;
+      }
+
+      textarea {
+          width: 100%;
+          padding: 15px;
+          border: 2px solid #e0e0e0;
+          border-radius: 12px;
+          font-family: inherit;
+          resize: vertical;
+          margin-bottom: 15px;
+          transition: 0.3s;
+      }
+
+      textarea:focus {
+          outline: none;
+          border-color: #8EB486;
+          background: white;
+      }
+
+      /* Review List */
+      .review-list {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+      }
+
+      .review-item {
+          background: white;
+          padding: 20px;
+          border-radius: 12px;
+          border: 1px solid #eee;
+          display: flex;
+          gap: 15px;
+      }
+
+      .review-avatar {
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #8EB486, #1C6758);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 18px;
+          flex-shrink: 0;
+      }
+
+      .review-content h4 {
+          margin-bottom: 5px;
+          color: #333;
+      }
+
+      .user-rating { color: #FFB800; font-size: 14px; margin-bottom: 8px; }
+      .review-text { color: #555; line-height: 1.5; }
+      .review-date { font-size: 12px; color: #999; margin-top: 5px; }
+
+      /* Right Sidebar */
+      .sidebar {
+          display: flex;
+          flex-direction: column;
+          gap: 25px;
+      }
+
+      .sidebar-card {
+          background: white;
+          padding: 25px;
+          border-radius: 20px;
+          box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+      }
+
+      .sidebar-card h3 {
+          color: #1C6758;
+          margin-bottom: 15px;
+          font-size: 1.2em;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+      }
+
+      .tag-cloud {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+      }
+
+      .tag-pill {
+          background: #f0fdf4;
+          color: #1C6758;
+          padding: 6px 14px;
+          border-radius: 20px;
+          font-size: 13px;
+          font-weight: 500;
+          border: 1px solid #d1fae5;
+      }
+
+      /* Weather Widget Styled */
+      .weather-info {
+          text-align: center;
+      }
+
+      .weather-main {
+          font-size: 4em;
+          margin: 10px 0;
+      }
+
+      .weather-temp {
+          font-size: 2.5em;
+          font-weight: 700;
+          color: #333;
+      }
+
+      .weather-detail {
+          color: #666;
+          margin-bottom: 15px;
+      }
+
+      .forecast-btn {
+          width: 100%;
+          padding: 10px;
+          background: #f5f5f5;
+          border: none;
+          border-radius: 10px;
+          color: #555;
+          font-weight: 600;
+          cursor: pointer;
+          transition: 0.3s;
+      }
+
+      .forecast-btn:hover { background: #e0e0e0; }
+
+      .forecast-list {
+          margin-top: 15px;
+          display: none;
+          border-top: 1px solid #eee;
+          padding-top: 15px;
+      }
+      
+      .forecast-list.show { display: block; }
+
+      .forecast-item {
+          display: flex;
+          justify-content: space-between;
+          padding: 8px 0;
+          border-bottom: 1px dashed #eee;
+          font-size: 14px;
+      }
+
+      /* Footer (Copy from Index) */
+      footer {
+          background: #2C3E50;
+          color: white;
+          padding: 50px 20px 20px;
+          margin-top: 60px;
+      }
+      
+      .footer-bottom {
+          text-align: center;
+          padding-top: 20px;
+          border-top: 1px solid #444;
+          color: #888;
+          margin-top: 30px;
+      }
+
+      @media (max-width: 900px) {
+          .detail-layout { grid-template-columns: 1fr; }
+          .dest-image { height: 350px; }
+      }
   </style>
 </head>
 <body>
+
   <div id="userInfo" data-user="{{ session.get('user_id', 0) }}"></div>
 
-  <h1>{{ image.name }}</h1>
+  <header>
+      <div class="header-container">
+          <a href="/" class="logo">Loca<span>Go!</span></a>
+          <div class="nav-links">
+              <a href="/MapRouting">Bản đồ du lịch</a>
+              <a href="/chat_ui">Chatbot du lịch</a>
+              <a href="/forum">Forum</a>
+              <a href="/friends_map">Friends map</a>
+              <div class="nav-links">
+                {% if current_user.is_authenticated %}
+                    <span class="nav-user">
+                        Xin chào, {{ current_user.username }}
+                    </span>
+                {%else %}
+                    <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
+                {% endif %}
+              <button class="hamburger-btn" onclick="toggleMenu()">
+                  <i class="fas fa-bars"></i>
+              </button>
+              <div class="dropdown-menu" id="dropdownMenu">
+                  <a href="{{ url_for('favorite_bp.list_favorites') }}"><i class="fas fa-heart"></i> Danh sách yêu thích</a>
+                  <a href="/friends"><i class="fas fa-user-friends"></i> Bạn bè</a>
+                  {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('login_bp.logout') }}"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                  {% endif %}
+              </div>
+          </div>
+      </div>
+  </header>
 
-  <img src="/static/images/{{ image.filename }}" alt="{{ image.name }}">
+  <div class="container">
+      <div style="margin-bottom: 20px;">
+          <a href="/" class="btn-outline">
+              <i class="fas fa-arrow-left"></i> Quay lại thư viện
+          </a>
+      </div>
 
-  <p><b>Tags:</b> {{ image.tags }}</p>
-  <div class="desc">{{ image.description }}</div>
+      <div class="detail-layout">
+          <div class="main-content">
+              <h1 class="dest-title">{{ image.name }}</h1>
+              <div class="dest-meta">
+                  <span id="ratingDisplay">
+                      <i class="fas fa-star" style="color: #FFB800;"></i> 
+                      <b>{{ "%.1f"|format(image.rating or 0) }}</b> ({{ image.rating_count or 0 }} đánh giá)
+                  </span>
+                  <span><i class="fas fa-map-marker-alt"></i> {{ image.city or 'Việt Nam' }}</span>
+              </div>
 
-  <p><a href="/">⬅ Quay lại thư viện</a></p>
+              <img src="/static/images/{{ image.filename }}" alt="{{ image.name }}" class="dest-image"
+                   onerror="this.src='https://via.placeholder.com/800x500?text=LocaGo'">
 
-<button id="addFavoriteBtn"
-        style="padding:10px 16px; font-size:16px; cursor:pointer; margin-bottom:20px;">
-  ❤️ Thêm vào danh sách yêu thích
-</button>
+              <h3 class="section-header">Giới thiệu</h3>
+              <div class="dest-desc">{{ image.description }}</div>
 
-    <div class="feedback-box">
-    <h2>Đánh giá & Bình luận</h2>
+              <div class="feedback-section">
+                  <h3 class="section-header">Đánh giá & Trải nghiệm</h3>
+                  
+                  <div class="rating-box">
+                      <p style="font-weight: 500;">Chia sẻ cảm nhận của bạn:</p>
+                      <div class="rating-select" id="ratingSelect">
+                          <span data-value="1"><i class="fas fa-star"></i></span>
+                          <span data-value="2"><i class="fas fa-star"></i></span>
+                          <span data-value="3"><i class="fas fa-star"></i></span>
+                          <span data-value="4"><i class="fas fa-star"></i></span>
+                          <span data-value="5"><i class="fas fa-star"></i></span>
+                      </div>
+                      <input type="hidden" id="ratingInput" value="0">
+                      
+                      <textarea id="comment" rows="3" placeholder="Không gian thế nào? Dịch vụ ra sao? Hãy chia sẻ nhé..."></textarea>
+                      
+                      <button id="sendBtn" class="btn-primary">
+                          <i class="fas fa-paper-plane"></i> Gửi đánh giá
+                      </button>
+                  </div>
 
-        <p id="ratingStats">
-      ⭐ <b>{{ "%.1f"|format(image.rating or 0) }}</b>
-      ({{ image.rating_count or 0 }} đánh giá)
-    </p>
+                  <div id="feedbackList" class="review-list">
+                      <div style="text-align:center; color:#999;">Đang tải bình luận...</div>
+                  </div>
+              </div>
+          </div>
 
-        <div class="rating-select" id="ratingSelect">
-      <span data-value="1">★</span>
-      <span data-value="2">★</span>
-      <span data-value="3">★</span>
-      <span data-value="4">★</span>
-      <span data-value="5">★</span>
-    </div>
-    <input type="hidden" id="ratingInput" value="0">
+          <div class="sidebar">
+              <div class="sidebar-card">
+                  <h3><i class="fas fa-bookmark"></i> Hành động</h3>
+                  <button id="addFavoriteBtn" class="btn-primary" style="width: 100%; justify-content: center;">
+                      <i class="far fa-heart"></i> Thêm vào yêu thích
+                  </button>
+                  <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+                  <div class="tag-cloud">
+                      <span style="width: 100%; font-size: 14px; color: #666; margin-bottom: 5px;">Tags:</span>
+                      {% if image.tags %}
+                        {% for tag in image.tags.split(',') %}
+                            <span class="tag-pill">{{ tag.strip() }}</span>
+                        {% endfor %}
+                      {% else %}
+                        <span class="tag-pill">Du lịch</span>
+                      {% endif %}
+                  </div>
+              </div>
 
-        <textarea id="comment" placeholder="Viết cảm nhận..."
-              rows="3" style="width:100%; margin-top:10px; padding:10px"></textarea>
+              <div class="sidebar-card">
+                  <h3><i class="fas fa-cloud-sun"></i> Thời tiết hiện tại</h3>
+                  <div class="weather-info" id="weatherWidget">
+                      <div id="w-icon" class="weather-main">❓</div>
+                      <div id="w-temp" class="weather-temp">--°C</div>
+                      <div id="w-wind" class="weather-detail">--</div>
+                      <div id="w-time" class="weather-detail" style="font-size: 12px;">--</div>
+                      
+                      <button class="forecast-btn" onclick="toggleForecast()">
+                          Xem dự báo 7 ngày <i class="fas fa-chevron-down"></i>
+                      </button>
 
-    <button id="sendBtn"
-            style="margin-top:10px; padding:10px 16px; font-size:16px; cursor:pointer;">
-      Gửi đánh giá
-    </button>
-
-    <h3 style="margin-top:30px">Các bình luận gần đây</h3>
-    <div id="feedbackList">Đang tải...</div>
+                      <div id="forecastContent" class="forecast-list">
+                          Đang tải dữ liệu...
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
   </div>
 
-  <!-- ===== WEATHER WIDGET ===== -->
-  <div id="weatherWidget" 
-     style="position: fixed; bottom: 20px; right: 20px; width: 200px; 
-            background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); 
-            border-radius: 16px; padding: 12px; text-align: center; cursor: pointer; z-index:999;">
-    <div id="w-icon" class="text-4xl mb-1"></div>
-    <div id="w-temp" class="font-bold text-xl"></div>
-    <div id="w-wind" class="text-sm opacity-80 mb-1"></div>
-    <div id="w-time" class="text-sm opacity-80 mb-1"></div>
-    <div style="font-size:12px; opacity:0.7;">Nhấn để xem dự báo</div>
-  </div>
-
-<!-- DỰ BÁO 7 NGÀY (ẩn mặc định) -->
-  <div id="weatherForecast" 
-     style="display:none; position: fixed; bottom: 20px; right: 240px; width: 300px; 
-            max-height: 400px; overflow-y:auto; background: rgba(255,255,255,0.2); 
-            backdrop-filter: blur(10px); border-radius:16px; padding:12px; z-index:999;">
-    <h3 style="text-align:center; margin-bottom:10px;">Dự báo 7 ngày</h3>
-    <div id="forecastContent"></div>
-  </div>
+  <footer>
+      <div class="footer-bottom">
+          <p>© 2025 LocaGo! - Designed with ❤️ for travelers</p>
+      </div>
+  </footer>
 
   <script>
-    // ===== SELECT RATING =====
+    function toggleMenu() {
+          const menu = document.getElementById('dropdownMenu');
+          menu.classList.toggle('show');
+      }
+
+      // Đóng menu khi click ra ngoài
+      document.addEventListener('click', function(event) {
+          const menu = document.getElementById('dropdownMenu');
+          const hamburger = document.querySelector('.hamburger-btn');
+          
+          if (menu && hamburger && !menu.contains(event.target) && !hamburger.contains(event.target)) {
+              menu.classList.remove('show');
+          }
+      });
+    // ===== 1. LOGIC ĐÁNH GIÁ (RATING) =====
     let currentRating = 0;
     const stars = document.querySelectorAll("#ratingSelect span");
-
     const ratingInput = document.getElementById("ratingInput");
+
     stars.forEach(s => {
       s.addEventListener("click", () => {
         currentRating = parseInt(s.dataset.value);
-        if (ratingInput) {
-            ratingInput.value = currentRating;
-        }
+        if (ratingInput) ratingInput.value = currentRating;
+        
         stars.forEach(x => x.classList.remove("active"));
         for (let i = 0; i < currentRating; i++) stars[i].classList.add("active");
       });
     });
 
-
-    // ===== SUBMIT FEEDBACK (ĐÃ SỬA) =====
-      document.getElementById("sendBtn").addEventListener("click", () => {
+    // ===== 2. XỬ LÝ GỬI BÌNH LUẬN (GEOLOCATION) =====
+    document.getElementById("sendBtn").addEventListener("click", () => {
         initiateFeedbackSubmission();
-      });
+    });
 
-      // ===== HÀM MỚI: XIN CẤP QUYỀN VÀ GỬI TỌA ĐỘ =====
-      function initiateFeedbackSubmission() {
+    function initiateFeedbackSubmission() {
         const imageId = Number("{{ image.id }}");
-        const userId = Number(document.getElementById("userInfo").dataset.user);
+        const userInfo = document.getElementById("userInfo");
+        const userId = userInfo ? Number(userInfo.dataset.user) : 0;
         const rating = Number(document.getElementById("ratingInput").value);
         const comment = document.getElementById("comment").value;
 
-      if (!userId) {
-            alert("Vui lòng đăng nhập để đánh giá.");
-            window.location.href = "/login";
-            return;
-      }
-
-        if (rating === 0 || isNaN(rating)) {
-          console.log("[DEBUG FE] 2. Lỗi: Rating bị thiếu hoặc bằng 0."); // <--- DEBUG 2
-            alert("Vui lòng chọn số sao (đánh giá) bắt buộc trước khi gửi.");
+        if (!userId) {
+            alert("Bạn cần đăng nhập để viết đánh giá.");
+            // window.location.href = "/login"; // Bỏ comment nếu muốn redirect
             return;
         }
 
-        // Bắt đầu quá trình lấy vị trí
+        if (rating === 0 || isNaN(rating)) {
+            alert("Vui lòng chọn số sao để đánh giá.");
+            return;
+        }
+
         if (navigator.geolocation) {
-          console.log("[DEBUG FE] 3. Geolocation được hỗ trợ."); // <--- DEBUG 3
-            alert("Web sẽ yêu cầu quyền truy cập vị trí của bạn để xác minh. Vui lòng chấp nhận.");
+            // Hiển thị trạng thái loading cho nút
+            const btn = document.getElementById("sendBtn");
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+            btn.disabled = true;
+
             navigator.geolocation.getCurrentPosition(
-                // Success: Có được vị trí
                 (position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
-
-                    // Gửi feedback với tọa độ
-                    sendFeedbackToServer(imageId, userId, rating, comment, lat, lng);
+                    sendFeedbackToServer(imageId, userId, rating, comment, lat, lng, btn, originalText);
                 },
-                // Error: Không có được vị trí (người dùng từ chối/timeout)
                 (error) => {
-                    let errorMessage = "Không thể lấy vị trí của bạn. ";
-                    if (error.code === 1) {
-                        errorMessage += "Vui lòng cấp quyền truy cập vị trí (Location) để đánh giá.";
-                    } else {
-                        errorMessage += "Lỗi kỹ thuật GPS. Vui lòng thử lại.";
-                    }
-                    alert(errorMessage);
-                    console.error("Geolocation Error:", error);
+                    alert("Không thể lấy vị trí. Vui lòng cấp quyền vị trí để xác thực review.");
+                    console.error(error);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                { enableHighAccuracy: true, timeout: 10000 }
             );
         } else {
-          console.log("[DEBUG FE] 4. Lỗi: Trình duyệt không hỗ trợ Geolocation."); // <--- DEBUG 4
-            alert("Trình duyệt của bạn không hỗ trợ định vị GPS.");
+            alert("Trình duyệt không hỗ trợ Geolocation.");
         }
     }
 
-    // ===== HÀM MỚI: GỬI DỮ LIỆU ĐẾN SERVER =====
-    async function sendFeedbackToServer(imageId, userId, rating, comment, lat, lng) {
-        // Gửi tọa độ người dùng lên server
+    async function sendFeedbackToServer(imageId, userId, rating, comment, lat, lng, btn, originalText) {
         try {
             const res = await fetch(`/feedback/${imageId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    user_id: userId,
-                    rating: rating,
-                    comment: comment,
-                    lat: lat,
-                    lng: lng // Gửi tọa độ người dùng
-                }),
+                body: JSON.stringify({ user_id: userId, rating, comment, lat, lng }),
             });
 
             const result = await res.json();
 
             if (res.ok) {
-                alert("Đánh giá của bạn đã được gửi thành công!");
+                alert("Cảm ơn bạn! Đánh giá đã được gửi.");
                 loadFeedback(); 
-                updateRatingStats(result.new_rating, result.rating_count);
-                // 3. Dọn dẹp giao diện
+                // Reset form
                 document.getElementById("comment").value = "";
                 stars.forEach(x => x.classList.remove("active"));
-                currentRating = 0;
-            } else if (res.status === 400 || res.status === 403 || res.status === 404 || res.status === 401) {
-                // Xử lý các lỗi từ BE (Bao gồm lỗi 403: Quá xa)
-                alert(`Thất bại: ${result.error}`);
+                ratingInput.value = 0;
+                
+                // Cập nhật điểm số hiển thị ngay lập tức (Optional)
+                 if(result.new_rating) {
+                     document.getElementById("ratingDisplay").innerHTML = 
+                        `<i class="fas fa-star" style="color: #FFB800;"></i> <b>${result.new_rating.toFixed(1)}</b> (${result.rating_count} đánh giá)`;
+                 }
+
             } else {
-                alert(`Lỗi hệ thống không xác định: ${res.statusText}`);
+                alert(`Lỗi: ${result.error || 'Không thể gửi đánh giá'}`);
             }
         } catch (error) {
-            console.error("Submission Error:", error);
-            alert("Có lỗi xảy ra trong quá trình gửi đánh giá.");
+            console.error(error);
+            alert("Lỗi kết nối server.");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
     }
-    // ===== HÀM MỚI: CẬP NHẬT CHỈ SỐ RATING TỔNG =====
-    function updateRatingStats(rating, count) {
-      const statsElement = document.getElementById("ratingStats");
-      const formattedRating = rating.toFixed(1);
-      statsElement.innerHTML = `
-        ⭐ <b>${formattedRating}</b>
-        (${count} đánh giá)
-      `;
-    }
 
-
-    // ===== LOAD FEEDBACK LIST (GIỮ NGUYÊN) =====
+    // ===== 3. TẢI DANH SÁCH BÌNH LUẬN =====
     async function loadFeedback() {
-      const imageId = Number("{{ image.id }}");  /* FIXED */
-      const res = await fetch(`/feedback/${imageId}`);
-      const feedbackData = await res.json();     /* FIXED */
+      const imageId = Number("{{ image.id }}");
+      const listDiv = document.getElementById("feedbackList");
+      
+      try {
+          const res = await fetch(`/feedback/${imageId}`);
+          const data = await res.json();
+          
+          if(!data.feedback || data.feedback.length === 0) {
+              listDiv.innerHTML = '<div style="text-align:center; padding:20px; background:#f9f9f9; border-radius:10px;">Chưa có đánh giá nào. Hãy là người đầu tiên!</div>';
+              return;
+          }
 
-      let html = "";
-      feedbackData.feedback.forEach(fb => {
-        html += `
-          <div class="feedback-item">
-            <div><b>${fb.username}</b></div>
-            <div class="rating-stars">${"★".repeat(fb.rating)}</div>
-            <div>${fb.comment}</div>
-            <div style="font-size:13px; color:#666;">${fb.timestamp}</div>
-          </div>
-        `;
-      });
-
-      document.getElementById("feedbackList").innerHTML =
-        html || "Chưa có đánh giá nào.";
+          let html = "";
+          data.feedback.forEach(fb => {
+            // Tạo avatar chữ cái đầu
+            const initial = fb.username ? fb.username.charAt(0).toUpperCase() : '?';
+            
+            html += `
+              <div class="review-item">
+                <div class="review-avatar">${initial}</div>
+                <div class="review-content" style="flex:1;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <h4>${fb.username}</h4>
+                        <div class="user-rating">
+                            ${'<i class="fas fa-star"></i>'.repeat(fb.rating)}
+                        </div>
+                    </div>
+                    <div class="review-text">${fb.comment}</div>
+                    <div class="review-date">${fb.timestamp || ''}</div>
+                </div>
+              </div>
+            `;
+          });
+          listDiv.innerHTML = html;
+      } catch (e) {
+          listDiv.innerHTML = "Lỗi tải bình luận.";
+      }
     }
-
+    
     loadFeedback();
 
-      // yeu thich
-    document.getElementById("addFavoriteBtn").addEventListener("click", async () => {
+    // ===== 4. YÊU THÍCH =====
+    document.getElementById("addFavoriteBtn").addEventListener("click", async function() {
       const imageId = Number("{{ image.id }}");
+      const icon = this.querySelector('i');
+      
+      try {
+          const res = await fetch(`/favorite/${imageId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+          });
+          const result = await res.json();
 
-      const res = await fetch(`/favorite/${imageId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      });
-
-      const result = await res.json();
-
-      if (res.ok) {
-        alert("Đã thêm vào danh sách yêu thích!");
-      } else {
-        if (result.login_url) {
-          // Chưa login → redirect tới login
-          window.location.href = result.login_url;
-        } else {
-          alert("Lỗi: " + result.error);
-        }
-      }
+          if (res.ok) {
+            icon.classList.remove('far');
+            icon.classList.add('fas');
+            alert("Đã thêm vào bộ sưu tập của bạn!");
+          } else {
+             if(result.login_url) window.location.href = result.login_url;
+             else alert(result.error);
+          }
+      } catch(e) { console.error(e); }
     });
 
-  </script>
-
-  <script>
-
+    // ===== 5. WEATHER WIDGET LOGIC =====
     function getWeatherIcon(code) {
         if (code == 0) return "☀️";
         if (code <= 3) return "☁️";
@@ -275,47 +751,43 @@
         return "❓";
     }
 
-      // ===== LOAD CURRENT WEATHER =====
-  async function loadCurrentWeather(placeId) {
-    try {
-        const res = await fetch(`/weather/${placeId}`);
-        const data = await res.json();
+    async function loadCurrentWeather(placeId) {
+        try {
+            const res = await fetch(`/weather/${placeId}`);
+            const data = await res.json();
+            
+            if (!res.ok || !data.current_weather) return;
 
-        if (!res.ok || !data.current_weather) {
-            console.error("Weather data missing", data);
-            document.getElementById("w-icon").innerHTML = "❓";
-            document.getElementById("w-temp").innerHTML = "--";
-            document.getElementById("w-wind").innerHTML = "--";
-            document.getElementById("w-time").innerHTML = "--";
-            return;
-        }
-
-        const c = data.current_weather;
-        document.getElementById("w-icon").innerHTML = getWeatherIcon(c.weathercode);
-        document.getElementById("w-temp").innerHTML = `${c.temperature}°C`;
-        document.getElementById("w-wind").innerHTML = `💨 Gió: ${c.windspeed} km/h`;
-        document.getElementById("w-time").innerHTML = `⏱ ${c.time}`;
-
-    } catch (err) {
-        console.error(err);
+            const c = data.current_weather;
+            document.getElementById("w-icon").innerHTML = getWeatherIcon(c.weathercode);
+            document.getElementById("w-temp").innerHTML = `${c.temperature}°C`;
+            document.getElementById("w-wind").innerHTML = `💨 Gió: ${c.windspeed} km/h`;
+            document.getElementById("w-time").innerHTML = `Cập nhật: ${c.time.split('T')[1]}`;
+        } catch (err) { console.error(err); }
     }
-}
 
+    function toggleForecast() {
+        const div = document.getElementById("forecastContent");
+        div.classList.toggle("show");
+        if(div.classList.contains("show")) {
+            loadForecast();
+        }
+    }
 
-
-    // ===== LOAD FORECAST =====
-    function loadForecast(placeId) {
+    function loadForecast() {
         fetch(`/forecast/{{ image.id }}`)
         .then(r => r.json())
         .then(data => {
+            if(!data.daily) return;
             let html = "";
-            for (let i = 0; i < data.daily.time.length; i++) {
+            for (let i = 0; i < Math.min(7, data.daily.time.length); i++) {
                 html += `
-                    <div style="padding:6px; margin-bottom:6px; border-radius:10px; background: rgba(255,255,255,0.1);">
-                        <div><b>${data.daily.time[i]}</b></div>
-                        <div>🌡 Max: ${data.daily.temperature_2m_max[i]}°C</div>
-                        <div>🌡 Min: ${data.daily.temperature_2m_min[i]}°C</div>
-                        <div>💧 Mưa: ${data.daily.precipitation_sum[i]} mm</div>
+                    <div class="forecast-item">
+                        <span>${data.daily.time[i]}</span>
+                        <span>
+                            <span style="color:#ff6b6b">H: ${data.daily.temperature_2m_max[i]}°</span> / 
+                            <span style="color:#4ecdc4">L: ${data.daily.temperature_2m_min[i]}°</span>
+                        </span>
                     </div>
                 `;
             }
@@ -323,18 +795,7 @@
         });
     }
 
-  document.getElementById("weatherWidget").addEventListener("click", () => {
-      const f = document.getElementById("weatherForecast");
-      f.style.display = f.style.display === "none" ? "block" : "none";
-      if (f.style.display === "block") {
-          loadForecast({{ image.id }});
-      }
-  });
-
-  loadCurrentWeather({{ image.id }});
-
-
+    loadCurrentWeather({{ image.id }});
   </script>
-
 </body>
 </html>
