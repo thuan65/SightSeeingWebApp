@@ -1,834 +1,652 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Real-Time Location Sharing Test - GPS</title>
+    <meta charset="utf-8">
+    <title>Chia Sẻ Vị Trí & Chat</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    <link href="{{ url_for('static', filename='friends_map_css+js/img/favicon.ico') }}" rel="icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <link href="{{ url_for('static', filename='friends_map_css+js/css/bootstrap.min.css') }}" rel="stylesheet">
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
     <style>
-        #map { height: 600px; width: 80%; margin: 20px auto; }
+        /* ========================================================= */
+        /* I. BIẾN & NỀN CHUNG (TỪ INDEX.HTML) */
+        /* ========================================================= */
+        :root {
+            --primary-dark: #1C6758; /* LocaGo! Dark Green */
+            --primary-light: #8EB486; /* LocaGo! Light Green */
+            --shadow-color: rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI';
+            background: #f5f5f5; /* Nền xám nhạt đồng bộ */
+            min-height: 100vh;
+        }
+
+        /* Helper class */
+        .text-primary-index {
+            color: var(--primary-dark) !important;
+        }
+
+        /* ========================================================= */
+        /* II. HEADER & NAVIGATION (TỪ INDEX.HTML) */
+        /* ========================================================= */
+        .header-main {
+            background: white;
+            box-shadow: 0 2px 10px var(--shadow-color);
+            padding: 15px 30px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between; /* CĂN LOGO TRÁI, MENU PHẢI */
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            text-decoration: none;
+            font-family: 'Poppins', sans-serif;
+            margin-right: 20px; /* Thêm khoảng cách */
+        }
+
+            .logo span {
+                color: var(--primary-light);
+            }
+
+        /* Căn chỉnh Menu: Đặt tất cả nav-links sang phải */
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            position: relative;
+            margin-left: auto; /* Đảm bảo căn phải hoàn toàn */
+        }
+
+            .nav-links a, .nav-links button, .nav-user {
+                text-decoration: none;
+                color: #333;
+                padding: 10px 18px;
+                border-radius: 8px;
+                transition: 0.3s;
+                border: none;
+                background: transparent;
+                cursor: pointer;
+                font-size: 15px;
+                font-weight: 500;
+                white-space: nowrap;
+            }
+
+                .nav-links a:hover, .nav-links button:hover, .nav-user:hover {
+                    background: #f0f0f0;
+                }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-light)) !important;
+            color: white !important;
+            font-weight: 600;
+        }
+
+        .hamburger-btn {
+            font-size: 24px;
+            padding: 8px 12px !important;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            padding: 10px;
+            min-width: 200px;
+            display: none;
+            z-index: 1001;
+        }
+        /* End Header styles */
+
+        /* ========================================================= */
+        /* III. CONTENT (MAP & CONTROLS) */
+        /* ========================================================= */
+        .page-wrapper {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .content-card {
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08); /* Áp dụng shadow nhẹ */
+        }
+
+        /* 1. Map Area */
+        #map {
+            height: 75vh;
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* 2. Controls Box */
+        .map-controls-box {
+            background: #f5f5f5 !important;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: none;
+            color: #333;
+        }
+
+        /* YÊU CẦU 2: Trạng thái GPS trên cùng một hàng */
+        .gps-status-row {
+            display: flex;
+            align-items: center;
+            /* Giúp trạng thái và giá trị nằm trên cùng 1 dòng */
+            gap: 8px;
+        }
+
+            .gps-status-row p {
+                /* Loại bỏ margin dưới nếu có, giữ cho nó ngang hàng */
+                margin-bottom: 0;
+                font-weight: 500;
+            }
+
+        .map-controls-box small {
+            /* Đẩy cập nhật xuống dòng dưới */
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* 3. Chat Box (Đồng bộ Light Mode) */
+        #chat-box {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 350px;
+            height: 100vh;
+            background: #ffffff;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #chat-header {
+            padding: 15px;
+            background: var(--primary-dark);
+            color: white;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #chat-send-btn {
+            background-color: var(--primary-dark) !important;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 15px;
+            cursor: pointer;
+        }
+
+        #messages-container {
+            background-color: #f7f7f7;
+        }
+
+        /* Footer (Giữ nguyên style) */
+        .footer-main {
+            background: #2C3E50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-top: 50px;
+        }
     </style>
 </head>
 <body>
+    <header class="header-main">
+        <div class="header-container">
+            <a href="/" class="logo">Loca<span>Go!</span></a>
 
-    <h1 style="text-align: center;">Vị trí của User: <span id="username_display">Loading...</span></h1>
-    <div id="map"></div>
+            <div class="nav-links">
+                <a href="/MapRouting">Bản đồ du lịch</a>
+                <a href="/chat_ui">Chatbot du lịch</a>
+                <a href="/forum">Forum</a>
+                <a href="/friends_map" class="btn-primary">Friends map</a>
+
+                {% if current_user.is_authenticated %}
+                <span class="nav-user">
+                    Xin chào, {{ current_user.username }}
+                </span>                
+                {%else %}
+                <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
+                {% endif %}
+
+                <button class="hamburger-btn" onclick="document.getElementById('dropdownMenu').classList.toggle('show');">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="{{ url_for('favorite_bp.list_favorites') }}"><i class="fas fa-heart"></i> Danh sách yêu thích</a>
+                    <a href="/friends"><i class="fas fa-user-friends"></i> Bạn bè</a>
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('login_bp.logout') }}"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="page-wrapper">
+        <div class="content-card">
+            <h5 class="text-primary-index mb-4" style="font-size: 1.5rem; font-weight: 600;">
+                <i class="fa fa-map-marker-alt me-2"></i> Bản Đồ Chia Sẻ Vị Trí Bạn Bè
+            </h5>
+
+            <div class="row mb-4">
+                <div class="col-sm-12 col-md-4">
+                    <div class="map-controls-box">
+                        <div class="gps-status-row">
+                            <p class="text-dark">Trạng thái GPS:</p>
+                            <strong class="text-primary-index">
+                                <span id="gps_status" style="color: orange;">Đang tìm vị trí...</span>
+                            </strong>
+                        </div>
+                        <small class="text-secondary">Cập nhật: Liên tục (WatchPosition)</small>
+                    </div>
+                </div>
+                <div class="col-sm-12 col-md-8">
+                    <div class="map-controls-box d-flex align-items-center justify-content-between">
+                        <label class="mb-0 text-dark me-3">Chế độ Chia Sẻ:</label>
+                        <button id="shareToggle" data-mode="friends" class="btn btn-primary" style="font-weight: 600;">
+                            <i class="fa fa-eye"></i> Đang Chia Sẻ (Friends)
+                        </button>
+                        <p id="toggleStatus" class="mb-0 text-secondary" style="margin-left: 10px;">Chế độ hiện tại: <span id="currentMode">Đang Tải...</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div id="map"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="chat-box" style="display: none;">
         <div id="chat-header">
             <span id="chat-title">Chat với [Tên Bạn Bè]</span>
             <button id="close-chat-btn">X</button>
         </div>
         <div id="messages-container">
-            </div>
+        </div>
         <div id="chat-input-area">
             <input type="text" id="chat-message-input" placeholder="Nhập tin nhắn...">
             <button id="chat-send-btn">Gửi</button>
         </div>
     </div>
-    <div style="text-align: center;">
-        <p>Trạng thái Socket: <strong id="socket_status" style="color: red;">Disconnected</strong></p>
-        <p>GPS Status: <strong id="gps_status" style="color: orange;">Đang tìm vị trí...</strong></p>
-        <p>Cập nhật vị trí: <strong>Liên tục (WatchPosition)</strong></p>
-    </div>
-    <hr>
-    <div style="text-align: center; margin-top: 10px;">
-        <h2>Chia sẻ Vị trí</h2>
-        <label for="shareToggle">Trạng thái:</label>
-        <button id="shareToggle" data-mode="friends" style="padding: 10px; font-weight: bold;">
-            Đang Chia Sẻ (Friends)
-        </button>
-        <p id="toggleStatus" style="color: grey; margin-top: 5px;">Chế độ hiện tại: <span id="currentMode">Đang Tải...</span></p>
-    </div>
-    <hr>
 
-<style>
-    #map { height: 600px; width: 80%; margin: 20px auto; }
+    <footer class="footer-main">
+        <p>© 2025 LocaGo! - All Rights Reserved | Designed with ❤️ for travelers</p>
+    </footer>
 
-    /* ⭐ CSS MỚI CHO TÊN VĨNH VIỄN ⭐ */
-    .leaflet-tooltip {
-        background-color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0;
-        font-weight: bold;
-        text-align: center;
-        white-space: nowrap;
-    }
-    
-    /* Màu xanh cho chữ "Bạn" */
-    .leaflet-tooltip.self-label {
-        color: #007bff; /* Màu xanh nổi bật */
-        text-shadow: 1px 1px 1px #fff; /* Viền chữ trắng để dễ đọc */
-    }
+    <button id="scrollTop" style="display: none; position: fixed; bottom: 30px; right: 30px; background: var(--primary-dark); color: white; width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; font-size: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 999;" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">
+        <i class="bi bi-arrow-up"></i>
+    </button>
 
-    /* Màu đen/xám cho bạn bè */
-    .leaflet-tooltip.friend-label {
-        color: #333;
-        text-shadow: 1px 1px 1px #fff;
-    }
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    /* CSS cho Chat Box */
-    #chat-box {
-        position: fixed;
-        top: 0;
-        right: 0;
-        width: 350px; /* Chiều rộng box chat */
-        height: 100vh;
-        background: #f0f2f5;
-        box-shadow: -4px 0 12px rgba(0, 0, 0, 0.2);
-        z-index: 1000; /* Đảm bảo nằm trên cùng */
-        display: flex;
-        flex-direction: column;
-    }
+    <script src="{{ url_for('static', filename='friends_map_css+js/lib/chart/chart.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='friends_map_css+js/lib/easing/easing.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='friends_map_css+js/lib/waypoints/waypoints.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='friends_map_css+js/lib/owlcarousel/owl.carousel.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='friends_map_css+js/lib/tempusdominus/js/moment.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='friends_map_css+js/lib/tempusdominus/js/moment-timezone.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='friends_map_css+js/lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js') }}"></script>
 
-    #chat-header {
-        padding: 15px;
-        background: #007bff;
-        color: white;
-        font-weight: bold;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+    <script src="{{ url_for('static', filename='friends_map_css+js/js/main.js') }}"></script>
 
-    #close-chat-btn {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 1.2em;
-        cursor: pointer;
-    }
-    
-    #messages-container {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding: 10px;
-        background-color: #e5ddd5;
-    }
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        // --- Cấu hình Ban đầu (GIỮ NGUYÊN LOGIC) ---
+        let user_id = null;
+        let username = 'Unknown';
+        let locationWatcherId = null;
+        let currentChatReceiverId = null;
+        let currentShareMode = 'friends';
 
-    /* Message Bubbles (Tương tự như chat_interface.html) */
-    .message-container { margin-bottom: 8px; display: flex; }
-    .message-bubble { padding: 8px 12px; border-radius: 18px; max-width: 80%; line-height: 1.4; }
-    .self { justify-content: flex-end; }
-    .self .message-bubble { background-color: #dcf8c6; color: #000; border-bottom-right-radius: 4px; }
-    .other { justify-content: flex-start; }
-    .other .message-bubble { background-color: #ffffff; color: #000; border-bottom-left-radius: 4px; }
+        const socket = io.connect('http://' + document.domain + ':' + location.port);
+        let protocol = (window.location.protocol === 'https:') ? 'wss://' : 'http://';
+        let socketUrl = protocol + document.domain + ':' + location.port;
 
+        const map = L.map('map', { attributionControl: false }).setView([10.7769, 106.7009], 13);
+        const markers = {};
+        let initialFitDone = false;
+        const ICON_BASE_URL = '/static/locationshare_img/';
 
-    #chat-input-area {
-        padding: 10px;
-        background: #f0f2f5;
-        display: flex;
-        border-top: 1px solid #ccc;
-    }
-    #chat-message-input {
-        flex-grow: 1;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 20px;
-        margin-right: 8px;
-    }
-    #chat-send-btn {
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 20px;
-        padding: 8px 15px;
-        cursor: pointer;
-    }
-</style>
+        const selfIcon = L.icon({
+            iconUrl: ICON_BASE_URL + 'user-icon.png', iconSize: [40, 40], iconAnchor: [16, 32], popupAnchor: [0, -32]
+        });
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-<script>
-    // --- Cấu hình Ban đầu ---
-    let user_id = null; 
-    let username = 'Unknown';
-    let locationWatcherId = null; // ⭐ BIẾN MỚI: Dùng để lưu ID của watchPosition
-    //let locationInterval = null;
-    let currentChatReceiverId = null; // ID người nhận chat hiện tại
-    let currentShareMode = 'friends'; // 'friends' hoặc 'hidden'
-    //const socket = io.connect('http://' + document.domain + ':' + location.port);
-    let protocol = (window.location.protocol === 'https:') ? 'wss://' : 'http://';
-    let socketUrl = protocol + document.domain + ':' + location.port;
+        const friendIcon = L.icon({
+            iconUrl: ICON_BASE_URL + 'friend-icon.png', iconSize: [50, 50], iconAnchor: [12, 24], popupAnchor: [0, -24]
+        });
 
-    const socket = io.connect(socketUrl);
-    const map = L.map('map', { 
-            // Thêm dòng này để tắt control ghi nhận của Leaflet
-            attributionControl: false 
-        }).setView([10.7769, 106.7009], 13);
-    const markers = {};
-    let initialFitDone = false; // Cờ để kiểm tra fitBounds lần đầu
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '' }).addTo(map);
 
-    // Sử dụng đường dẫn tĩnh (Đã sửa theo gợi ý trước)
-    const ICON_BASE_URL = '/static/locationshare_img/'; // Đảm bảo đường dẫn này đúng
-    
-    const selfIcon = L.icon({
-        iconUrl: ICON_BASE_URL + 'user-icon.png', 
-        iconSize: [40, 40],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32]
-    });
+        const shareToggleButton = document.getElementById('shareToggle');
+        const currentModeSpan = document.getElementById('currentMode');
+        const chatBox = document.getElementById('chat-box');
+        const chatTitle = document.getElementById('chat-title');
+        const messagesContainer = document.getElementById('messages-container');
+        const messageInput = document.getElementById('chat-message-input');
+        const sendButton = document.getElementById('chat-send-btn');
+        const closeButton = document.getElementById('close-chat-btn');
 
-    const friendIcon = L.icon({
-        iconUrl: ICON_BASE_URL + 'friend-icon.png', 
-        iconSize: [50, 50], 
-        iconAnchor: [12, 24],
-        popupAnchor: [0, -24]
-    });
+        closeButton.addEventListener('click', closeChatBox);
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: ''
-    }).addTo(map);
-
-    // --- DOM Elements ---
-    const shareToggleButton = document.getElementById('shareToggle');
-    const currentModeSpan = document.getElementById('currentMode');
-
-    // --- DOM Chat Elements ---
-    const chatBox = document.getElementById('chat-box');
-    const chatTitle = document.getElementById('chat-title');
-    const messagesContainer = document.getElementById('messages-container');
-    const messageInput = document.getElementById('chat-message-input');
-    const sendButton = document.getElementById('chat-send-btn');
-    const closeButton = document.getElementById('close-chat-btn');
-
-    closeButton.addEventListener('click', closeChatBox);
-    sendButton.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
-
-    // // --- Hàm Gửi Vị trí Thật (Geolocation) ---
-    // function getAndSendLocation() {
-    //     if (user_id === null || currentShareMode === 'hidden') return;
-        
-    //     document.getElementById('gps_status').innerText = 'Đang tìm vị trí...';
-    //     document.getElementById('gps_status').style.color = 'orange';
-
-    //     if (navigator.geolocation) {
-    //         navigator.geolocation.getCurrentPosition(
-    //             function(position) {
-    //                 const lat = position.coords.latitude;
-    //                 const lng = position.coords.longitude;
-                    
-    //                 document.getElementById('gps_status').innerText = 'OK';
-    //                 document.getElementById('gps_status').style.color = 'green';
-                    
-    //                 socket.emit('update_location', { lat: lat, lng: lng });
-
-    //                 updateMarker(user_id, username, lat, lng, true);
-    //             },
-    //             function(error) {
-    //                 let errorMessage = (error.code === 1) ? "LỖI: Từ chối cấp quyền GPS." : "LỖI GPS: Timeout/Không xác định.";
-    //                 document.getElementById('gps_status').innerText = errorMessage;
-    //                 document.getElementById('gps_status').style.color = 'red';
-    //             },
-    //             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    //         );
-    //     } else {
-    //         document.getElementById('gps_status').innerText = 'Trình duyệt không hỗ trợ Geolocation.';
-    //         document.getElementById('gps_status').style.color = 'red';
-    //     }
-    // }
-
-    // -------------------------------------------------------------
-    // ⭐ LOGIC WATCH POSITION (Thay thế cho getAndSendLocation và setInterval) ⭐
-    // -------------------------------------------------------------
-    
-    // --- Hàm xử lý thành công (Gửi dữ liệu) ---
-    function sendLocationHandler(position) {
-        if (currentShareMode === 'hidden') return; // An toàn: Dù watchPosition vẫn chạy, không gửi
-
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        
-        document.getElementById('gps_status').innerText = 'OK';
-        document.getElementById('gps_status').style.color = 'green';
-        
-        socket.emit('update_location', { lat: lat, lng: lng });
-
-        updateMarker(user_id, username, lat, lng, true);
-    }
-    
-    // --- Hàm xử lý lỗi Geolocation ---
-    function geolocationErrorHandler(error) {
-        let errorMessage;  //= (error.code === 1) ? "LỖI: Từ chối cấp quyền GPS." : "LỖI GPS: Timeout/Không xác định.";
-
-        if (error.code === 1) {
-            errorMessage = "LỖI: Từ chối cấp quyền GPS.";
-            // Chỉ dừng và chuyển sang hidden khi người dùng từ chối quyền (Error Code 1)
-            stopLocationTracking();
-            setShareMode('hidden'); 
-            alert("Bạn đã từ chối quyền truy cập vị trí. Chế độ chia sẻ tự động tắt.");
-        } else if (error.code === 2) {
-            errorMessage = "LỖI GPS: Không thể xác định vị trí.";
-        } else if (error.code === 3) {
-            errorMessage = "LỖI GPS: Timeout (Quá thời gian chờ).";
-        } else {
-            errorMessage = "LỖI GPS: Không xác định.";
+        // --- HÀM LOGIC CỐT LÕI ---
+        function sendLocationHandler(position) {
+            if (currentShareMode === 'hidden') return;
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            document.getElementById('gps_status').innerText = 'OK';
+            document.getElementById('gps_status').style.color = 'green';
+            socket.emit('update_location', { lat: lat, lng: lng });
+            updateMarker(user_id, username, lat, lng, true);
         }
 
-        document.getElementById('gps_status').innerText = errorMessage;
-        document.getElementById('gps_status').style.color = 'red';
-        console.error("Geolocation error:", error);
-        
-        // Cần dừng theo dõi nếu lỗi nghiêm trọng (như từ chối quyền)
-        // if (error.code === 1) {
-        //     stopLocationTracking();
-        //     setShareMode('hidden'); // Tự động chuyển sang hidden
-        //     alert("Bạn đã từ chối quyền truy cập vị trí. Chế độ chia sẻ tự động tắt.");
-        // }
-    }
-
-    // --- Hàm Bắt đầu theo dõi (watchPosition) ---
-    function startLocationTracking() {
-        if (user_id === null || currentShareMode === 'hidden') return;
-        if (locationWatcherId !== null) return; // Đã chạy rồi thì thôi
-
-        document.getElementById('gps_status').innerText = 'Đang BẮT ĐẦU theo dõi vị trí...';
-        document.getElementById('gps_status').style.color = 'orange';
-
-        if (navigator.geolocation) {
-            // ⭐ SỬ DỤNG watchPosition ⭐
-            locationWatcherId = navigator.geolocation.watchPosition(
-                sendLocationHandler,
-                geolocationErrorHandler,
-                { enableHighAccuracy: true, timeout: 50000, maximumAge: 0 } // Tăng timeout cho watchPosition
-            );
-            console.log("[DEBUG TRACKING] Bắt đầu theo dõi vị trí (Watcher ID:", locationWatcherId, ")");
-            
-            // Lấy vị trí lần đầu ngay lập tức để vẽ marker của mình ngay khi map load
-            // navigator.geolocation.getCurrentPosition(
-            //     (position) => updateMarker(user_id, username, position.coords.latitude, position.coords.longitude, true), 
-            //     geolocationErrorHandler,
-            //     { enableHighAccuracy: true, timeout: 5000 }
-            // );
-        } else {
-            document.getElementById('gps_status').innerText = 'Trình duyệt không hỗ trợ Geolocation.';
+        function geolocationErrorHandler(error) {
+            let errorMessage;
+            if (error.code === 1) {
+                errorMessage = "LỖI: Từ chối cấp quyền GPS.";
+                stopLocationTracking();
+                setShareMode('hidden');
+                alert("Bạn đã từ chối quyền truy cập vị trí. Chế độ chia sẻ tự động tắt.");
+            } else if (error.code === 2) {
+                errorMessage = "LỖI GPS: Không thể xác định vị trí.";
+            } else if (error.code === 3) {
+                errorMessage = "LỖI GPS: Timeout (Quá thời gian chờ).";
+            } else {
+                errorMessage = "LỖI GPS: Không xác định.";
+            }
+            document.getElementById('gps_status').innerText = errorMessage;
             document.getElementById('gps_status').style.color = 'red';
+            console.error("Geolocation error:", error);
         }
-    }
-    
-    // --- Hàm Dừng theo dõi (clearWatch) ---
-    function stopLocationTracking() {
-        if (locationWatcherId !== null) {
-            // ⭐ SỬ DỤNG clearWatch ⭐
-            navigator.geolocation.clearWatch(locationWatcherId);
-            console.log("[DEBUG TRACKING] Đã dừng theo dõi vị trí (Cleared Watcher ID:", locationWatcherId, ")");
-            locationWatcherId = null;
-            document.getElementById('gps_status').innerText = 'Đã dừng theo dõi GPS.';
-            document.getElementById('gps_status').style.color = 'grey';
-        }
-    }
 
-    // --- Hàm xử lý cập nhật Marker trên Map ---
-    function updateMarker(id, user_name, lat, lng, is_self = false) {
-        const latlng = [lat, lng];
-
-        // ⭐ TẠO TEXT HIỂN THỊ ⭐
-        const labelText = is_self ? "Bạn" : user_name;
-        const labelClassName = is_self ? 'self-label' : 'friend-label';
-
-        // Cấu hình Tooltip để luôn hiển thị
-        const tooltipOptions = {
-            permanent: true, // Luôn hiển thị
-            direction: 'top', // Hiển thị phía trên marker
-            className: 'leaflet-tooltip ' + labelClassName, // Áp dụng CSS
-            offset: [0, -15] // Điều chỉnh vị trí (lên trên một chút so với mặc định)
-        };
-
-        const popupText = `<b>${labelText}</b><br>${is_self ? 'Vị trí của bạn' : 'Bạn bè'}`;
-
-        if (id in markers) {
-            const currentMarker = markers[id].marker;
-
-            currentMarker.setLatLng(latlng);
-            currentMarker.setOpacity(current_is_online ? 1.0 : 0.5); // Đồng bộ opacity
-            currentMarker.getTooltip().setContent(labelText); 
-            currentMarker.getPopup().setContent(popupText);
-        } else {
-            const marker = L.marker(latlng, {
-                icon: is_self ? selfIcon : friendIcon
-            }).addTo(map);
-
-            marker.bindTooltip(labelText, tooltipOptions).openTooltip();
-            marker.bindPopup(popupText);
-
-            markers[id] = {
-                marker: marker,
-                username: user_name,
-            };
-
-            // Gắn sự kiện
-            marker.userId = id;
-            marker.userName = user_name;
-
-            if (!is_self) {
-                marker.on('click', function(e) {
-                    // Giả định hàm này được định nghĩa ở đâu đó
-                    showFriendPostsPopup(e.target.userId, e.target.userName, e.target); 
-                });
+        function startLocationTracking() {
+            if (user_id === null || currentShareMode === 'hidden') return;
+            if (locationWatcherId !== null) return;
+            document.getElementById('gps_status').innerText = 'Đang BẮT ĐẦU theo dõi vị trí...';
+            document.getElementById('gps_status').style.color = 'orange';
+            if (navigator.geolocation) {
+                locationWatcherId = navigator.geolocation.watchPosition(sendLocationHandler, geolocationErrorHandler, { enableHighAccuracy: true, timeout: 50000, maximumAge: 0 });
+                console.log("[DEBUG TRACKING] Bắt đầu theo dõi vị trí (Watcher ID:", locationWatcherId, ")");
+            } else {
+                document.getElementById('gps_status').innerText = 'Trình duyệt không hỗ trợ Geolocation.';
+                document.getElementById('gps_status').style.color = 'red';
             }
         }
-        
-        if (is_self && document.getElementById('username_display').innerText.indexOf('Loading') !== -1) {
-            document.getElementById('username_display').innerText = user_name + " (ID: " + id + ")";
+
+        function stopLocationTracking() {
+            if (locationWatcherId !== null) {
+                navigator.geolocation.clearWatch(locationWatcherId);
+                console.log("[DEBUG TRACKING] Đã dừng theo dõi vị trí (Cleared Watcher ID:", locationWatcherId, ")");
+                locationWatcherId = null;
+                document.getElementById('gps_status').innerText = 'Đã dừng theo dõi GPS.';
+                document.getElementById('gps_status').style.color = 'grey';
+            }
         }
 
-        if (!initialFitDone && markers[id]) {
-            setTimeout(fitMapToAllMarkers, 100); 
+        function updateMarker(id, user_name, lat, lng, is_self = false) {
+            const latlng = [lat, lng];
+            const labelText = is_self ? "Bạn" : user_name;
+            const labelClassName = is_self ? 'self-label' : 'friend-label';
+            const tooltipOptions = { permanent: true, direction: 'top', className: 'leaflet-tooltip ' + labelClassName, offset: [0, -15] };
+            const popupText = `<b>${labelText}</b><br>${is_self ? 'Vị trí của bạn' : 'Bạn bè'}`;
+            const current_is_online = markers[id] && 'is_online' in markers[id] ? markers[id].is_online : true;
+
+            if (id in markers) {
+                const currentMarker = markers[id].marker;
+                currentMarker.setLatLng(latlng);
+                // currentMarker.setOpacity(current_is_online ? 1.0 : 0.5);
+                currentMarker.getTooltip().setContent(labelText);
+                currentMarker.getPopup().setContent(popupText);
+            } else {
+                const marker = L.marker(latlng, { icon: is_self ? selfIcon : friendIcon }).addTo(map);
+                marker.bindTooltip(labelText, tooltipOptions).openTooltip();
+                marker.bindPopup(popupText);
+                markers[id] = { marker: marker, username: user_name, };
+                marker.userId = id;
+                marker.userName = user_name;
+                if (!is_self) { marker.on('click', function (e) { showFriendPostsPopup(e.target.userId, e.target.userName, e.target); }); }
+            }
+
+            if (is_self && document.getElementById('username_display').innerText.indexOf('Loading') !== -1) {
+                document.getElementById('username_display').innerText = user_name;
+            }
+            if (!initialFitDone && markers[id]) { setTimeout(fitMapToAllMarkers, 100); }
         }
-        
-        // // YÊU CẦU 3: Hiển thị tên người dùng
-        // const displayName = is_self ? "Tôi" : user_name;
-        // // YÊU CẦU 3: Cập nhật popup để hiển thị vị trí cuối (Last Known)
-        // const popupText = `<b>${displayName}</b><br>${is_self ? 'Vị trí hiện tại' : 'Vị trí cuối'}`;
-        
-        // if (markers[id]) {
-        //     markers[id].setLatLng(latlng);
-        //     markers[id].marker.getTooltip().setContent(labelText);
-        //     markers[id].marker.getPopup().setContent(`<b>${user_name}</b><br>${is_self ? 'Vị trí của bạn' : 'Bạn bè'}`); // Cập nhật popup nếu click vào
-        //     // Đặt opacity về 1.0 khi nhận được update (vì người này đang online/share)
-        //     markers[id].setOpacity(1.0); 
-        // } else {
-        //     const marker = L.marker(latlng, { icon: is_self ? selfIcon : friendIcon }).addTo(map);
 
-        //     // ⭐ THAY THẾ POPUP BẰNG TOOLTIP PERMANENT ⭐
-        //     marker.bindTooltip(labelText, tooltipOptions).openTooltip();
-            
-        //     // Vẫn giữ bindPopup nếu cần chi tiết khi click
-        //     marker.bindPopup(`<b>${user_name}</b><br>${is_self ? 'Vị trí của bạn' : 'Bạn bè'}`);
-
-        //     //marker.bindPopup(popupText);
-
-        //     // Lưu ID và tên vào đối tượng marker để sử dụng trong event click
-        //     marker.userId = id; // <--- LƯU ID
-        //     marker.userName = user_name; // <--- LƯU TÊN
-            
-        //     markers[id] = marker;
-
-        //     // Chỉ thêm event listener cho bạn bè (is_self=false)
-        //     if (!is_self) {
-        //         // Thêm event listener để gọi hàm hiển thị posts khi click
-        //         marker.on('click', function(e) {
-        //             showFriendPostsPopup(e.target.userId, e.target.userName, e.target);
-        //         });
-        //     }
-        // }
-        // if (is_self) {
-        //     //map.setView(latlng, map.getZoom() > 13 ? map.getZoom() : 13);
-        //     document.getElementById('username_display').innerText = username + " (Tôi)";
-        // }
-        // if (!initialFitDone) {
-        //     //initialFitDone = true; // Chỉ fitBounds lần đầu
-        //     setTimeout(fitMapToAllMarkers, 100);
-        // }
-        // Gọi hàm fitBounds sau khi marker đã được vẽ/cập nhật
-        // Dùng setTimeout để đảm bảo tất cả các event SocketIO đã kịp thời xử lý
-        //setTimeout(fitMapToAllMarkers, 100);
-    }
-
-    // --- HÀM MỚI: XỬ LÝ POPUP BÀI VIẾT BẠN BÈ ---
-    function showFriendPostsPopup(friendId, friendName, marker) {
-        // ⭐ THÊM NÚT CHAT VÀO ĐẦU POPUP ⭐
-        const chatButtonHtml = `
-            <button onclick="openChatBox(${friendId}, '${friendName}')" 
-                    style="margin-bottom: 10px; background-color: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; display: block; width: 100%;">
-                <i class="fas fa-comment"></i> Nhắn tin
-            </button>
-            <hr style="margin: 5px 0; border-top: 1px dashed #ccc;">
-        `;
-        
-        // Tạm thời hiển thị trạng thái tải
-        const loadingContent = `<b>${friendName}</b><br><hr style="margin: 5px 0;"><p>Đang tải 3 bài viết gần nhất...</p>`;
-        marker.getPopup().setContent(loadingContent);
-        
-        // Mở popup
-        marker.openPopup();
-        
-        // Fetch dữ liệu từ API mới
-        fetch(`/posts/${friendId}`)
-            .then(res => res.json())
-            .then(data => {
-                let popupContent = `<b>${friendName}</b><br><hr style="margin: 5px 0; border-top: 1px solid #ccc;">`;
-                
-                if (data.error) {
-                    popupContent += `<p style="color:red; font-size: 0.9em;">Lỗi khi tải bài viết: ${data.error}</p>`;
-                } else if (data.message && data.message === "No visible posts found for this user.") {
-                    popupContent += `<p style="font-size: 0.9em;">Người dùng này chưa có bài viết công khai hoặc bạn bè nào.</p>`;
-                } else {
-                    // Định dạng danh sách bài viết
+        window.showFriendPostsPopup = function (friendId, friendName, marker) {
+            // Thay đổi màu nút Chat sang màu chủ đạo của index
+            const chatButtonHtml = `<button onclick="openChatBox(${friendId}, '${friendName}')" style="margin-bottom: 10px; background-color: var(--primary-dark); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; display: block; width: 100%;"><i class="fas fa-comment"></i> Nhắn tin</button><hr style="margin: 5px 0; border-top: 1px dashed #ccc;">`;
+            const loadingContent = `<b>${friendName}</b><br><hr style="margin: 5px 0;"><p>Đang tải 3 bài viết gần nhất...</p>`;
+            marker.getPopup().setContent(loadingContent);
+            marker.openPopup();
+            fetch(`/posts/${friendId}`).then(res => res.json()).then(data => {
+                let popupContent = `<b>${friendName}</b><hr style="margin: 5px 0; border-top: 1px solid #ccc;">`;
+                if (data.error) { popupContent += `<p style="color:red; font-size: 0.9em;">Lỗi khi tải bài viết: ${data.error}</p>`; }
+                else if (data.message && data.message === "No visible posts found for this user.") { popupContent += `<p style="font-size: 0.9em;">Người dùng này chưa có bài viết công khai hoặc bạn bè nào.</p>`; }
+                else if (Array.isArray(data)) {
                     data.forEach(post => {
-                        // TẠO THẺ IMAGE NẾU CÓ filename
-                        const imageHtml = post.image_filename 
-                            ? `<img src="/static/post_images/${post.image_filename}" style="max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ddd;">` 
-                            : '';
-                        popupContent += `
-                            <div style="margin-bottom: 10px; border: 1px solid #eee; padding: 8px; border-radius: 4px; background-color: #f9f9f9;">
-                                ${imageHtml} <h4 style="margin: 0; font-size: 1.1em;">
-                                    <a href="/forum/post/${post.id}" target="_blank" title="Xem thêm trong Forum" style="color: #007bff; text-decoration: none; font-weight: bold;">
-                                        ${post.title}
-                                    </a>
-                                </h4>
-                                <p style="margin: 3px 0; font-size: 0.85em; color: #6c757d; border-bottom: 1px dashed #ddd; padding-bottom: 3px;">
-                                    ${post.created_at} | Quyền: <i>${post.privacy}</i>
-                                </p>
-                                <p style="margin: 0; font-size: 0.9em; max-height: 40px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
-                                    ${post.content_snippet || 'Không có nội dung.'}
-                                </p>
-                            </div>
-                        `;
+                        // Sửa màu link bài viết
+                        const imageHtml = post.image_filename ? `<img src="/static/post_images/${post.image_filename}" style="max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ddd;">` : '';
+                        popupContent += `<div style="margin-bottom: 10px; border: 1px solid #eee; padding: 8px; border-radius: 4px; background-color: #f9f9f9;">${imageHtml} <h4 style="margin: 0; font-size: 1.1em;"><a href="/forum/post/${post.id}" target="_blank" title="Xem thêm trong Forum" style="color: var(--primary-dark); text-decoration: none; font-weight: bold;">${post.title}</a></h4><p style="margin: 3px 0; font-size: 0.85em; color: #6c757d; border-bottom: 1px dashed #ddd; padding-bottom: 3px;">${post.created_at} | Quyền: <i>${post.privacy}</i></p><p style="margin: 0; font-size: 0.9em; max-height: 40px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${post.content_snippet || 'Không có nội dung.'}</p></div>`;
                     });
                 }
-                //postsContentDiv.innerHTML = htmlContent;
-                // Cập nhật nội dung popup
-                //marker.getPopup().setContent(popupContent);
                 const finalPopupContent = `<b>${friendName}</b><hr style="margin: 5px 0;">${chatButtonHtml} <div style="max-height: 250px; overflow-y: auto;">${popupContent}</div>`;
                 marker.getPopup().setContent(finalPopupContent);
-                // Đảm bảo popup vẫn mở sau khi cập nhật nội dung
-                if (!marker.getPopup().isOpen()) {
-                    marker.openPopup();
-                }
-
-            })
-            .catch(err => {
+                if (!marker.getPopup().isOpen()) { marker.openPopup(); }
+            }).catch(err => {
                 const errorContent = `<b>${friendName}</b><br><p style="color:red; font-size: 0.9em;">Lỗi kết nối: Không thể tải bài viết.</p>`;
                 marker.getPopup().setContent(errorContent);
                 console.error("Lỗi khi fetch post:", err);
             });
-    }
-
-
-    // --- Hàm điều chỉnh view map để bao trùm tất cả markers ---
-    function fitMapToAllMarkers() {
-        if (initialFitDone) return; // Chỉ fitBounds lần đầu tiên
-        const latLngs = [];
-        //let needsAdjustment = false;
-        
-        // 1. Thu thập tất cả tọa độ từ đối tượng markers
-        for (const id in markers) {
-            if (markers.hasOwnProperty(id)) {
-                //latLngs.push(markers[id].marker.getLatLng());
-                // ⭐ LẤY ĐỐI TƯỢNG MARKER THẬT: truy cập qua .marker ⭐
-                const leafletMarker = markers[id].marker; 
-
-                if (leafletMarker) {
-                    latLngs.push(leafletMarker.getLatLng()); // Gọi hàm getLatLng() trên đối tượng Marker
-                }
-            }
         }
 
-        if (latLngs.length > 0) {
-            try {
-                // 2. Tạo đối tượng Bounding Box từ các tọa độ
-                const bounds = L.latLngBounds(latLngs);
-                
-                // 3. Áp dụng fitBounds lên map
-                // Padding: thêm một chút khoảng trống (ví dụ: 50 pixels) xung quanh các markers
-                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
-                initialFitDone = true; // Đánh dấu đã fitBounds lần đầu
-                console.log("[CLIENT] Map view đã được điều chỉnh để bao trùm tất cả markers.");
-
-            } catch (error) {
-                // Bắt lỗi nếu chỉ có một điểm (Leaflet đôi khi lỗi với chỉ một điểm)
-                if (latLngs.length === 1) {
-                    map.setView(latLngs[0], 13); // Nếu chỉ có 1 điểm, chỉ cần setView
+        function fitMapToAllMarkers() {
+            if (initialFitDone) return;
+            const latLngs = [];
+            for (const id in markers) {
+                if (markers.hasOwnProperty(id)) {
+                    const leafletMarker = markers[id].marker;
+                    if (leafletMarker) { latLngs.push(leafletMarker.getLatLng()); }
+                }
+            }
+            if (latLngs.length > 0) {
+                try {
+                    const bounds = L.latLngBounds(latLngs);
+                    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
                     initialFitDone = true;
-                } else {
-                    console.error("Lỗi khi điều chỉnh fitBounds:", error);
+                    console.log("[CLIENT] Map view đã được điều chỉnh để bao trùm tất cả markers.");
+                } catch (error) {
+                    if (latLngs.length === 1) { map.setView(latLngs[0], 13); initialFitDone = true; }
+                    else { console.error("Lỗi khi điều chỉnh fitBounds:", error); }
                 }
             }
         }
-    }
 
+        function setShareMode(mode) {
+            if (currentShareMode === mode && locationWatcherId !== null && mode === 'friends') { return; }
+            stopLocationTracking();
+            currentShareMode = mode;
+            const btnText = (mode === 'friends') ? "Đang Chia Sẻ (Friends)" : "Đã Ẩn (Hidden)";
+            shareToggleButton.innerText = btnText;
+            // Áp dụng màu gradient cho nút share khi ON
+            shareToggleButton.style.cssText = `font-weight: 600; ${mode === 'friends' ? 'background: linear-gradient(135deg, var(--primary-dark), var(--primary-light)) !important; color: white;' : 'background-color: #f44336; color: white;'}`;
 
-
-    // --- Quản lý Consent và Toggle ---
-    
-    function setShareMode(mode) {
-        if (currentShareMode === mode && locationWatcherId !== null && mode === 'friends') {
-            return; // Tránh cập nhật chế độ đã đúng
-        }
-        stopLocationTracking();
-
-        currentShareMode = mode;
-        const btnText = (mode === 'friends') ? "Đang Chia Sẻ (Friends)" : "Đã Ẩn (Hidden)";
-        shareToggleButton.innerText = btnText;
-        shareToggleButton.style.backgroundColor = (mode === 'friends') ? '#4CAF50' : '#f44336';
-        currentModeSpan.innerText = mode === 'friends' ? 'Friends' : 'Hidden';
-        shareToggleButton.setAttribute('data-mode', mode);
-
-        if (mode === 'friends') {
-            // Bắt đầu gửi vị trí
-            //stopLocationTracking(); 
-            startLocationTracking(); // ⭐ BẮT ĐẦU watchPosition ⭐
-        } else {
-            // Dừng gửi vị trí
-            //if (locationInterval) clearInterval(locationInterval);
-            stopLocationTracking(); // ⭐ DỪNG watchPosition ⭐
+            currentModeSpan.innerText = mode === 'friends' ? 'Friends' : 'Hidden';
+            shareToggleButton.setAttribute('data-mode', mode);
+            if (mode === 'friends') { startLocationTracking(); } else { stopLocationTracking(); }
+            fetch('/api/share_mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: mode }) })
+                .then(res => res.json()).then(data => console.log("Trạng thái chia sẻ đã cập nhật:", data)).catch(err => console.error("Lỗi khi cập nhật Share Mode:", err));
         }
 
-
-        // Gửi trạng thái mới lên server qua API
-        fetch('/api/share_mode', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mode: mode })
-        })
-        .then(res => res.json())
-        .then(data => console.log("Trạng thái chia sẻ đã cập nhật:", data))
-        .catch(err => console.error("Lỗi khi cập nhật Share Mode:", err));
-    }
-    
-    shareToggleButton.addEventListener('click', () => {
-        const oldMode = shareToggleButton.getAttribute('data-mode');
-        const newMode = (oldMode === 'friends') ? 'hidden' : 'friends';
-        
-        if (newMode === 'friends') {
-            // YÊU CẦU 1: Hỏi lại khi chuyển từ Hidden sang Friends
-            if (oldMode === 'hidden' && !confirm("Bạn có chắc chắn muốn chia sẻ vị trí của mình với bạn bè không?")) {
-                 return; // Không làm gì nếu người dùng hủy
+        shareToggleButton.addEventListener('click', () => {
+            const oldMode = shareToggleButton.getAttribute('data-mode');
+            const newMode = (oldMode === 'friends') ? 'hidden' : 'friends';
+            if (newMode === 'friends') {
+                if (oldMode === 'hidden' && !confirm("Bạn có chắc chắn muốn chia sẻ vị trí của mình với bạn bè không?")) { return; }
+                setShareMode('friends');
+            } else if (newMode === 'hidden') {
+                setShareMode('hidden');
             }
-            setShareMode('friends');
-        } else if (newMode === 'hidden') {
-            setShareMode('hidden');
-        }
-    });
+        });
 
-    // ⭐ Đã sửa đổi: Dừng chia sẻ khi người dùng rời khỏi trang ⭐ 
-    window.addEventListener('beforeunload', () => {
-        if (locationWatcherId !== null) {
-            stopLocationTracking(); 
-
-            const data = JSON.stringify({ mode: 'hidden' });
-            try {
-                // Gửi beacon để đảm bảo server nhận được lệnh dừng chia sẻ
-                navigator.sendBeacon('/api/share_mode', new Blob([data], { type: 'application/json' }));
-                console.log("[CLIENT UNLOAD] Đã gửi beacon dừng chia sẻ.");
-            } catch (e) {
-                console.error("[CLIENT UNLOAD] Lỗi khi gửi sendBeacon:", e);
+        window.addEventListener('beforeunload', () => {
+            if (locationWatcherId !== null) {
+                stopLocationTracking();
+                const data = JSON.stringify({ mode: 'hidden' });
+                try { navigator.sendBeacon('/api/share_mode', new Blob([data], { type: 'application/json' })); console.log("[CLIENT UNLOAD] Đã gửi beacon dừng chia sẻ."); }
+                catch (e) { console.error("[CLIENT UNLOAD] Lỗi khi gửi sendBeacon:", e); }
             }
-        }
-    });
+        });
 
-    // --- Xử lý sự kiện SocketIO ---
-    socket.on('connect', function() {
-        document.getElementById('socket_status').innerText = 'Connected';
-        document.getElementById('socket_status').style.color = 'green';
-        
-        // 1. Lấy thông tin user và share_mode hiện tại
-        fetch('/api/current_user_info')
-            .then(res => res.json())
-            .then(data => {
+        // Thêm logic hiển thị nút cuộn lên đầu trang (từ index.html)
+        window.addEventListener('scroll', function () {
+            const scrollBtn = document.getElementById('scrollTop');
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                scrollBtn.style.display = 'block';
+            } else {
+                scrollBtn.style.display = 'none';
+            }
+        });
+
+
+        // --- SocketIO & Fetch Initial Data ---
+        socket.on('connect', function () {
+            document.getElementById('socket_status').innerText = 'Connected';
+            document.getElementById('socket_status').style.color = 'green';
+            fetch('/api/current_user_info').then(res => res.json()).then(data => {
                 user_id = data.user_id;
                 username = data.username;
-                //currentShareMode = data.share_mode || 'friends'; 
-
-                let newShareMode = 'hidden';
-                
-                // Khởi tạo UI và logic dựa trên share_mode
-                // YÊU CẦU 1: Hỏi consent lần đầu nếu share_mode chưa được set
-                //if (currentShareMode !== 'hidden') {
-                    if (confirm("Bạn có muốn chia sẻ vị trí của mình với bạn bè không?")) {
-                        currentShareMode = 'friends';
-                    } //else {
-                        //currentShareMode = 'hidden';
-                    //}
-                    //localStorage.setItem('locationConsentShown', 'true');
-                //}
-
-                setShareMode(currentShareMode); // Cập nhật trạng thái lần đầu
-
-
-                
-                // 2. Lấy vị trí ban đầu của tất cả bạn bè (Lọc bằng share_mode)
-                // fetch('/api/friends_list') 
-                //     .then(res => res.json())
-                //     .then(friendData => {
-                //         // Logic phức tạp hơn cần thêm API để lấy LiveLocation/last_known_location 
-                //         // của tất cả bạn bè đang ở mode 'friends' hoặc 'online=0'
-                //         // VÌ TA KHÔNG CÓ API ĐÓ, TA CHỈ CÓ THỂ CHỜ SOCKETIO CẬP NHẬT.
-                //         console.log('Chờ vị trí ban đầu từ SocketIO...');
-                //     });
-                fetch('/api/initial_locations') 
-                    .then(res => res.json())
-                    .then(data => {
-                        // Vẽ tất cả các vị trí cuối đã được tải
-                        data.locations.forEach(loc => {
-                            updateMarker(loc.user_id, loc.username, loc.lat, loc.lng, loc.is_self || false);
-                        });
-                        
-                        // Quan trọng: Gọi fitBounds sau khi tất cả markers đã được thêm lần đầu
-                        setTimeout(fitMapToAllMarkers, 500); 
-                    })
-                    .catch(err => console.error("Lỗi khi tải vị trí cuối:", err));
-            })
-            .catch(err => {
-                console.error("Lỗi xác thực hoặc tải thông tin user:", err);
-                document.getElementById('username_display').innerText = 'LỖI TẢI USER';
-            });
-    });
-
-    socket.on('disconnect', function() {
-        document.getElementById('socket_status').innerText = 'Disconnected';
-        document.getElementById('socket_status').style.color = 'red';
-        //if (locationInterval) clearInterval(locationInterval);
-        stopLocationTracking(); // ⭐ DỪNG watchPosition ⭐
-    });
-
-    // Nhận cập nhật vị trí từ bạn bè
-    socket.on('friend_location_update', function(data) {
-        if (data.user_id !== user_id) { 
-            // Vị trí này là live (người kia đang share_mode='friends')
-            updateMarker(data.user_id, data.username, data.lat, data.lng, false);
-            // Có thể thêm logic làm sáng marker nếu cần.
-        }
-    });
-
-    // YÊU CẦU 2: LOẠI BỎ logic xóa marker hoàn toàn. Marker sẽ tồn tại mãi mãi 
-    // trừ khi người dùng load lại trang (và không có API lấy vị trí ban đầu)
-    // hoặc có một sự kiện xóa rõ ràng từ server (đã loại bỏ).
-
-    socket.on('friend_status_update', function(data) {
-        console.log(`Status update: User ${data.user_id} is_online: ${data.is_online}`);
-        if (data.user_id in markers) {
-            markers[data.user_id].marker.setOpacity(data.is_online ? 1.0 : 0.5); 
-        }
-    });
-
-    socket.on("friend:disconnected", data => {
-        const disconnectedUserId = data.userId;
-
-        if (markers[disconnectedUserId]) {
-            const markerToRemove = markers[disconnectedUserId].marker || markers[disconnectedUserId];
-            map.removeLayer(markerToRemove); // ⭐ ĐÃ SỬA: Dùng .marker
-            delete markers[disconnectedUserId];
-            
-            console.log(`[CLIENT] Đã xóa marker của User ID: ${disconnectedUserId} (ngắt kết nối)`);
-        }
-    });
-
-    fetch('/location_sharing/friends_list')
-        .then(res => res.json())
-        .then(data => {
-            console.log('Friend IDs for initialization:', data.friends_ids);
+                if (confirm("Bạn có muốn chia sẻ vị trí của mình với bạn bè không?")) { currentShareMode = 'friends'; }
+                setShareMode(currentShareMode);
+                fetch('/api/initial_locations').then(res => res.json()).then(data => {
+                    data.locations.forEach(loc => { updateMarker(loc.user_id, loc.username, loc.lat, loc.lng, loc.is_self || false); });
+                    setTimeout(fitMapToAllMarkers, 500);
+                }).catch(err => console.error("Lỗi khi tải vị trí cuối:", err));
+            }).catch(err => { console.error("Lỗi xác thực hoặc tải thông tin user:", err); document.getElementById('username_display').innerText = 'LỖI TẢI USER'; });
         });
 
-
-
-
-    //======================= CHAT ====================
-    // friends_map.html
-
-    // --- Hàm Hỗ trợ ---
-    function getChatRoom(user1_id, user2_id) {
-        // Phải đồng bộ với logic get_chat_room trong Messaging/socket_events.py
-        const ids = sorted([user1_id, user2_id]);
-        return `chat_${ids[0]}_${ids[1]}`;
-    }
-    function sorted(array) {
-        return [...array].sort((a, b) => a - b);
-    }
-    // Lấy ID của mình sau khi connect (Cần đảm bảo user_id được gán)
-    
-    // --- Hàm Mở Chat Box ---
-    function openChatBox(friendId, friendName) {
-        if (user_id === null) {
-            alert("Vui lòng đăng nhập để chat.");
-            return;
-        }
-
-        currentChatReceiverId = friendId;
-        chatTitle.innerText = `Chat với ${friendName}`;
-        messagesContainer.innerHTML = '<p style="text-align: center; color: #777;">Đang tải lịch sử...</p>';
-        chatBox.style.display = 'flex'; // Hiển thị box chat
-
-        // 1. Tham gia phòng chat SocketIO
-        socket.emit('join_chat', { target_id: friendId });
-
-        // 2. Tải lịch sử tin nhắn
-        loadMessageHistory(friendId);
-    }
-
-    // --- Hàm Đóng Chat Box ---
-    function closeChatBox() {
-        if (currentChatReceiverId !== null) {
-            // Rời phòng chat (Nếu cần, bạn có thể implement sự kiện 'leave_chat' trong backend)
-            // socket.emit('leave_chat', { target_id: currentChatReceiverId });
-        }
-        currentChatReceiverId = null;
-        chatBox.style.display = 'none'; // Ẩn box chat
-        messagesContainer.innerHTML = '';
-        messageInput.value = '';
-    }
-
-    // --- Hàm Gửi Tin Nhắn ---
-    function sendMessage() {
-        const content = messageInput.value.trim();
-        if (content === '' || currentChatReceiverId === null) return;
-
-        // Gửi tin nhắn qua Socket
-        socket.emit('send_message', {
-            receiver_id: currentChatReceiverId,
-            content: content
+        socket.on('disconnect', function () {
+            document.getElementById('socket_status').innerText = 'Disconnected';
+            document.getElementById('socket_status').style.color = 'red';
+            stopLocationTracking();
         });
 
-        messageInput.value = '';
-    }
+        socket.on('friend_location_update', function (data) {
+            if (data.user_id !== user_id) { updateMarker(data.user_id, data.username, data.lat, data.lng, false); }
+        });
+        socket.on('friend_status_update', function (data) {
+            console.log(`Status update: User ${data.user_id} is_online: ${data.is_online}`);
+            if (data.user_id in markers) { markers[data.user_id].marker.setOpacity(data.is_online ? 1.0 : 0.5); }
+        });
+        socket.on("friend:disconnected", data => {
+            const disconnectedUserId = data.userId;
+            if (markers[disconnectedUserId]) {
+                const markerToRemove = markers[disconnectedUserId].marker || markers[disconnectedUserId];
+                map.removeLayer(markerToRemove);
+                delete markers[disconnectedUserId];
+                console.log(`[CLIENT] Đã xóa marker của User ID: ${disconnectedUserId} (ngắt kết nối)`);
+            }
+        });
+        fetch('/location_sharing/friends_list').then(res => res.json()).then(data => { console.log('Friend IDs for initialization:', data.friends_ids); });
 
-    // --- Tải Lịch sử Tin Nhắn ---
-    function loadMessageHistory(friendId) {
-        fetch(`/api/history/${friendId}`)
-            .then(res => res.json())
-            .then(data => {
+        // --- CHAT LOGIC ---
+        function getChatRoom(user1_id, user2_id) { const ids = sorted([user1_id, user2_id]); return `chat_${ids[0]}_${ids[1]}`; }
+        function sorted(array) { return [...array].sort((a, b) => a - b); }
+        window.openChatBox = function (friendId, friendName) {
+            if (user_id === null) { alert("Vui lòng đăng nhập để chat."); return; }
+            currentChatReceiverId = friendId;
+            chatTitle.innerText = `Chat với ${friendName}`;
+            messagesContainer.innerHTML = '<p style="text-align: center; color: #777;">Đang tải lịch sử...</p>';
+            chatBox.style.display = 'flex';
+            socket.emit('join_chat', { target_id: friendId });
+            loadMessageHistory(friendId);
+        }
+        function closeChatBox() {
+            if (currentChatReceiverId !== null) { /* Rời phòng chat (Nếu cần) */ }
+            currentChatReceiverId = null;
+            chatBox.style.display = 'none';
+            messagesContainer.innerHTML = '';
+            messageInput.value = '';
+        }
+        function sendMessage() {
+            const content = messageInput.value.trim();
+            if (content === '' || currentChatReceiverId === null) return;
+            socket.emit('send_message', { receiver_id: currentChatReceiverId, content: content });
+            messageInput.value = '';
+        }
+        function loadMessageHistory(friendId) {
+            fetch(`/api/history/${friendId}`).then(res => res.json()).then(data => {
                 messagesContainer.innerHTML = '';
-                if (data.messages && data.messages.length > 0) {
-                    data.messages.forEach(msg => {
-                        appendMessage(msg.content, msg.sender_id === user_id, msg.timestamp);
-                    });
-                } else {
-                    messagesContainer.innerHTML = '<p style="text-align: center; color: #777;">Chưa có tin nhắn nào.</p>';
-                }
-                messagesContainer.scrollTop = messagesContainer.scrollHeight; 
-            })
-            .catch(err => {
-                console.error("Error loading message history:", err);
-                messagesContainer.innerHTML = '<p style="text-align: center; color: red;">Lỗi khi tải lịch sử.</p>';
-            });
-    }
-    
-    // --- Hàm Thêm Tin Nhắn vào UI (Giữ nguyên logic từ file mẫu trước) ---
-    function appendMessage(content, isSelf, timestamp) {
-        const container = document.createElement('div');
-        container.className = isSelf ? 'message-container self' : 'message-container other';
-        
-        const bubble = document.createElement('div');
-        bubble.className = 'message-bubble';
-        
-        // ... (Logic thêm nội dung và timestamp) ...
-        const contentSpan = document.createElement('span');
-        contentSpan.innerText = content;
-        
-        const timeSpan = document.createElement('div');
-        timeSpan.className = 'message-timestamp';
-        // Hiển thị giờ/phút
-        timeSpan.innerText = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); 
-
-        bubble.appendChild(contentSpan);
-        // bubble.appendChild(timeSpan); // Thường để timestamp bên ngoài bubble hoặc dùng CSS phức tạp hơn
-        container.appendChild(bubble);
-        
-        messagesContainer.appendChild(container);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight; 
-    }
-
-    // --- Lắng nghe Tin Nhắn Socket ---
-    socket.on('new_message', (data) => {
-        // Chỉ hiển thị nếu tin nhắn thuộc về cuộc hội thoại hiện tại
-        if (data.sender_id === user_id || data.sender_id === currentChatReceiverId) {
-             appendMessage(data.content, data.sender_id === user_id, data.timestamp);
+                if (data.messages && data.messages.length > 0) { data.messages.forEach(msg => { appendMessage(msg.content, msg.sender_id === user_id, msg.timestamp); }); }
+                else { messagesContainer.innerHTML = '<p style="text-align: center; color: #777;">Chưa có tin nhắn nào.</p>'; }
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }).catch(err => { console.error("Error loading message history:", err); messagesContainer.innerHTML = '<p style="text-align: center; color: red;">Lỗi khi tải lịch sử.</p>'; });
         }
-    });
-</script>
+        function appendMessage(content, isSelf, timestamp) {
+            const container = document.createElement('div');
+            container.className = isSelf ? 'message-container self' : 'message-container other';
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            const contentSpan = document.createElement('span');
+            contentSpan.innerText = content;
+            const timeSpan = document.createElement('div');
+            timeSpan.className = 'message-timestamp';
+            timeSpan.innerText = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            bubble.appendChild(contentSpan);
+            container.appendChild(bubble);
+            messagesContainer.appendChild(container);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        socket.on('new_message', (data) => {
+            if (data.sender_id === user_id || data.sender_id === currentChatReceiverId) { appendMessage(data.content, data.sender_id === user_id, data.timestamp); }
+        });
+    </script>
 </body>
 </html>
