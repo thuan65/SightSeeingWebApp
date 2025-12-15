@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diễn đàn Du lịch - LocaGo!</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -14,7 +16,7 @@
             min-height: 100vh;
         }
 
-        /* HEADER */
+        /* --- HEADER STYLES (Đồng bộ với Index & Detail) --- */
         header {
             background: white;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -44,6 +46,7 @@
             display: flex;
             gap: 20px;
             align-items: center;
+            position: relative; /* Để neo dropdown menu */
         }
 
         .nav-links a {
@@ -55,13 +58,86 @@
             font-size: 15px;
             font-weight: 500;
         }
+
         .nav-links a:hover { background: #f0f0f0; }
 
+        .nav-user {
+            color: #333;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: default;
+        }
+        .nav-user:hover { background: #f0f0f0; }
+
+        /* Buttons Header - Sửa lỗi trong suốt */
         .btn-primary {
-            background: linear-gradient(135deg, #1C6758, #8EB486);
+            background: linear-gradient(135deg, #1C6758, #8EB486) !important;
             color: white !important;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(28, 103, 88, 0.3);
         }
 
+        /* Hamburger Button (Header) */
+        .hamburger-btn {
+            font-size: 24px;
+            padding: 8px 12px !important;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #333;
+        }
+
+        /* Header Dropdown Menu */
+        .dropdown-menu {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            padding: 10px;
+            min-width: 200px;
+            display: none;
+            z-index: 1001;
+            text-align: left;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+            animation: fadeInHeader 0.2s ease;
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 12px 16px;
+            color: #333;
+            margin: 2px 0;
+            text-decoration: none;
+        }
+        
+        .dropdown-menu a:hover { background: #f0f0f0; }
+        
+        @keyframes fadeInHeader {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- FORUM SPECIFIC STYLES --- */
         .btn-secondary {
             border: 2px solid #1C6758;
             color: #1C6758 !important;
@@ -80,8 +156,14 @@
             border-radius: 50px;
             text-decoration: none;
             display: inline-block;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: 0.3s;
         }
-
+        
+        .btn-primary-2:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(28, 103, 88, 0.2);
+        }
 
         /* HERO BANNER */
         .hero-banner {
@@ -130,7 +212,6 @@
             gap: 15px;
         }
 
-
         .search-box input {
             flex: 1;
             padding: 15px 20px;
@@ -147,32 +228,24 @@
 
         .filter-container select {
             width: 100%;
-            padding: 14px 42px 14px 30px; /* chừa chỗ cho arrow mới */
+            padding: 14px 42px 14px 30px;
             border-radius: 40px;
             border: 2px solid #e0e0e0;
             font-size: 15px;
             font-weight: 500;
             cursor: pointer;
             background-color: white;
-
-            /* Ẩn arrow mặc định */
             appearance: none;
             -webkit-appearance: none;
             -moz-appearance: none;
-
-            /* Arrow custom */
-            background-image: url("data:image/svg+xml;utf8,\
-            <svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'>\
-            <path d='M1 1l5 5 5-5' stroke='%231C6758' stroke-width='2' fill='none'/>\
-            </svg>");
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%231C6758' stroke-width='2' fill='none'/></svg>");
             background-repeat: no-repeat;
-            background-position: right 22px center; /* 👈 DỊCH QUA TRÁI */
+            background-position: right 22px center;
         }
 
         .filter-container select:hover {
             border-color: #1C6758;
         }
-
 
         /* MAIN CONTENT */
         .container {
@@ -186,6 +259,7 @@
             font-size: 2.2em;
             font-weight: 700;
             margin-bottom: 40px;
+            color: #333;
         }
 
         /* POST CARD */
@@ -254,9 +328,10 @@
             border-radius: 50px;
             text-decoration: none;
             font-weight: 600;
+            display: inline-block;
         }
 
-        /* NÚT ⋯ */
+        /* MENU BÀI VIẾT (⋯) */
         .post-menu {
             position: absolute;
             top: 14px;
@@ -319,17 +394,30 @@
         <a href="/" class="logo">Loca<span>Go!</span></a>
 
         <div class="nav-links">
-            <a href="/MapRouting">Bản đồ</a>
+            <a href="/MapRouting">Bản đồ du lịch</a>
             <a href="/chat_ui">Chatbot du lịch</a>
             <a href="{{ url_for('forum.show_forum') }}">Forum</a>
             <a href="/friends_map">Friends map</a>
 
             {% if current_user.is_authenticated %}
-                <a href="{{ url_for('login_bp.logout') }}" class="btn-danger">Đăng xuất</a>
+                <span class="nav-user">
+                    Xin chào, {{ current_user.username }}
+                </span>
             {% else %}
-                <a href="{{ url_for('login_bp.register') }}" class="btn-secondary">Đăng ký</a>
                 <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
             {% endif %}
+
+            <button class="hamburger-btn" onclick="toggleHeaderMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="dropdown-menu" id="dropdownHeader">
+                <a href="{{ url_for('favorite_bp.list_favorites') }}"><i class="fas fa-heart"></i> Danh sách yêu thích</a>
+                <a href="/friends"><i class="fas fa-user-friends"></i> Bạn bè</a>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('login_bp.logout') }}"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                {% endif %}
+            </div>
         </div>
     </div>
 </header>
@@ -359,7 +447,6 @@
     </form>
 </div>
 
-
 <div style="text-align: center;">
     {% if current_user.is_authenticated %}
         <a href="{{ url_for('forum.new_post') }}" class="btn-primary-2">
@@ -379,17 +466,14 @@
         {% for post in posts %}
         <div class="post-card">
 
-            <!-- ⋯ MENU -->
-            <div class="post-menu" onclick="toggleMenu({{ post.id }})">⋯</div>
+            <div class="post-menu" onclick="togglePostMenu({{ post.id }})">⋯</div>
 
             <div class="menu-box" id="menu-{{ post.id }}">
                 <button onclick="deletePost({{ post.id }}, '{{ post.username }}')">🗑 Xóa bài viết</button>
             </div>
 
-            <!-- TITLE -->
             <h3 class="post-title">{{ post.title }}</h3>
 
-            <!-- META -->
             <div class="post-meta">
                 <span>👤 {{ post.username }}</span>
                 <span>📅 {{ post.created_at[:10] }}</span>
@@ -401,7 +485,6 @@
                 </span>
             </div>
 
-            <!-- IMAGES -->
             {% if post.images and post.images|length > 0 %}
             <div class="preview-grid">
                 {% for img in post.images[:3] %}
@@ -410,7 +493,6 @@
             </div>
             {% endif %}
 
-            <!-- CONTENT PREVIEW -->
             <p class="post-content-preview">
                 {{ post.content[:150] }}{% if post.content|length > 150 %}...{% endif %}
             </p>
@@ -427,43 +509,69 @@
 </div>
 
 <script>
-const currentUser = "{{ current_user.username if current_user.is_authenticated else '' }}";
-const isAdmin = "{{ 'True' if current_user.is_authenticated and current_user.is_admin else 'False' }}";
+    const currentUser = "{{ current_user.username if current_user.is_authenticated else '' }}";
+    const isAdmin = "{{ 'True' if current_user.is_authenticated and current_user.is_admin else 'False' }}";
 
-function toggleMenu(id) {
-    document.querySelectorAll(".menu-box").forEach(m => {
-        if (m.id !== "menu-" + id) m.style.display = "none";
+    // 1. HEADER MENU TOGGLE
+    function toggleHeaderMenu() {
+        const menu = document.getElementById('dropdownHeader');
+        menu.classList.toggle('show');
+    }
+
+    // 2. POST MENU TOGGLE (Đã đổi tên hàm để tránh nhầm lẫn)
+    function togglePostMenu(id) {
+        // Đóng các menu bài viết khác đang mở
+        document.querySelectorAll(".menu-box").forEach(m => {
+            if (m.id !== "menu-" + id) m.style.display = "none";
+        });
+
+        // Toggle menu được chọn
+        let box = document.getElementById("menu-" + id);
+        box.style.display = box.style.display === "block" ? "none" : "block";
+    }
+
+    // 3. XỬ LÝ CLICK RA NGOÀI ĐỂ ĐÓNG MENU
+    document.addEventListener('click', function(event) {
+        // Xử lý Header Menu
+        const headerMenu = document.getElementById('dropdownHeader');
+        const hamburger = document.querySelector('.hamburger-btn');
+        if (headerMenu && hamburger && !headerMenu.contains(event.target) && !hamburger.contains(event.target)) {
+            headerMenu.classList.remove('show');
+        }
+
+        // Xử lý Post Menu (Nếu click không phải vào nút 3 chấm và không phải vào menu box)
+        if (!event.target.classList.contains('post-menu')) {
+             document.querySelectorAll(".menu-box").forEach(m => m.style.display = "none");
+        }
     });
 
-    let box = document.getElementById("menu-" + id);
-    box.style.display = box.style.display === "block" ? "none" : "block";
-}
+    // 4. XÓA BÀI VIẾT
+    function deletePost(postId, owner) {
+        if (!currentUser) {
+            alert("Bạn cần đăng nhập.");
+            return;
+        }
 
-function deletePost(postId, owner) {
-    if (!currentUser) {
-        alert("Bạn cần đăng nhập.");
-        return;
+        if (currentUser !== owner && isAdmin !== "True") {
+            alert("Bạn không có quyền xóa bài viết này!");
+            return;
+        }
+
+        let msg = (isAdmin === "True")
+            ? "Admin muốn xóa bài này?"
+            : "Bạn chắc chắn muốn xóa bài viết?";
+
+        if (confirm(msg)) {
+            fetch(`/post/${postId}/delete`, {
+                method: "POST"
+            })
+            .then(res => {
+                if (res.ok) location.reload();
+                else alert("Có lỗi xảy ra khi xóa.");
+            })
+            .catch(err => console.error(err));
+        }
     }
-
-    if (currentUser !== owner && isAdmin !== "True") {
-        alert("Bạn không có quyền xóa bài viết này!");
-        return;
-    }
-
-    let msg = (isAdmin === "True")
-        ? "Admin muốn xóa bài này?"
-        : "Bạn chắc chắn muốn xóa bài viết?";
-
-    if (confirm(msg)) {
-        fetch(`/post/${postId}/delete`, {
-            method: "POST"
-        })
-        .then(res => {
-            if (res.ok) location.reload();
-        })
-        .catch(err => console.error(err));
-    }
-}
 </script>
 
 </body>
