@@ -45,6 +45,14 @@
         }
 
         /* ========================================================= */
+        /* IV. HELPER HIDE ELEMENTS (FIX JS ERROR) ⭐ THÊM ĐOẠN NÀY ⭐ */
+        /* ========================================================= */
+        #username_display, #socket_status {
+            /* Ẩn hoàn toàn khỏi bố cục và màn hình */
+            display: none !important;
+        }
+
+        /* ========================================================= */
         /* II. HEADER & NAVIGATION (TỪ INDEX.HTML) */
         /* ========================================================= */
         .header-main {
@@ -231,6 +239,10 @@
     </style>
 </head>
 <body>
+    <div style="display: none;">
+        <span id="username_display">Loading...</span>
+        <span id="socket_status">Disconnected</span>
+    </div>
     <header class="header-main">
         <div class="header-container">
             <a href="/" class="logo">Loca<span>Go!</span></a>
@@ -244,7 +256,7 @@
                 {% if current_user.is_authenticated %}
                 <span class="nav-user">
                     Xin chào, {{ current_user.username }}
-                </span>                
+                </span>
                 {%else %}
                 <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
                 {% endif %}
@@ -454,6 +466,7 @@
                 if (!is_self) { marker.on('click', function (e) { showFriendPostsPopup(e.target.userId, e.target.userName, e.target); }); }
             }
 
+            // ⭐ KHÔNG CẦN CHỈNH SỬA Ở ĐÂY, VÌ ĐÃ THÊM ELEMENT BỊ THIẾU Ở HTML ⭐
             if (is_self && document.getElementById('username_display').innerText.indexOf('Loading') !== -1) {
                 document.getElementById('username_display').innerText = user_name;
             }
@@ -558,6 +571,7 @@
 
         // --- SocketIO & Fetch Initial Data ---
         socket.on('connect', function () {
+            // ⭐ ĐÃ KHẮC PHỤC LỖI THIẾU ELEMENT #socket_status ⭐
             document.getElementById('socket_status').innerText = 'Connected';
             document.getElementById('socket_status').style.color = 'green';
             fetch('/api/current_user_info').then(res => res.json()).then(data => {
@@ -569,7 +583,11 @@
                     data.locations.forEach(loc => { updateMarker(loc.user_id, loc.username, loc.lat, loc.lng, loc.is_self || false); });
                     setTimeout(fitMapToAllMarkers, 500);
                 }).catch(err => console.error("Lỗi khi tải vị trí cuối:", err));
-            }).catch(err => { console.error("Lỗi xác thực hoặc tải thông tin user:", err); document.getElementById('username_display').innerText = 'LỖI TẢI USER'; });
+            }).catch(err => {
+                console.error("Lỗi xác thực hoặc tải thông tin user:", err);
+                // ⭐ ĐÃ KHẮC PHỤC LỖI THIẾU ELEMENT #username_display ⭐
+                document.getElementById('username_display').innerText = 'LỖI TẢI USER';
+            });
         });
 
         socket.on('disconnect', function () {
