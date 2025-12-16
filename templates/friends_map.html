@@ -596,21 +596,23 @@
             }
         }
 
-        function updateMarker(id, user_name, lat, lng, is_self = false) {
+        function updateMarker(id, user_name, lat, lng, is_self = false, initial_opacity = 1.0) {
             const latlng = [lat, lng];
             const labelText = is_self ? "Bạn" : user_name;
             const labelClassName = is_self ? 'self-label' : 'friend-label';
             const tooltipOptions = { permanent: true, direction: 'top', className: 'leaflet-tooltip ' + labelClassName, offset: [0, -15] };
             const popupText = `<b>${labelText}</b><br>${is_self ? 'Vị trí của bạn' : 'Bạn bè'}`;
             const current_is_online = markers[id] && 'is_online' in markers[id] ? markers[id].is_online : true;
+            const final_opacity = (is_self || current_is_online) ? 1.0 : 0.5;
 
             if (id in markers) {
                 const currentMarker = markers[id].marker;
                 currentMarker.setLatLng(latlng);
+                currentMarker.setOpacity(initial_opacity);
                 currentMarker.getTooltip().setContent(labelText);
                 currentMarker.getPopup().setContent(popupText);
             } else {
-                const marker = L.marker(latlng, { icon: is_self ? selfIcon : friendIcon }).addTo(map);
+                const marker = L.marker(latlng, { icon: is_self ? selfIcon : friendIcon, opacity: initial_opacity }).addTo(map);
                 marker.bindTooltip(labelText, tooltipOptions).openTooltip();
                 marker.bindPopup(popupText);
                 markers[id] = { marker: marker, username: user_name, };
@@ -656,7 +658,7 @@
             for (const id in markers) {
                 if (markers.hasOwnProperty(id)) {
                     const leafletMarker = markers[id].marker;
-                    if (leafletMarker) { latLngs.push(leafletMarker.getLatLng()); }
+                    if (leafletMarker && leafletMarker.options.opacity > 0) { latLngs.push(leafletMarker.getLatLng()); }
                 }
             }
             if (latLngs.length > 0) {
@@ -729,7 +731,10 @@
                 if (confirm("Bạn có muốn chia sẻ vị trí của mình với bạn bè không?")) { currentShareMode = 'friends'; }
                 setShareMode(currentShareMode);
                 fetch('/api/initial_locations').then(res => res.json()).then(data => {
-                    data.locations.forEach(loc => { updateMarker(loc.user_id, loc.username, loc.lat, loc.lng, loc.is_self || false); });
+                    data.locations.forEach(loc => {
+                        const initial_opacity = (loc.is_self || loc.is_online) ? 1.0 : 0.5;
+                        updateMarker(loc.user_id, loc.username, loc.lat, loc.lng, loc.is_self || false, initial_opacity);
+                    });
                     setTimeout(fitMapToAllMarkers, 500);
                 }).catch(err => console.error("Lỗi khi tải vị trí cuối:", err));
             }).catch(err => {
@@ -745,7 +750,7 @@
         });
 
         socket.on('friend_location_update', function (data) {
-            if (data.user_id !== user_id) { updateMarker(data.user_id, data.username, data.lat, data.lng, false); }
+            if (data.user_id !== user_id) { updateMarker(data.user_id, data.username, data.lat, data.lng, false, 1.0); }
         });
         socket.on('friend_status_update', function (data) {
             console.log(`Status update: User ${data.user_id} is_online: ${data.is_online}`);
@@ -755,9 +760,10 @@
             const disconnectedUserId = data.userId;
             if (markers[disconnectedUserId]) {
                 const markerToRemove = markers[disconnectedUserId].marker || markers[disconnectedUserId];
-                map.removeLayer(markerToRemove);
-                delete markers[disconnectedUserId];
-                console.log(`[CLIENT] Đã xóa marker của User ID: ${disconnectedUserId} (ngắt kết nối)`);
+                markerToRemove.setOpacity(0.5);
+                // map.removeLayer(markerToRemove);
+                // delete markers[disconnectedUserId];
+                // console.log(`[CLIENT] Đã xóa marker của User ID: ${disconnectedUserId} (ngắt kết nối)`);
             }
         });
         fetch('/location_sharing/friends_list').then(res => res.json()).then(data => { console.log('Friend IDs for initialization:', data.friends_ids); });
