@@ -5,9 +5,12 @@
 *$py.class
 
 *.db
-!instance/.gitkeep
-
 instance/*
+!instance/.gitkeep
+!instance/PlaceDescriptionFaiss.bin
+!instance/PlacePictureDescription.index
+!instance/FlaskDataBase.db
+
 tempCodeRunnerFile.py
 
 static/images/images/*

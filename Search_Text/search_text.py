@@ -68,7 +68,7 @@ def compute_similarity(query_text, places, top_k=5):
 # ======================================================
 # FUNCTION HELPER
 # ======================================================
-# Trả về danh sách địa điểm giống trên một tiêu chí nhất định
+# Trả về danh sách ID địa điểm giống trên một tiêu chí nhất định
 def threshold_search(query_emb):
     top_k = 50
     threshold = 0.25

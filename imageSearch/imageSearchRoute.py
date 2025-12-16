@@ -1,6 +1,7 @@
-from flask import Blueprint, current_app, request, render_template
+from flask import Blueprint, current_app, request, jsonify, render_template
+from models import Image
 from .imageSearchLogic import find_similar
-import os 
+import os, json
 
 search_image_bp = Blueprint('image_bp', __name__)
 
@@ -19,22 +20,44 @@ def search_image():
 
         # --- PHẦN ĐÃ SỬA ---
         # 1. Nhận về danh sách kết quả (list of dicts)
-        results = find_similar(upload_path)
-        
-        # 2. Kiểm tra xem có kết quả không và lấy kết quả đầu tiên (Rank 1)
-        if results and len(results) > 0:
-            top_result = results[0] # Lấy phần tử đầu tiên
-            best_match = top_result['file_name'] # Lấy tên file
-            score = top_result['distance'] # Lấy điểm số
-            
-            return render_template(
-                "search_result.html",
-                query=file.filename,
-                match=best_match,
-                score=1-round(score, 3)
-            )
-        else:
-            return "Không tìm thấy ảnh tương tự trong cơ sở dữ liệu", 404
-        # -------------------
+        faiss_results  = find_similar(upload_path)
+        if not faiss_results:
+            return jsonify([])
 
-    return render_template("search_image.html")
+        #Lấy image_id
+        image_ids = [item["image_id"] for item in faiss_results]
+
+        #Query DB
+        images = Image.query.filter(Image.id.in_(image_ids)).all()
+        image_map = {img.id: img for img in images}
+
+        final_results = [
+            {
+                #**item,                          # rank, distance, image_id
+                **image_map[item["image_id"]].to_dict()
+            }
+            for item in faiss_results
+            if item["image_id"] in image_map
+        ]
+
+        return jsonify(final_results)
+
+    return jsonify([])
+
+    #     # 2. Kiểm tra xem có kết quả không và lấy kết quả đầu tiên (Rank 1)
+    #     if results and len(results) > 0:
+    #         top_result = results[0] # Lấy phần tử đầu tiên
+    #         best_match = top_result['file_name'] # Lấy tên file
+    #         score = top_result['distance'] # Lấy điểm số
+            
+    #         return render_template(
+    #             "search_result.html",
+    #             query=file.filename,
+    #             match=best_match,
+    #             score=1-round(score, 3)
+    #         )
+    #     else:
+    #         return "Không tìm thấy ảnh tương tự trong cơ sở dữ liệu", 404
+    #     # -------------------
+
+    # return render_template("search_image.html")
