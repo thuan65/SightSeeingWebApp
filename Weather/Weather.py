@@ -39,20 +39,10 @@ def get_current_weather(place_id):
 
 @weatherForecast_bp.route("/forecast/<int:place_id>")
 def get_weather_forecast(place_id):
-    place = Image.query.get(place_id)
-    print(f"Fetching weather for place_id={place_id}")
-
-    if not place:
-        return jsonify({"error" : "Place not found"}), 404
+    lon = Image.query.with_entities(Image.longitude).filter_by(id=place_id).scalar()
+    lat = Image.query.with_entities(Image.latitude).filter_by(id=place_id).scalar()
     
-    address = place.address
-
-    geo = geocode_address(address)
-    if not geo:
-        return jsonify({"error": "Không tìm thấy tọa độ"}), 404
-
-    lat, lon = geo['lat'], geo['lng']
-
+    print(f"Fetching weather for place_id={place_id}")
     if lat is None or lon is None:
         return jsonify({"error" : "Failed to geocode the address"}), 500
 
