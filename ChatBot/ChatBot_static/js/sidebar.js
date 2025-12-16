@@ -1,6 +1,6 @@
 function renderSidebar(placeName, placeImage) {
   const sidebar = document.getElementById("sidebar");
-
+  if (!sidebar) return;
   sidebar.innerHTML = `
     <div class="w-80 bg-gradient-to-b from-gray-900 to-gray-800 text-white p-6 flex flex-col h-screen">
       <div class="flex items-center gap-2 mb-6">
@@ -48,8 +48,3 @@ function renderSidebar(placeName, placeImage) {
   `;
 }
 
-/* Test */
-renderSidebar(
-  "Paris",
-  "https://images.unsplash.com/photo-1502602898657-3e91760cbb34"
-);

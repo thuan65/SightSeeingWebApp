@@ -1,4 +1,4 @@
-﻿from flask import Blueprint, request, jsonify, Response, current_app, copy_current_request_context
+﻿from flask import Blueprint, request, jsonify, Response, current_app, render_template, copy_current_request_context
 from flask_login import current_user 
 from models import db, ConversationHistory 
 from .chatBotLogic import chatbot_reply
@@ -7,7 +7,7 @@ from .chatBotLogic import chatbot_reply
 # CHATBOT
 # ---------------------------------------------------------
 
-chatBot_bp = Blueprint("chat_bot", __name__)
+chatBot_bp = Blueprint("chat_bot", __name__, template_folder= "ChatBot_templates", static_folder= "ChatBot_static")
 
 # @chatBot_bp.route("/stream", methods=["POST"])
 # def stream():
@@ -23,7 +23,12 @@ chatBot_bp = Blueprint("chat_bot", __name__)
 
 #     return Response(generate(), mimetype="text/event-stream")
 
-@chatBot_bp.route("/stream", methods=["POST"])
+@chatBot_bp.route("/chat_ui")
+def chat_ui():
+    """Giao diện Chatbot"""
+    return render_template("chat_ui.html")
+
+@chatBot_bp.route("/api/stream", methods=["POST"])
 def stream():
     data = request.get_json()
     if not data or "message" not in data:

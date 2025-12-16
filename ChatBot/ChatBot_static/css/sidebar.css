@@ -1,0 +1,8 @@
+#sidebar-wrapper {
+  width: 320px;
+  transition: transform 0.3s ease;
+}
+
+#sidebar-wrapper.hidden {
+  transform: translateX(-100%);
+}

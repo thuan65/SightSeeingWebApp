@@ -132,13 +132,6 @@ def search():
             for img in results]
     return jsonify(data)
 
-
-@app.route("/chat_ui")
-def chat_ui():
-    """Giao diện Chatbot"""
-    return render_template("chat_ui.html")
-
-
 @app.route("/friends")
 def friends_page():
     """Trang bạn bè (Yêu cầu đăng nhập)"""
