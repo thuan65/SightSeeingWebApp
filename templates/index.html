@@ -780,8 +780,8 @@
                   </button>
                   <span class="page-info">
                       Trang <input type="number" id="pageInput" min="1" value="1"
-                            onchange="gotoPage(this.value)"
-                            style="width: 50px; text-align: center; border: 2px solid #1C6758; border-radius: 5px; padding: 5px; front-weight: 600;"> 
+                            onchange="goToPage(this.value)"
+                            style="width: 50px; text-align: center; border: 2px solid #1C6758; border-radius: 5px; padding: 5px; font-weight: 600;"> 
                       / <span id="totalPages">1</span>
                   </span>
                   <button id="nextBtn" onclick="nextPage()">
@@ -926,7 +926,7 @@
           
           // Cập nhật thông tin phân trang
           document.getElementById('totalPages').textContent = totalPages || 1;
-          document.getElementById('currentPage').textContent = CURRENT_PAGE;
+         // document.getElementById('currentPage').textContent = CURRENT_PAGE;
           document.getElementById('pageInput').value = CURRENT_PAGE;
           document.getElementById('pageInput').max = totalPages || 1;
          
@@ -1007,6 +1007,8 @@
               () => fetch(`/api/search?q=${encodeURIComponent(query)}`),
               'Đã xảy ra lỗi khi tìm kiếm từ khóa'
           );
+          console.log('Tổng số địa điểm:', ALL_DESTINATIONS.length);
+          console.log('Dữ liệu nhận được:', ALL_DESTINATIONS);
       }
 
       async function searchFilter() {
