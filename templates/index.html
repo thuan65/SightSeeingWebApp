@@ -72,20 +72,6 @@
           background: #f0f0f0;
       }
 
-      .nav-user {
-        color: #333;
-        padding: 10px 18px;
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 500;
-        font-family: 'Poppins', sans-serif;
-        cursor: default;
-      }
-
-      .nav-user:hover {
-        background: #f0f0f0;
-      }
-
       .btn-primary {
           background: linear-gradient(135deg, #1C6758, #8EB486) !important;
           color: white !important;
@@ -411,7 +397,6 @@
 
       /* Pagination */
       .pagination {
-          /* Giữ nguyên vì nó nằm trong cột trái, không cần grid-column: 1 / -1; */
           display: flex;
           justify-content: center;
           align-items: center;
@@ -445,7 +430,6 @@
           color: #333;
       }
 
-      /* Right Sidebar - ĐÃ BỎ position: sticky để cho phép cuộn thoải mái */
       .sidebar {
           display: flex;
           flex-direction: column;
@@ -478,7 +462,6 @@
           flex-direction: column;
           gap: 12px;
           max-height: 300px;
-          /* Cho phép cuộn danh sách bạn bè nếu quá dài */
           overflow-y: auto; 
       }
 
@@ -702,23 +685,14 @@
               <a href="/chat_ui">Chatbot du lịch</a>
               <a href="/forum">Forum</a>
               <a href="/friends_map">Friends map</a>
-              <div class="nav-links">
-                {% if current_user.is_authenticated %}
-                    <span class="nav-user">
-                        Xin chào, {{ current_user.username }}
-                    </span>
-                {%else %}
-                    <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
-                {% endif %}
+              <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
               <button class="hamburger-btn" onclick="toggleMenu()">
                   <i class="fas fa-bars"></i>
               </button>
               <div class="dropdown-menu" id="dropdownMenu">
                   <a href="{{ url_for('favorite_bp.list_favorites') }}"><i class="fas fa-heart"></i> Danh sách yêu thích</a>
                   <a href="/friends"><i class="fas fa-user-friends"></i> Bạn bè</a>
-                  {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('login_bp.logout') }}"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
-                  {% endif %}
+                  <a href="{{ url_for('login_bp.logout') }}"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
               </div>
           </div>
       </div>
@@ -746,7 +720,7 @@
 
               <div id="keyword" class="search-form active">
                   <div class="search-row">
-                      <input type="text" id="searchInput" placeholder="Nhập từ khóa: sea, mountain, forest...">
+                      <input type="text" id="searchInput" placeholder="Nhập từ khóa: cat, dog, mountain...">
                       <button class="search-button" onclick="searchImages()">Tìm kiếm</button>
                   </div>
               </div>
@@ -805,7 +779,10 @@
                       <i class="fas fa-chevron-left"></i> Trước
                   </button>
                   <span class="page-info">
-                      Trang <span id="currentPage">1</span> / <span id="totalPages">1</span>
+                      Trang <input type="number" id="pageInput" min="1" value="1"
+                            onchange="gotoPage(this.value)"
+                            style="width: 50px; text-align: center; border: 2px solid #1C6758; border-radius: 5px; padding: 5px; front-weight: 600;"> 
+                      / <span id="totalPages">1</span>
                   </span>
                   <button id="nextBtn" onclick="nextPage()">
                       Tiếp <i class="fas fa-chevron-right"></i>
@@ -814,12 +791,12 @@
           </div>
 
           <div class="sidebar">
-              <!-- <div class="sidebar-card">
+              <div class="sidebar-card">
                   <h3><i class="fas fa-user-friends"></i> Bạn bè Online</h3>
                   <div class="friends-list" id="friendsList">
                       <div class='friend-item'>Đang tải dữ liệu bạn bè...</div>
                   </div>
-              </div> -->
+              </div>
 
               <div class="sidebar-card">
                   <h3><i class="fas fa-map-marked-alt"></i> Bản đồ Việt Nam</h3>
@@ -879,10 +856,9 @@
       let ALL_DESTINATIONS = []; // Lưu trữ tất cả kết quả tìm kiếm
       const DESTINATIONS_PER_PAGE = 9; // 3 hàng x 3 cột
       let CURRENT_PAGE = 1;
-      // Dùng 1 ID giả định vì không có session ở đây, nhưng vẫn gọi API thực tế
       const CURRENT_USER_ID = 1; 
 
-      /* --- SLIDESHOW & MENU FUNCTIONS (Giữ nguyên) --- */
+      /* --- SLIDESHOW & MENU FUNCTIONS  --- */
 
       let currentSlide = 0;
       const slides = document.querySelectorAll('.hero-slide');
@@ -892,6 +868,22 @@
           currentSlide = (currentSlide + 1) % slides.length;
           slides[currentSlide].classList.add('active');
       }
+
+      function goToPage(pageNum) {
+        const totalPages = Math.ceil(ALL_DESTINATIONS.length / DESTINATIONS_PER_PAGE);  
+        pageNum = parseInt(pageNum);
+
+        if (isNaN(pageNum) || pageNum < 1) {
+             pageNum = 1;
+        } else if (pageNum > totalPages) {
+        pageNum = totalPages;
+        }
+
+        CURRENT_PAGE = pageNum;
+        document.getElementById('pageInput').value = pageNum; // Cập nhật lại input
+        renderPage();
+        }
+
       
       setInterval(nextSlide, 3000);
 
@@ -925,9 +917,9 @@
           searchImages();
       }
       
-      /* --- PAGINATION CORE FUNCTIONS (ĐÃ THÊM) --- */
+      /* --- PAGINATION CORE FUNCTIONS --- */
 
-      // Hàm hiển thị kết quả cho trang hiện tại (Thay thế displayResults cũ)
+      // Hàm hiển thị kết quả cho trang hiện tại 
       function renderPage() {
           const container = document.getElementById('results');
           const totalPages = Math.ceil(ALL_DESTINATIONS.length / DESTINATIONS_PER_PAGE);
@@ -935,7 +927,9 @@
           // Cập nhật thông tin phân trang
           document.getElementById('totalPages').textContent = totalPages || 1;
           document.getElementById('currentPage').textContent = CURRENT_PAGE;
-          
+          document.getElementById('pageInput').value = CURRENT_PAGE;
+          document.getElementById('pageInput').max = totalPages || 1;
+         
           // Vô hiệu hóa/Kích hoạt nút
           document.getElementById('prevBtn').disabled = CURRENT_PAGE === 1;
           document.getElementById('nextBtn').disabled = CURRENT_PAGE >= totalPages;
@@ -987,7 +981,7 @@
           }
       }
 
-      /* --- SEARCH FUNCTIONS (ĐÃ SỬA ĐỂ TÍCH HỢP PHÂN TRANG) --- */
+      /* --- SEARCH FUNCTIONS  --- */
 
       async function processSearch(apiCall, errorMessage) {
           try {
@@ -1073,7 +1067,7 @@
           }
       }
       
-      /* --- FRIENDS FUNCTION (ĐÃ CHUYỂN VÀO SCRIPT) --- */
+      /* --- FRIENDS FUNCTION --- */
 
       async function loadFriendsForSidebar() {
           const container = document.getElementById("friendsList");
@@ -1086,7 +1080,7 @@
           }
 
           try {
-              // Gọi API đã có trong backend của bạn
+              // Gọi API đã có trong backend 
               const res = await fetch(`/friends/list/${userId}`);
               
               if (!res.ok) {
@@ -1123,7 +1117,7 @@
           }
       }
 
-      /* --- MAP FUNCTIONS (Giữ nguyên) --- */
+      /* --- MAP FUNCTIONS --- */
       function initMiniMap() {
           const miniMap = L.map('miniMap', {
               zoomControl: true,
@@ -1172,7 +1166,7 @@
           window.location.href = '/image/' + imageId;
       }
       
-      /* --- UTILS (Giữ nguyên) --- */
+      /* --- UTILS --- */
 
       window.onscroll = function() {
           const scrollBtn = document.getElementById('scrollTop');
@@ -1198,7 +1192,7 @@
           if (e.key === 'Enter') searchText();
       });
 
-      /* --- INITIAL LOAD (ĐÃ SỬA) --- */
+      /* --- INITIAL LOAD --- */
       window.onload = async function() {
           // 1. Tải địa danh (sẽ gọi searchImages() -> renderPage() để hiển thị trang 1)
           await searchImages(); 
