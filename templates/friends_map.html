@@ -46,7 +46,7 @@
         }
 
         /* ========================================================= */
-        /* IV. HELPER HIDE ELEMENTS (FIX JS ERROR) ⭐ THÊM ĐOẠN NÀY ⭐ */
+        /* IV. HELPER HIDE ELEMENTS (FIX JS ERROR) */
         /* ========================================================= */
         #username_display, #socket_status {
             /* Ẩn hoàn toàn khỏi bố cục và màn hình */
@@ -69,7 +69,7 @@
             max-width: 1400px;
             margin: 0 auto;
             display: flex;
-            justify-content: space-between; /* CĂN LOGO TRÁI, MENU PHẢI */
+            justify-content: space-between;
             align-items: center;
         }
 
@@ -79,7 +79,7 @@
             color: var(--primary-dark);
             text-decoration: none;
             font-family: 'Poppins', sans-serif;
-            margin-right: 20px; /* Thêm khoảng cách */
+            margin-right: 20px;
         }
 
             .logo span {
@@ -92,7 +92,7 @@
             gap: 20px;
             align-items: center;
             position: relative;
-            margin-left: auto; /* Đảm bảo căn phải hoàn toàn */
+            margin-left: auto;
         }
 
             .nav-links a, .nav-links button, .nav-user {
@@ -151,7 +151,7 @@
             padding: 30px;
             background: white;
             border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08); /* Áp dụng shadow nhẹ */
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
         }
 
         /* 1. Map Area */
@@ -172,38 +172,38 @@
             color: #333;
         }
 
-        /* YÊU CẦU 2: Trạng thái GPS trên cùng một hàng */
         .gps-status-row {
             display: flex;
             align-items: center;
-            /* Giúp trạng thái và giá trị nằm trên cùng 1 dòng */
             gap: 8px;
         }
 
             .gps-status-row p {
-                /* Loại bỏ margin dưới nếu có, giữ cho nó ngang hàng */
                 margin-bottom: 0;
                 font-weight: 500;
             }
 
         .map-controls-box small {
-            /* Đẩy cập nhật xuống dòng dưới */
             margin-top: 5px;
             display: block;
         }
 
-        /* 3. Chat Box (Đồng bộ Light Mode) */
+        /* ========================================================= */
+        /* 3. CHAT BOX (CẬP NHẬT THEO YÊU CẦU) */
+        /* ========================================================= */
         #chat-box {
             position: fixed;
-            top: 0;
-            right: 0;
+            bottom: 0; /* Đẩy xuống dưới cùng */
+            right: 20px; /* Cách lề phải 20px */
             width: 350px;
-            height: 100vh;
+            height: 500px; /* Yêu cầu 1: Thu nhỏ chiều cao */
             background: #ffffff;
-            box-shadow: -4px 0 12px rgba(0, 0, 0, 0.2);
+            border-radius: 12px 12px 0 0; /* Bo góc trên */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
             z-index: 1000;
             display: flex;
             flex-direction: column;
+            transition: all 0.3s ease-in-out;
         }
 
         #chat-header {
@@ -214,38 +214,73 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-radius: 12px 12px 0 0;
         }
 
-        #close-chat-btn {
+        #close-chat-btn, #minimize-chat-btn {
             background: none;
             border: none;
             color: white;
             font-size: 1.2em;
             cursor: pointer;
+            margin-left: 10px;
+            opacity: 0.8;
+            transition: opacity 0.2s;
         }
+
+            #close-chat-btn:hover, #minimize-chat-btn:hover {
+                opacity: 1;
+            }
 
         #messages-container {
             flex-grow: 1;
             overflow-y: auto;
             padding: 10px;
             background-color: #f7f7f7;
+            max-height: 380px; /* 500 (height) - 60 (header) - 60 (input) = 380px */
         }
 
         .message-timestamp {
-            font-size: 0.75em; 
+            font-size: 0.75em;
             color: #555;
             font-weight: 500;
             white-space: nowrap;
             margin: 0 6px;
         }
 
-        /* Message Bubbles (Tương tự như chat_interface.html) */
-        .message-container { margin-bottom: 8px; display: flex; }
-        .message-bubble { padding: 8px 12px; border-radius: 18px; max-width: 80%; line-height: 1.4; }
-        .self { justify-content: flex-end; }
-        .self .message-bubble { background-color: #dcf8c6; color: #000; border-bottom-right-radius: 4px; }
-        .other { justify-content: flex-start; }
-        .other .message-bubble { background-color: #ffffff; color: #000; border-bottom-left-radius: 4px; }
+        /* Message Bubbles */
+        .message-container {
+            margin-bottom: 8px;
+            display: flex;
+        }
+
+        .message-bubble {
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 80%;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .self {
+            justify-content: flex-end;
+        }
+
+            .self .message-bubble {
+                background-color: #dcf8c6;
+                color: #000;
+                border-bottom-right-radius: 4px;
+            }
+
+        .other {
+            justify-content: flex-start;
+        }
+
+            .other .message-bubble {
+                background-color: #ffffff;
+                color: #000;
+                border-bottom-left-radius: 4px;
+            }
 
         #chat-input-area {
             padding: 10px;
@@ -253,6 +288,7 @@
             display: flex;
             border-top: 1px solid #ccc;
         }
+
         #chat-message-input {
             flex-grow: 1;
             padding: 8px;
@@ -270,6 +306,57 @@
             cursor: pointer;
         }
 
+        /* ========================================================= */
+        /* CHẾ ĐỘ THU GỌN (MESSENGER BUBBLE) */
+        /* ========================================================= */
+        #chat-mini {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: var(--primary-dark);
+            color: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            display: none; /* Mặc định ẩn, chỉ hiện khi chat bị thu nhỏ */
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease-in-out;
+            animation: pulse-new-message 1s infinite alternate; /* Hiệu ứng rung nhẹ */
+        }
+
+            /* Tắt hiệu ứng rung nếu không có tin nhắn mới */
+            #chat-mini.no-new-message {
+                animation: none;
+            }
+
+        @keyframes pulse-new-message {
+            from {
+                box-shadow: 0 0 0 0 rgba(28, 103, 88, 0.7);
+            }
+
+            to {
+                box-shadow: 0 0 0 10px rgba(28, 103, 88, 0);
+            }
+        }
+
+        /* Dấu chấm đỏ báo tin nhắn mới */
+        #chat-mini .unread-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: red;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 50%;
+            display: none; /* Mặc định ẩn */
+        }
 
         /* Footer (Giữ nguyên style) */
         .footer-main {
@@ -358,7 +445,10 @@
     <div id="chat-box" style="display: none;">
         <div id="chat-header">
             <span id="chat-title">Chat với [Tên Bạn Bè]</span>
-            <button id="close-chat-btn">X</button>
+            <div>
+                <button id="minimize-chat-btn"><i class="fas fa-minus"></i></button>
+                <button id="close-chat-btn"><i class="fas fa-times"></i></button>
+            </div>
         </div>
         <div id="messages-container">
         </div>
@@ -366,6 +456,11 @@
             <input type="text" id="chat-message-input" placeholder="Nhập tin nhắn...">
             <button id="chat-send-btn">Gửi</button>
         </div>
+    </div>
+
+    <div id="chat-mini" style="display: none;">
+        <i class="fas fa-comment"></i>
+        <span class="unread-count" id="unread-count"></span>
     </div>
 
     <footer class="footer-main">
@@ -399,7 +494,6 @@
         let currentChatReceiverId = null;
         let currentShareMode = 'friends';
 
-        //const socket = io.connect('http://' + document.domain + ':' + location.port);
         let protocol = (window.location.protocol === 'https:') ? 'wss://' : 'http://';
         let socketUrl = protocol + document.domain + ':' + location.port;
         const socket = io.connect(socketUrl);
@@ -426,13 +520,29 @@
         const messagesContainer = document.getElementById('messages-container');
         const messageInput = document.getElementById('chat-message-input');
         const sendButton = document.getElementById('chat-send-btn');
-        const closeButton = document.getElementById('close-chat-btn');
 
+        // KHAI BÁO BIẾN CHO CHAT MỚI
+        const closeButton = document.getElementById('close-chat-btn');
+        const minimizeButton = document.getElementById('minimize-chat-btn');
+        const chatMini = document.getElementById('chat-mini');
+        const unreadCountSpan = document.getElementById('unread-count');
+
+        let unreadCount = 0;
+        let isChatMinimized = false;
+
+        // GÁN SỰ KIỆN MỚI
         closeButton.addEventListener('click', closeChatBox);
         sendButton.addEventListener('click', sendMessage);
         messageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
 
-        // --- HÀM LOGIC CỐT LÕI ---
+        if (minimizeButton) {
+            minimizeButton.addEventListener('click', minimizeChatBox);
+        }
+        if (chatMini) {
+            chatMini.addEventListener('click', maximizeChatBox);
+        }
+
+        // --- HÀM LOGIC CỐT LÕI (GIỮ NGUYÊN) ---
         function sendLocationHandler(position) {
             if (currentShareMode === 'hidden') return;
             const lat = position.coords.latitude;
@@ -497,7 +607,6 @@
             if (id in markers) {
                 const currentMarker = markers[id].marker;
                 currentMarker.setLatLng(latlng);
-                // currentMarker.setOpacity(current_is_online ? 1.0 : 0.5);
                 currentMarker.getTooltip().setContent(labelText);
                 currentMarker.getPopup().setContent(popupText);
             } else {
@@ -510,7 +619,6 @@
                 if (!is_self) { marker.on('click', function (e) { showFriendPostsPopup(e.target.userId, e.target.userName, e.target); }); }
             }
 
-            // ⭐ KHÔNG CẦN CHỈNH SỬA Ở ĐÂY, VÌ ĐÃ THÊM ELEMENT BỊ THIẾU Ở HTML ⭐
             if (is_self && document.getElementById('username_display').innerText.indexOf('Loading') !== -1) {
                 document.getElementById('username_display').innerText = user_name;
             }
@@ -518,7 +626,6 @@
         }
 
         window.showFriendPostsPopup = function (friendId, friendName, marker) {
-            // Thay đổi màu nút Chat sang màu chủ đạo của index
             const chatButtonHtml = `<button onclick="openChatBox(${friendId}, '${friendName}')" style="margin-bottom: 10px; background-color: var(--primary-dark); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; display: block; width: 100%;"><i class="fas fa-comment"></i> Nhắn tin</button><hr style="margin: 5px 0; border-top: 1px dashed #ccc;">`;
             const loadingContent = `<b>${friendName}</b><br><hr style="margin: 5px 0;"><p>Đang tải 3 bài viết gần nhất...</p>`;
             marker.getPopup().setContent(loadingContent);
@@ -529,7 +636,6 @@
                 else if (data.message && data.message === "No visible posts found for this user.") { popupContent += `<p style="font-size: 0.9em;">Người dùng này chưa có bài viết công khai hoặc bạn bè nào.</p>`; }
                 else if (Array.isArray(data)) {
                     data.forEach(post => {
-                        // Sửa màu link bài viết
                         const imageHtml = post.image_filename ? `<img src="/static/post_images/${post.image_filename}" style="max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ddd;">` : '';
                         popupContent += `<div style="margin-bottom: 10px; border: 1px solid #eee; padding: 8px; border-radius: 4px; background-color: #f9f9f9;">${imageHtml} <h4 style="margin: 0; font-size: 1.1em;"><a href="/forum/post/${post.id}" target="_blank" title="Xem thêm trong Forum" style="color: var(--primary-dark); text-decoration: none; font-weight: bold;">${post.title}</a></h4><p style="margin: 3px 0; font-size: 0.85em; color: #6c757d; border-bottom: 1px dashed #ddd; padding-bottom: 3px;">${post.created_at} | Quyền: <i>${post.privacy}</i></p><p style="margin: 0; font-size: 0.9em; max-height: 40px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${post.content_snippet || 'Không có nội dung.'}</p></div>`;
                     });
@@ -613,9 +719,8 @@
         });
 
 
-        // --- SocketIO & Fetch Initial Data ---
+        // --- SocketIO & Fetch Initial Data (GIỮ NGUYÊN) ---
         socket.on('connect', function () {
-            // ⭐ ĐÃ KHẮC PHỤC LỖI THIẾU ELEMENT #socket_status ⭐
             document.getElementById('socket_status').innerText = 'Connected';
             document.getElementById('socket_status').style.color = 'green';
             fetch('/api/current_user_info').then(res => res.json()).then(data => {
@@ -629,7 +734,6 @@
                 }).catch(err => console.error("Lỗi khi tải vị trí cuối:", err));
             }).catch(err => {
                 console.error("Lỗi xác thực hoặc tải thông tin user:", err);
-                // ⭐ ĐÃ KHẮC PHỤC LỖI THIẾU ELEMENT #username_display ⭐
                 document.getElementById('username_display').innerText = 'LỖI TẢI USER';
             });
         });
@@ -658,31 +762,81 @@
         });
         fetch('/location_sharing/friends_list').then(res => res.json()).then(data => { console.log('Friend IDs for initialization:', data.friends_ids); });
 
-        // --- CHAT LOGIC ---
+        // --- CHAT LOGIC CẬP NHẬT HOÀN TOÀN ---
         function getChatRoom(user1_id, user2_id) { const ids = sorted([user1_id, user2_id]); return `chat_${ids[0]}_${ids[1]}`; }
         function sorted(array) { return [...array].sort((a, b) => a - b); }
+
+        // Mở khung chat (tối đa hóa)
         window.openChatBox = function (friendId, friendName) {
             if (user_id === null) { alert("Vui lòng đăng nhập để chat."); return; }
             currentChatReceiverId = friendId;
             chatTitle.innerText = `Chat với ${friendName}`;
             messagesContainer.innerHTML = '<p style="text-align: center; color: #777;">Đang tải lịch sử...</p>';
+
             chatBox.style.display = 'flex';
+            chatMini.style.display = 'none';
+            isChatMinimized = false;
+            resetUnreadCount();
+
             socket.emit('join_chat', { target_id: friendId });
             loadMessageHistory(friendId);
         }
+
+        // Đóng chat hoàn toàn
         function closeChatBox() {
             if (currentChatReceiverId !== null) { /* Rời phòng chat (Nếu cần) */ }
             currentChatReceiverId = null;
             chatBox.style.display = 'none';
+            chatMini.style.display = 'none';
+            isChatMinimized = false;
+            resetUnreadCount();
             messagesContainer.innerHTML = '';
             messageInput.value = '';
         }
+
+        // Thu nhỏ khung chat về bong bóng (-)
+        function minimizeChatBox() {
+            chatBox.style.display = 'none';
+            chatMini.style.display = 'flex';
+            chatMini.classList.add('no-new-message'); // Bắt đầu không rung
+            isChatMinimized = true;
+            if (unreadCount === 0) { resetUnreadCount(); }
+        }
+
+        // Mở rộng khung chat từ bong bóng
+        function maximizeChatBox() {
+            chatBox.style.display = 'flex';
+            chatMini.style.display = 'none';
+            isChatMinimized = false;
+            resetUnreadCount();
+            if (currentChatReceiverId !== null) { loadMessageHistory(currentChatReceiverId); }
+        }
+
+        // Cập nhật số tin nhắn chưa đọc
+        function updateUnreadCount(count) {
+            unreadCount = count;
+            if (count > 0) {
+                unreadCountSpan.innerText = count > 99 ? '99+' : count;
+                unreadCountSpan.style.display = 'block';
+                chatMini.classList.remove('no-new-message'); // Kích hoạt hiệu ứng rung
+            } else {
+                unreadCountSpan.style.display = 'none';
+                chatMini.classList.add('no-new-message'); // Tắt hiệu ứng rung
+            }
+        }
+
+        // Đặt lại số tin nhắn chưa đọc
+        function resetUnreadCount() {
+            updateUnreadCount(0);
+        }
+
         function sendMessage() {
             const content = messageInput.value.trim();
             if (content === '' || currentChatReceiverId === null) return;
             socket.emit('send_message', { receiver_id: currentChatReceiverId, content: content });
             messageInput.value = '';
         }
+
         function loadMessageHistory(friendId) {
             fetch(`/api/history/${friendId}`).then(res => res.json()).then(data => {
                 messagesContainer.innerHTML = '';
@@ -691,58 +845,62 @@
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }).catch(err => { console.error("Error loading message history:", err); messagesContainer.innerHTML = '<p style="text-align: center; color: red;">Lỗi khi tải lịch sử.</p>'; });
         }
+
         function appendMessage(content, isSelf, timestamp) {
             const container = document.createElement('div');
             container.className = isSelf ? 'message-container self' : 'message-container other';
 
-            const wrapper = document.createElement('div');
-            wrapper.className = 'message-content-wrapper'; // Wrapper mới để kiểm soát flex
-
             const bubble = document.createElement('div');
             bubble.className = 'message-bubble';
+            bubble.innerText = content;
 
-            const contentSpan = document.createElement('span');
-            contentSpan.innerText = content;
-            bubble.appendChild(contentSpan);
-
-            const timeSpan = document.createElement('div');
-            // timeSpan.className = 'message-timestamp';
-            // // Format ngày và giờ đầy đủ
-            // const dateObj = new Date(timestamp);
-            // const dateOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
-            // const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: false };
-            
-            // const formattedDate = dateObj.toLocaleDateString('vi-VN', dateOptions);
-            // const formattedTime = dateObj.toLocaleTimeString('vi-VN', timeOptions);
-
-            // timeSpan.innerText = `${formattedDate} ${formattedTime}`;
-            //timeSpan.innerText = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            if(timestamp){
-                const ts=new Date(timestamp);
-                const hours=ts.getHours().toString().padStart(2,"0");
-                const minutes=ts.getMinutes().toString().padStart(2,"0");
-                const span=document.createElement("span");
-                span.classList.add("message-timestamp");
-                span.textContent=`${hours}:${minutes}`;
-                wrapper.appendChild(span);
+            let timeSpan = null;
+            if (timestamp) {
+                const ts = new Date(timestamp);
+                const hours = ts.getHours().toString().padStart(2, "0");
+                const minutes = ts.getMinutes().toString().padStart(2, "0");
+                timeSpan = document.createElement("span");
+                timeSpan.classList.add("message-timestamp");
+                timeSpan.textContent = `${hours}:${minutes}`;
             }
-            
+
             if (isSelf) {
-                // Tự gửi: Timestamp bên trái, Bubble bên phải
-                wrapper.appendChild(timeSpan);
-                wrapper.appendChild(bubble);
+                if (timeSpan) {
+                    container.appendChild(timeSpan);
+                }
+                container.appendChild(bubble);
             } else {
-                // Người khác gửi: Bubble bên trái, Timestamp bên phải
-                wrapper.appendChild(bubble);
-                wrapper.appendChild(timeSpan);
+                container.appendChild(bubble);
+                if (timeSpan) {
+                    container.appendChild(timeSpan);
+                }
             }
 
-            container.appendChild(bubble);
             messagesContainer.appendChild(container);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
+
+        // Xử lý tin nhắn đến
         socket.on('new_message', (data) => {
-            if (data.sender_id === user_id || data.sender_id === currentChatReceiverId) { appendMessage(data.content, data.sender_id === user_id, data.timestamp); }
+            // Chỉ hiển thị tin nhắn nếu là mình gửi hoặc tin nhắn cho cuộc hội thoại đang mở
+            if (data.sender_id === user_id || data.sender_id === currentChatReceiverId) {
+                appendMessage(data.content, data.sender_id === user_id, data.timestamp);
+
+                if (data.sender_id !== user_id) { // Nếu là tin nhắn từ người khác
+                    if (chatBox.style.display === 'none' || isChatMinimized) {
+                        // Tự động popup nếu đang đóng hoàn toàn
+                        if (!isChatMinimized) {
+                            window.openChatBox(data.sender_id, markers[data.sender_id] ? markers[data.sender_id].username : "Bạn bè");
+                        } else {
+                            // Tăng bộ đếm nếu đang ở chế độ thu nhỏ
+                            updateUnreadCount(unreadCount + 1);
+                        }
+                    } else if (data.sender_id === currentChatReceiverId) {
+                        // Cuộn xuống cuối nếu đang mở đúng cuộc trò chuyện
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }
+                }
+            }
         });
     </script>
 </body>
