@@ -45,25 +45,51 @@ def aTemporaryCreateApp():
     db.init_app(app)
     return app
 
+
+# ===================  Intent dectector =================== 
+INTENT_KEYWORDS = {
+    "suggest": [
+        "gợi ý", "đề xuất", "nên đi",
+        "đi đâu", "chỗ nào", "ở đâu chơi",
+        "gần đây", "địa điểm", "tham quan"
+    ],
+    "info": [
+        "ở đâu", "là gì", "giá vé",
+        "mở cửa", "địa chỉ",
+        "giờ mở cửa", "bao nhiêu tiền",
+        "giới thiệu", "thông tin"
+    ],
+    "chat": [
+        "hello", "hi", "chào",
+        "bạn là ai", "giúp gì",
+        "nói chuyện", "cảm ơn"
+    ]
+}
+
+INTENT_PRIORITY = ["suggest", "info", "chat"]
+
 # ======================================================
 # Phân loại ý định người dùng
 # ======================================================
 def detect_intent(text: str) -> str:
-    """
-    Phân loại ý định người dùng:
-    - suggest: muốn gợi ý địa điểm
-    - info: hỏi thông tin cụ thể
-    - chat: trò chuyện tự nhiên
-    """
-    text_lower = text.lower()
-    keywords = ["đi", "du lịch", "địa điểm", "ở đâu", "biển", "núi", "tham quan", "đến"]
+    text = text.lower()
 
-    if any(k in text_lower for k in keywords):
-        return "suggest"
-    elif "ở" in text_lower and "gì" in text_lower:
-        return "info"
-    else:
-        return "chat"
+    scores = {intent: 0 for intent in INTENT_PRIORITY}
+
+    for intent, keywords in INTENT_KEYWORDS.items():
+        for kw in keywords:
+            if kw in text:
+                scores[intent] += 1
+    # Thứ tự ưu tiên là suggest -> info -> chat
+    for intent in INTENT_PRIORITY:
+        if scores[intent] > 0:
+            return intent
+
+    return "chat"
+# =================== Intent dectector =================== 
+
+
+
 
 # ======================================================
 #Gợi ý địa điểm từ cơ sở dữ liệu
@@ -167,15 +193,27 @@ def gemini_stream(user_message: str):
                 yield chunk.text
 
 
+def build_suggest_Prompt(user_message: str, places):
+    raw_info = "\n".join([f"{p['name']} — {p['tags']}" for p in places])
+    return raw_info
+
+def build_info_Prompt(user_messgae: str, places):
+    raw_info = "\n".join([f"{p['name']} — {p['description']}" for p in places])#add rating, address nếu thấy cần thiết về sau
+    return raw_info
+
+def build_safe_prompt(intent, data):
+    raw_info = "intent: chat - Chỉ trò chuyện thân thiện, không đề cập địa điểm mới."
+    return raw_info
+
 
 # ======================================================
 # 7. Hàm trung tâm: Chatbot trả lời
 # ======================================================
-def chatbot_reply(user_message: str,  places):
-    intent = detect_intent(user_message)
+def chatbot_reply(user_message: str,  places, intent):
+
     try:
         if intent == "suggest":
-            raw_info = "\n".join([f"{p['name']} — {p['description']}" for p in places])
+            raw_info = build_suggest_Prompt(user_message, places)
 
             prompt = f"""
             Hãy trả lời thật ngắn các thông tin của các địa điểm.
@@ -190,9 +228,9 @@ def chatbot_reply(user_message: str,  places):
             {raw_info}
 
             """
-        else:
-            print(4)
-            # Trường hợp không suggest thì chỉ gộp SYSTEM_PROMPT + user input
+        elif intent == "info":
+            raw_info = build_info_Prompt(user_message, places)
+            
             prompt = f"""
             # SYSTEM INSTRUCTION
             {SYSTEM_PROMPT}
@@ -200,34 +238,57 @@ def chatbot_reply(user_message: str,  places):
             # USER MESSAGE
             {user_message}
 
-            # TASK
-            Dựa trên SYSTEM_INSTRUCTION + USER_MESSAGE, hãy trả lời tự nhiên và đúng yêu cầu.
+            # ASSISTANT RESOURCES
+            Dưới đây là thông tin tôi tìm thấy từ cơ sở dữ liệu nội bộ:
+            {raw_info}
+
             """
+        else: # chat
+            raw_info = build_info_Prompt(user_message, places)
+            
+            prompt = f"""
+            # SYSTEM INSTRUCTION
+            {SYSTEM_PROMPT}
+
+            # USER MESSAGE
+            {user_message}
+
+            # ASSISTANT RESOURCES
+            {raw_info}
+
+            """
+
+        
         for chunk in gemini_stream(prompt):
             yield chunk
 
     except Exception as e:
          # Nếu Gemini API lỗi, hết quota...
         print(f"Gemini API lỗi: {e}. Chuyển sang rule-based.")
-        fallback_reply = rule_based_reply(user_message, places)
+        fallback_reply = rule_based_reply(user_message, places, intent)
 
         for line in fallback_reply.split("\n"):
             yield line
 
 
 
-def rule_based_reply(user_message: str, places):
+def rule_based_reply(user_message: str, places, intent):
     """
     Một phiên bản rule-based fallback nếu Gemini API không dùng được.
     """
-    intent = detect_intent(user_message)
+
 
     if intent == "suggest" and places:
         # trả lời dựa trên cơ sở dữ liệu
         return "\n".join([f"{p['name']} — {p['description']}" for p in places])  # lấy tối đa 5 địa điểm
+    elif intent == "info":
+        return "\n".join([f"{p['name']}: {p['description']}" for p in places])
     else:
         # fallback generic
-        return f"Tôi không thể truy cập AI hiện tại. Bạn hỏi: {user_message}.\nHãy thử hỏi lại sau hoặc tham khảo thông tin trong hệ thống."
+        return f"Xin lỗi, tôi chưa hiểu ý của bạn."
+
+
+
 
 
 print("Chat Bot loaded")

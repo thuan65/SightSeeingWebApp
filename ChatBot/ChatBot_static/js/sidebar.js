@@ -1,3 +1,14 @@
+document.addEventListener("click", (e) => {
+  const card = e.target.closest(".image-card");
+  if (!card) return;
+
+  const placeId = card.dataset.placeId;
+  if (!placeId) return;
+
+  viewDetail(placeId);
+});
+
+
 function renderSidebar(places) {
   const wrapper = document.getElementById("sidebar-wrapper");
   const sidebar = document.getElementById("sidebar");
@@ -39,7 +50,7 @@ function renderPlaceCard(place) {
     : `/static/images/${normalized}`;
 
   return `
-    <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 w-full max-w-full box-border">
+    <div class="image-card bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 w-full max-w-full box-border"  data-place-id="${place.id}">
       <img
         src="${imageSrc}"
         alt="${place.name || 'Place'}"
@@ -67,3 +78,8 @@ function renderPlaceCard(place) {
     </div>
   `;
 }
+
+function viewDetail(imageId) {
+          // Giữ nguyên logic cũ của bạn là chuyển hướng sang trang chi tiết
+          window.location.href = '/image/' + imageId;
+      }

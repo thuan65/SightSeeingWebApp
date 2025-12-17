@@ -30,7 +30,6 @@ def get_current_weather(place_id):
         return jsonify({"error": "Failed to fetch weather"}), 500
 
     data = response.json()
-    print(data)
     return jsonify({
         "current_weather": data.get("current_weather", {}),
         "lat": lat,
@@ -59,7 +58,6 @@ def get_weather_forecast(place_id):
     if response.status_code != 200:
         return jsonify({"error": "Failed to fetch weather"}), 500
 
-    print(response)
     data = response.json()
     return jsonify(data)
 

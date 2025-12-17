@@ -1,7 +1,7 @@
 ﻿from flask import Blueprint, request, jsonify, Response, current_app, render_template, copy_current_request_context
 from flask_login import current_user 
 from models import db, ConversationHistory 
-from .chatBotLogic import chatbot_reply, query_places
+from .chatBotLogic import chatbot_reply, query_places, detect_intent
 import json, textwrap
 
 # ---------------------------------------------------------
@@ -17,7 +17,7 @@ def chat_ui():
 
 @chatBot_bp.route("/api/stream", methods=["POST"])
 def stream():
-    #Xử lý input Handler
+    # =====Input Handler=====
     data = request.get_json()
     if not data or "message" not in data:
         return jsonify({"error": "Missing 'message' in request"}), 400
@@ -25,13 +25,17 @@ def stream():
     user_message = data.get("message", "").strip()
     if not user_message:
         return jsonify({"error": "Empty message"}), 400
+    # =====Input Handler=====
 
     # Lưu thông tin user trước khi generate() làm mất context
     user_is_auth = current_user.is_authenticated
     user_id = current_user.id if user_is_auth else None
 
+    intent = detect_intent(user_message)
 
+    # if intent == "suggest" and intent == "info":
     places = query_places(user_message)
+
 
     full_bot_reply = []
     real_app = current_app._get_current_object()
@@ -39,13 +43,9 @@ def stream():
         @copy_current_request_context
         def generate():
             # SEND PLACE DATA FIRST
-
-            for pl in places:
-                print(pl)
-
             yield f"data: {json.dumps({'type': 'places', 'data': places})}\n\n"
             # STREAM GEMINI
-            for chunk in chatbot_reply(user_message, places):
+            for chunk in chatbot_reply(user_message, places, intent):
                 clean = chunk.replace("data: ", "").strip()
                 # Ví dụ wrap text 80 ký tự
 
@@ -108,4 +108,6 @@ def get_chat_history():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+
+
 
