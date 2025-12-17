@@ -2,7 +2,7 @@ from sentence_transformers import util
 from models_loader import sbert_model
 import google.generativeai as genai
 import torch
-import os
+import os, json
 from dotenv import load_dotenv
 from sentence_transformers.util import cos_sim
 
@@ -76,7 +76,7 @@ def detect_intent(text: str) -> str:
 # Trả về danh sách địa điểm giống trên một tiêu chí nhất định
 def threshold_search(query_emb):
     top_k = 50
-    threshold = 0.75
+    threshold = 0.35
     distances, indices = faiss_loader.faiss_Text_index.search(query_emb, top_k)
     results = [
         {"id": idx, "score": score}
@@ -86,12 +86,18 @@ def threshold_search(query_emb):
     return results
 # ======================================================
 
-def suggest_place(user_query: str) -> dict:
+def query_places(user_query: str) -> dict:
+  
     # Encode query
     query_emb = sbert_model.encode([user_query], convert_to_numpy=True)
     query_emb = query_emb.astype('float32')
     faiss.normalize_L2(query_emb)  # nếu index đã normalize
     topK_Similarity_List = threshold_search(query_emb)
+
+    # print("############################")
+    # for r in topK_Similarity_List:
+    #     print(r["id"], r["score"])
+
     results = [] 
 
     app = aTemporaryCreateApp()
@@ -102,11 +108,7 @@ def suggest_place(user_query: str) -> dict:
             image = Image.query.get(image_id)
             if image:  # an toàn nếu record tồn tại
                 results.append({
-                    "id": image.id,
-                    "name": image.name,
-                    "tag": image.tags,
-                    "address": image.address,
-                    "description": image.description
+                    **image.to_dict()
                 })
     return results
 
@@ -156,83 +158,76 @@ def gemini_reply(user_message: str) -> str:
     
 def gemini_stream(user_message: str):
  
-    try:
         response = gemini_model.generate_content(
             user_message, 
             stream=True
         )
         for chunk in response:
             if chunk.text:
-                yield f"data: {chunk.text}\n\n"
-    except Exception as e:
-        yield f"data: Lỗi khi gọi Gemini API: {e}\n\n"
+                yield chunk.text
 
 
 
 # ======================================================
 # 7. Hàm trung tâm: Chatbot trả lời
 # ======================================================
-# def chatbot_reply(user_message: str):
-# # Sinh phản hồi dựa trên intent.
-#     intent = detect_intent(user_message)
+def chatbot_reply(user_message: str,  places):
+    intent = detect_intent(user_message)
+    try:
+        if intent == "suggest":
+            raw_info = "\n".join([f"{p['name']} — {p['description']}" for p in places])
 
-#     if intent == "suggest":
-#         place = suggest_place(user_message)
-#         raw_info = f" Gợi ý cho bạn: {place['name']} — {place['description']}"
-#         prompt = f"""Người dùng hỏi: "{user_message}".
-#         Dưới đây là thông tin tôi tìm thấy:
-#         {raw_info}
-#         Hãy viết lại câu trả lời ngắn gọn, thân thiện, tự nhiên như hướng dẫn viên du lịch đang nói chuyện, bằng tiếng Việt.
-#         """
-#         reply = gemini_reply(prompt)
-#     else:
-#         reply = gemini_reply(user_message)
+            prompt = f"""
+            Hãy trả lời thật ngắn các thông tin của các địa điểm.
+            # SYSTEM INSTRUCTION
+            {SYSTEM_PROMPT}
 
-#     return reply
+            # USER MESSAGE
+            Người dùng hỏi: "{user_message}"
+
+            # ASSISTANT RESOURCES
+            Dưới đây là thông tin tôi tìm thấy từ cơ sở dữ liệu nội bộ:
+            {raw_info}
+
+            """
+        else:
+            print(4)
+            # Trường hợp không suggest thì chỉ gộp SYSTEM_PROMPT + user input
+            prompt = f"""
+            # SYSTEM INSTRUCTION
+            {SYSTEM_PROMPT}
+
+            # USER MESSAGE
+            {user_message}
+
+            # TASK
+            Dựa trên SYSTEM_INSTRUCTION + USER_MESSAGE, hãy trả lời tự nhiên và đúng yêu cầu.
+            """
+        for chunk in gemini_stream(prompt):
+            yield chunk
+
+    except Exception as e:
+         # Nếu Gemini API lỗi, hết quota...
+        print(f"Gemini API lỗi: {e}. Chuyển sang rule-based.")
+        fallback_reply = rule_based_reply(user_message, places)
+
+        for line in fallback_reply.split("\n"):
+            yield line
 
 
 
-def chatbot_reply(user_message: str):
+def rule_based_reply(user_message: str, places):
+    """
+    Một phiên bản rule-based fallback nếu Gemini API không dùng được.
+    """
     intent = detect_intent(user_message)
 
-   
-
-    if intent == "suggest":
-        places = suggest_place(user_message)
-        raw_info = "\n".join([f"{p['name']} — {p['description']}" for p in places])
-
-        prompt = f"""
-        # SYSTEM INSTRUCTION
-        {SYSTEM_PROMPT}
-
-        # USER MESSAGE
-        Người dùng hỏi: "{user_message}"
-
-        # ASSISTANT RESOURCES
-        Dưới đây là thông tin tôi tìm thấy từ cơ sở dữ liệu nội bộ:
-        {raw_info}
-
-        # TASK
-        Dựa trên SYSTEM_INSTRUCTION + USER_MESSAGE + ASSISTANT_RESOURCES,
-        hãy viết câu trả lời ngắn gọn, thân thiện, tự nhiên như hướng dẫn viên du lịch đang nói chuyện, bằng tiếng Việt.
-        """
-
-        reply = gemini_stream(prompt)
-
+    if intent == "suggest" and places:
+        # trả lời dựa trên cơ sở dữ liệu
+        return "\n".join([f"{p['name']} — {p['description']}" for p in places])  # lấy tối đa 5 địa điểm
     else:
-        # Trường hợp không suggest thì chỉ gộp SYSTEM_PROMPT + user input
-        prompt = f"""
-        # SYSTEM INSTRUCTION
-        {SYSTEM_PROMPT}
+        # fallback generic
+        return f"Tôi không thể truy cập AI hiện tại. Bạn hỏi: {user_message}.\nHãy thử hỏi lại sau hoặc tham khảo thông tin trong hệ thống."
 
-        # USER MESSAGE
-        {user_message}
-
-        # TASK
-        Dựa trên SYSTEM_INSTRUCTION + USER_MESSAGE, hãy trả lời tự nhiên và đúng yêu cầu.
-        """
-    reply = gemini_stream(prompt)
-
-    return reply
 
 print("Chat Bot loaded")

@@ -1,27 +1,14 @@
 ﻿from flask import Blueprint, request, jsonify, Response, current_app, render_template, copy_current_request_context
 from flask_login import current_user 
 from models import db, ConversationHistory 
-from .chatBotLogic import chatbot_reply
+from .chatBotLogic import chatbot_reply, query_places
+import json, textwrap
 
 # ---------------------------------------------------------
 # CHATBOT
 # ---------------------------------------------------------
 
 chatBot_bp = Blueprint("chat_bot", __name__, template_folder= "ChatBot_templates", static_folder= "ChatBot_static")
-
-# @chatBot_bp.route("/stream", methods=["POST"])
-# def stream():
-#     data = request.get_json()
-#     user_message = data.get("message", "")
-#     print("Client gửi:", user_message)
-
-#     def generate():
-#         for chunk in chatbot_reply(user_message):
-#             yield chunk   # Đã bao gồm "data: ...\n\n"
-
-#         yield "data: [DONE]\n\n"
-
-#     return Response(generate(), mimetype="text/event-stream")
 
 @chatBot_bp.route("/chat_ui")
 def chat_ui():
@@ -30,6 +17,7 @@ def chat_ui():
 
 @chatBot_bp.route("/api/stream", methods=["POST"])
 def stream():
+    #Xử lý input Handler
     data = request.get_json()
     if not data or "message" not in data:
         return jsonify({"error": "Missing 'message' in request"}), 400
@@ -42,19 +30,29 @@ def stream():
     user_is_auth = current_user.is_authenticated
     user_id = current_user.id if user_is_auth else None
 
+
+    places = query_places(user_message)
+
     full_bot_reply = []
     real_app = current_app._get_current_object()
     try:
         @copy_current_request_context
         def generate():
+            # SEND PLACE DATA FIRST
 
-            for chunk in chatbot_reply(user_message):
+            for pl in places:
+                print(pl)
+
+            yield f"data: {json.dumps({'type': 'places', 'data': places})}\n\n"
+            # STREAM GEMINI
+            for chunk in chatbot_reply(user_message, places):
                 clean = chunk.replace("data: ", "").strip()
                 # Ví dụ wrap text 80 ký tự
-                import textwrap
-                clean = "\n".join(textwrap.wrap(clean, width=80))
+
+                
                 full_bot_reply.append(clean)
-                yield f"data: {clean}\n\n"
+                 # STREAM GEMINI
+                yield f"data: {json.dumps({'type':'text', 'data': clean})}\n\n"
 
 
             # Ghép bot trả lời
@@ -83,7 +81,7 @@ def stream():
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), 500  
 
 
   #Trả kết quả 

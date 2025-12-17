@@ -3,156 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <title>Chatbot Du Lịch</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1C6758 0%, #8EB486 100%); 
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-
-        h1 {
-            margin-bottom: 20px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
-        }
-
-        .chat-container {
-            width: 100%;
-            max-width: 600px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        }
-
-        .chat-box {
-            background: white;
-            color: #333;
-            width: 100%;
-            border-radius: 15px;
-            padding: 15px;
-            box-sizing: border-box; 
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
-            overflow-y: auto;
-            height: 350px;
-            scroll-behavior: smooth;
-        }
-
-            .chat-box::-webkit-scrollbar {
-                width: 8px;
-            }
-
-            .chat-box::-webkit-scrollbar-thumb {
-                background: #ccc;
-                border-radius: 4px;
-            }
-
-        .message {
-            margin-bottom: 12px;
-            padding: 10px 15px;
-            border-radius: 18px;
-            max-width: 75%;
-            word-wrap: break-word;
-            line-height: 1.5;
-            font-size: 15px;
-            position: relative;
-        }
-
-        .user-container {
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .user {
-            background: linear-gradient(135deg, #1C6758, #8EB486);
-            color: white;
-            border-bottom-right-radius: 4px;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .bot-container {
-            display: flex;
-            justify-content: flex-start;
-        }
-
-        .bot {
-            background-color: #f1f2f6;
-            color: #2c3e50;
-            border-bottom-left-radius: 4px;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .input-area {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-        }
-
-        input {
-            flex: 1;
-            padding: 12px 15px;
-            border-radius: 25px;
-            border: none;
-            font-size: 16px;
-            outline: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        button {
-            background: linear-gradient(135deg, #1C6758, #8EB486);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            padding: 10px 25px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 16px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        }
-
-            button:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-            }
-
-            button:active {
-                transform: translateY(0);
-            }
-
-        #loadingMsg {
-            text-align: center;
-            color: gray;
-            font-style: italic;
-            font-size: 0.9em;
-            margin-top: 20px;
-        }
-    </style>
+<link rel="stylesheet" href="{{ url_for('chat_bot.static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{url_for('chat_bot.static', filename= 'css/style.css')}}" >
 </head>
-<body>
-    <h1>Trợ lý Du Lịch</h1>
 
-    <div class="chat-container">
-        <div class="chat-box" id="chatBox">
-            <div id="loadingMsg">Đang tải cuộc trò chuyện cũ...</div>
-        </div>
+<body>
+
+        <!-- Toggle Button -->
+    <button id="sidebar-toggle" onclick="toggleSidebar()"> ☰ </button>
 
          <!-- SIDEBAR -->
         <div id="sidebar-wrapper" class="hidden">
             <div id="sidebar"></div>
         </div>
 
+        <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <h1>Trợ lý Du Lịch</h1>
 
+        <div class="chat-container">
+            <div class="chat-box" id="chatBox">
+                <div id="loadingMsg">Đang tải cuộc trò chuyện cũ...</div>
+            </div>
 
-        <div class="input-area">
-            <input id="userInput" placeholder="Hỏi gì đó về du lịch đi..." autocomplete="off">
-            <button onclick="sendMessage()">Gửi ➤</button>
+            <div class="input-area">
+                <input id="userInput" placeholder="Hỏi gì đó về du lịch đi..." autocomplete="off">
+                <button onclick="sendMessage()">Gửi ➤</button>
+            </div>
         </div>
     </div>
 
@@ -249,37 +126,57 @@
         }
 
         const reader = response.body.getReader();
-        const decoder = new TextDecoder();
+        const textDecoder  = new TextDecoder();
+        let buffer = "";
+
         let done = false;
         let pendingAnimate = Promise.resolve(); // chuỗi các animation để giữ thứ tự
 
         while (!done) {
           const { value, done: streamDone } = await reader.read();
           done = streamDone;
-          if (value) {
-            // decode chunk (có thể chứa "data: ..." hoặc nhiều event)
-            let chunk = decoder.decode(value, { stream: true });
+          if (!value) continue;
 
-            // Nếu backend gửi theo chuẩn SSE "data: ...\n\n", có thể nhận nhiều "data:" trong chunk.
-            // Tách các dòng "data: ..." và xử lý lần lượt.
-            // Lọc các phần rỗng
-            const parts = chunk.split(/\r?\n/).filter(Boolean);
+           buffer += textDecoder.decode(value, { stream: true });
+            
+               // SSE event kết thúc bằng \n\n
+            let parts = buffer.split(/\n\n/);
+
+            // giữ lại phần cuối chưa hoàn chỉnh
+            buffer = parts.pop() || "";
 
             for (let part of parts) {
-              // bỏ prefix "data: " nếu có
-              part = part.replace(/^data:\s*/i, '');
+                if (!part.trim()) continue;
 
+              // Bỏ tiền tố "data: "
+            const match = part.match(/^data:\s*(.*)$/i);
+            if (!match) continue;
+
+            const jsonStr = match[1].trim();
               // nếu backend gửi token đặc biệt [DONE]
-              if (part.trim() === '[DONE]') {
+              if (jsonStr  === '[DONE]') {
                 // chờ tất cả animation hiện tại hoàn thành rồi kết thúc
                 await pendingAnimate;
                 return;
               }
 
+                let parsed;
+                try {
+                parsed = JSON.parse(jsonStr);
+                } catch(e) {
+                console.error("Lỗi parse SSE chunk", e);
+                continue;
+                }
+
+                if (parsed.type === "text") {
               // nếu có text thực, đẩy vào hàng animation để vẫn giữ thứ tự
               // (nếu 1 chunk lớn, sẽ animate từng ký tự liên tục)
-              pendingAnimate = pendingAnimate.then(() => animateAppend(botBubble, part));
-            }
+              pendingAnimate = pendingAnimate.then(() => animateAppend(botBubble, parsed.data));
+                } else if (parsed.type === "places") {
+                    // cập nhật sidebar
+                    renderSidebar(parsed.data);
+                }
+            
           }
         }
 
