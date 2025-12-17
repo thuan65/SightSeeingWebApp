@@ -110,41 +110,26 @@ def submit_feedback(image_id):
         if not image:
             return jsonify({"error": "Image not found"}), 404
         # 2. Lấy địa chỉ của địa điểm và Geocoding 
-        location_address = image.address
+        location_lat = image.latitude
+        location_lng = image.longitude
 
-        print(f"[DEBUG FEEDBACK] Địa chỉ địa điểm: {location_address}") 
+        distance = haversine(
+            float(user_lat), float(user_lng), 
+            float(location_lat), float(location_lng)
+        )
 
-        if not location_address:
-            # Nếu địa điểm không có địa chỉ, không có cơ sở để từ chối
-            print(f"DEBUG: Địa điểm ID {id} không có địa chỉ. Bỏ qua kiểm tra vị trí.")
-        else:
-            # Chuyển đổi địa chỉ sang Lat/Lng
-            geo_result = geocode_address(location_address)
+        # GIỚI HẠN BÁN KÍNH
+        RADIUS_KM = 10 # Đặt là 2km
+        RADIUS_METER = RADIUS_KM * 1000
 
-            if not geo_result:
-                print(f"DEBUG: Geocoding thất bại cho {location_address}. Bỏ qua kiểm tra vị trí.")
-            else:
-                image_lat = geo_result['lat']
-                image_lng = geo_result['lon'] 
+        # print(f"[DEBUG FEEDBACK] Khoảng cách tính được: {distance:.2f} mét. Giới hạn: {RADIUS_METER} mét.")
 
-                # 3. Tính khoảng cách và kiểm tra (2km = 2000m)
-                distance = haversine(
-                    float(user_lat), float(user_lng), 
-                    image_lat, image_lng
-                )
-
-                # GIỚI HẠN BÁN KÍNH
-                RADIUS_KM = 2 # Đặt là 2km
-                RADIUS_METER = RADIUS_KM * 1000
-
-                print(f"[DEBUG FEEDBACK] Khoảng cách tính được: {distance:.2f} mét. Giới hạn: {RADIUS_METER} mét.")
-
-                if distance > RADIUS_METER:
-                    print(f"[DEBUG FEEDBACK] TỪ CHỐI: Khoảng cách > {RADIUS_KM} km.") # <--- DEBUG
-                    return jsonify({
-                        "error": f"Bạn quá xa để đánh giá. Khoảng cách: {distance:.2f} mét. Yêu cầu: dưới {RADIUS_KM} km."
-                    }), 403
-                else: print(f"[DEBUG FEEDBACK] CHẤP NHẬN: Khoảng cách OK.") # <--- DEBUG
+        if distance > RADIUS_METER:
+            print(f"[DEBUG FEEDBACK] TỪ CHỐI: Khoảng cách > {RADIUS_KM} km.") # <--- DEBUG
+            return jsonify({
+                "error": f"Bạn quá xa để đánh giá. Khoảng cách: {distance:.2f} mét. Yêu cầu: dưới {RADIUS_KM} km."
+            }), 403
+        # else: print(f"[DEBUG FEEDBACK] CHẤP NHẬN: Khoảng cách OK.") # <--- DEBUG
 
         # Update rating
         old_rating = image.rating or 0
