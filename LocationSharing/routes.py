@@ -17,26 +17,26 @@ def get_friends_ids(user_id):
     friend_ids = set()
     
     for friendship in friendships:
-        # if (friendship.user_id != user_id):
-        #     friend_ids.add(friendship.user_id)
-        # if friendship.friend_id != user_id:
-        #     friend_ids.add(friendship.friend_id)
-        for friendship in friendships:
-            friend_id_to_check = None
+        if (friendship.user_id != user_id):
+            friend_ids.add(friendship.user_id)
+        if friendship.friend_id != user_id:
+            friend_ids.add(friendship.friend_id)
+        # for friendship in friendships:
+        #     friend_id_to_check = None
             
-            # 1. Xác định ID người bạn (ID khác user_id)
-            if friendship.user_id != user_id:
-                friend_id_to_check = friendship.user_id
-            elif friendship.friend_id != user_id:
-                friend_id_to_check = friendship.friend_id
+        #     # 1. Xác định ID người bạn (ID khác user_id)
+        #     if friendship.user_id != user_id:
+        #         friend_id_to_check = friendship.user_id
+        #     elif friendship.friend_id != user_id:
+        #         friend_id_to_check = friendship.friend_id
             
-            if friend_id_to_check:
-                # 2. Lấy đối tượng User từ DB (Gây nhiều DB hit)
-                friend_user = db.session.query(User).filter_by(id=friend_id_to_check).first()
+        #     if friend_id_to_check:
+        #         # 2. Lấy đối tượng User từ DB (Gây nhiều DB hit)
+        #         friend_user = db.session.query(User).filter_by(id=friend_id_to_check).first()
                 
-                # 3. CÚ PHÁP KIỂM TRA ĐÚNG:
-                if friend_user and friend_user.online == True: # True tương đương với 1 trong DB
-                    friend_ids.add(friend_id_to_check)
+        #         # 3. CÚ PHÁP KIỂM TRA ĐÚNG:
+        #         if friend_user and friend_user.online == True: # True tương đương với 1 trong DB
+        #             friend_ids.add(friend_id_to_check)
             
     final_ids = list(friend_ids)
 
@@ -96,12 +96,12 @@ def initial_locations():
     
     # 1. Lấy LiveLocation của tất cả bạn bè đã tìm được
     # Cần phải JOIN với bảng User để lấy username và share_mode
-    locations = db.session.query(LiveLocation, User.username, User.share_mode).join(User, LiveLocation.user_id == User.id).filter(
+    locations = db.session.query(LiveLocation, User.username, User.share_mode, User.online).join(User, LiveLocation.user_id == User.id).filter(
         LiveLocation.user_id.in_(friend_ids)
     ).all()
     
     result = []
-    for loc, uname, mode in locations:
+    for loc, uname, mode, is_online in locations:
         # Chỉ hiển thị vị trí cuối nếu họ không ở chế độ 'hidden'
         #if mode != 'hidden':
         result.append({
@@ -109,7 +109,8 @@ def initial_locations():
             'username': uname,
             'lat': loc.lat,
             'lng': loc.lng,
-            'share_mode': mode
+            'share_mode': mode,
+            'is_online': is_online
         })
             
     # Thêm vị trí của chính mình (để đảm bảo map bao trùm cả mình)
