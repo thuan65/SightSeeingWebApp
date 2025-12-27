@@ -5,9 +5,6 @@ import os, json
 
 search_image_bp = Blueprint('image_bp', __name__)
 
-# ---------------------------------------------------------
-# TÌM KIẾM ẢNH BẰNG ẢNH (UPLOAD)
-# ---------------------------------------------------------
 @search_image_bp.route("/search_image", methods=["GET", "POST"])
 def search_image():
     if request.method == "POST":
@@ -18,16 +15,15 @@ def search_image():
         upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], file.filename)
         file.save(upload_path)
 
-        # --- PHẦN ĐÃ SỬA ---
-        # 1. Nhận về danh sách kết quả (list of dicts)
+        # 1.list of dicts here
         faiss_results  = find_similar(upload_path)
         if not faiss_results:
             return jsonify([])
 
-        #Lấy image_id
+        #image_id
         image_ids = [item["image_id"] for item in faiss_results]
 
-        #Query DB
+        #Query DB by img id
         images = Image.query.filter(Image.id.in_(image_ids)).all()
         image_map = {img.id: img for img in images}
 
@@ -43,21 +39,3 @@ def search_image():
         return jsonify(final_results)
 
     return jsonify([])
-
-    #     # 2. Kiểm tra xem có kết quả không và lấy kết quả đầu tiên (Rank 1)
-    #     if results and len(results) > 0:
-    #         top_result = results[0] # Lấy phần tử đầu tiên
-    #         best_match = top_result['file_name'] # Lấy tên file
-    #         score = top_result['distance'] # Lấy điểm số
-            
-    #         return render_template(
-    #             "search_result.html",
-    #             query=file.filename,
-    #             match=best_match,
-    #             score=1-round(score, 3)
-    #         )
-    #     else:
-    #         return "Không tìm thấy ảnh tương tự trong cơ sở dữ liệu", 404
-    #     # -------------------
-
-    # return render_template("search_image.html")
