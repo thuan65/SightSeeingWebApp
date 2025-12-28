@@ -3,21 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <title>Chatbot Du Lịch</title>
-<link rel="stylesheet" href="{{ url_for('chat_bot.static', filename='css/sidebar.css') }}">
-<link rel="stylesheet" href="{{url_for('chat_bot.static', filename= 'css/style.css')}}" >
+    <link rel="stylesheet" href="{{ url_for('chat_bot.static', filename='css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{url_for('chat_bot.static', filename= 'css/style.css')}}" >
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px 30px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 3000;
+            height: 70px;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1C6758;
+            text-decoration: none;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .logo span {
+            color: #8EB486;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            position: relative;
+        }
+
+        .nav-links a, .nav-links button {
+            text-decoration: none;
+            color: #333;
+            padding: 10px 18px;
+            border-radius: 8px;
+            transition: 0.3s;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .nav-links a:hover, .nav-links button:hover {
+            background: #f0f0f0;
+        }
+
+        .nav-user {
+            color: #333;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+            cursor: default;
+        }
+
+        .nav-user:hover {
+            background: #f0f0f0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1C6758, #8EB486) !important;
+            color: white !important;
+            font-weight: 600;
+        }
+
+        .hamburger-btn {
+            font-size: 24px;
+            padding: 8px 12px !important;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            padding: 10px;
+            min-width: 200px;
+            display: none;
+            z-index: 3001;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 2px 0;
+            color: #333;
+        }
+
+        .dropdown-menu a:hover {
+            background: #f0f0f0;
+        }
+
+        body {
+            padding-top: 70px;
+        }
+
+        #sidebar-toggle {
+            top: 85px; /* 70px (header) + 15px spacing */
+        }
+
+        .main-content {
+            margin-top: 0;
+        }
+    </style>
 </head>
 
 <body>
 
-        <!-- Toggle Button -->
+    <header>
+        <div class="header-container">
+            <a href="/" class="logo">Loca<span>Go!</span></a>
+            <div class="nav-links">
+                <a href="/MapRouting">Bản đồ du lịch</a>
+                <a href="/chat_ui">Chatbot du lịch</a>
+                <a href="/forum">Forum</a>
+                <a href="/friends_map">Friends map</a>
+
+                <span class="nav-user">Xin chào, User</span>
+
+                <button class="hamburger-btn" onclick="toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="/favorites"><i class="fas fa-heart"></i> Danh sách yêu thích</a>
+                    <a href="/friends"><i class="fas fa-user-friends"></i> Bạn bè</a>
+                    <a href="/logout"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toggle Button -->
     <button id="sidebar-toggle" onclick="toggleSidebar()"> ☰ </button>
 
-         <!-- SIDEBAR -->
-        <div id="sidebar-wrapper" class="hidden">
-            <div id="sidebar"></div>
-        </div>
+    <!-- SIDEBAR -->
+    <div id="sidebar-wrapper" class="hidden">
+        <div id="sidebar"></div>
+    </div>
 
-        <!-- MAIN CONTENT -->
+    <!-- MAIN CONTENT -->
     <div class="main-content">
         <h1>Trợ lý Du Lịch</h1>
 
@@ -38,34 +194,46 @@
     </div>
 
     <script>
+        // Header menu toggle
+        function toggleMenu() {
+            const menu = document.getElementById('dropdownMenu');
+            menu.classList.toggle('show');
+        }
+
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('dropdownMenu');
+            const hamburger = document.querySelector('.hamburger-btn');
+            if (!menu.contains(event.target) && !hamburger.contains(event.target)) {
+                menu.classList.remove('show');
+            }
+        });
+
+        // Chat functionality
         const chatBox = document.getElementById('chatBox');
         const userInput = document.getElementById('userInput');
         const loadingMsg = document.getElementById('loadingMsg');
 
         // Hàm vẽ tin nhắn lên màn hình
-       function appendMessage(text, sender) {
-          // const chatBox = document.getElementById("chat-box");
+        function appendMessage(text, sender) {
+            const isAtBottom = chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 5;
 
-          const isAtBottom = chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 5;
+            const msgContainer = document.createElement("div");
+            msgContainer.className = sender === "user" ? "user-container" : "bot-container";
 
-          const msgContainer = document.createElement("div");
-          msgContainer.className = sender === "user" ? "user-container" : "bot-container";
+            const bubble = document.createElement("div");
+            bubble.className = `message ${sender}`;
+            bubble.textContent = text;
 
-          const bubble = document.createElement("div");
-          bubble.className = `message ${sender}`;
-          bubble.textContent = text;
+            msgContainer.appendChild(bubble);
+            chatBox.appendChild(msgContainer);
 
-          msgContainer.appendChild(bubble);
-          chatBox.appendChild(msgContainer);
+            // Chỉ scroll xuống khi user đang ở cuối
+            if (isAtBottom) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
 
-           // Chỉ scroll xuống khi user đang ở cuối
-          if (isAtBottom) {
-              chatBox.scrollTop = chatBox.scrollHeight;
-          }
-
-          return bubble;  // trả về để SSE append tiếp
+            return bubble;  // trả về để SSE append tiếp
         }
-
 
         async function loadHistory() {
             try {
@@ -88,111 +256,109 @@
 
         // Gửi tin nhắn mới 
         // tốc độ gõ (ký tự / giây)
-    const charsPerSecond = 60; // đổi nhỏ hơn để chậm lại, lớn hơn để nhanh hơn
+        const charsPerSecond = 60; // đổi nhỏ hơn để chậm lại, lớn hơn để nhanh hơn
 
-    function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    async function animateAppend(bubble, text) {
-      // thêm từng ký tự với interval dựa trên charsPerSecond
-      if (!text) return;
-      const delay = 1000 / Math.max(1, charsPerSecond);
-      for (let i = 0; i < text.length; i++) {
-        bubble.textContent += text[i];
-        // cuộn xuống cuối nếu cần
-        if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
-        await sleep(delay);
-      }
-    }
-
-    async function sendMessage() {
-      const message = userInput.value.trim();
-      if (!message) return;
-
-      // Hiện tin nhắn user
-      appendMessage(message, 'user');
-      userInput.value = '';
-
-      // Tạo bubble rỗng cho bot và giữ reference
-      const botBubble = appendMessage('', 'bot');
-
-      try {
-        const response = await fetch('/api/stream', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message })
-        });
-
-        if (!response.ok || !response.body) {
-          botBubble.textContent = '⚠️ Lỗi kết nối server.';
-          return;
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        const reader = response.body.getReader();
-        const textDecoder  = new TextDecoder();
-        let buffer = "";
+        async function animateAppend(bubble, text) {
+            // thêm từng ký tự với interval dựa trên charsPerSecond
+            if (!text) return;
+            const delay = 1000 / Math.max(1, charsPerSecond);
+            for (let i = 0; i < text.length; i++) {
+                bubble.textContent += text[i];
+                // cuộn xuống cuối nếu cần
+                if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+                await sleep(delay);
+            }
+        }
 
-        let done = false;
-        let pendingAnimate = Promise.resolve(); // chuỗi các animation để giữ thứ tự
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
 
-        while (!done) {
-          const { value, done: streamDone } = await reader.read();
-          done = streamDone;
-          if (!value) continue;
+            // Hiện tin nhắn user
+            appendMessage(message, 'user');
+            userInput.value = '';
 
-           buffer += textDecoder.decode(value, { stream: true });
-            
-               // SSE event kết thúc bằng \n\n
-            let parts = buffer.split(/\n\n/);
+            // Tạo bubble rỗng cho bot và giữ reference
+            const botBubble = appendMessage('', 'bot');
 
-            // giữ lại phần cuối chưa hoàn chỉnh
-            buffer = parts.pop() || "";
+            try {
+                const response = await fetch('/api/stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
 
-            for (let part of parts) {
-                if (!part.trim()) continue;
+                if (!response.ok || !response.body) {
+                    botBubble.textContent = '⚠️ Lỗi kết nối server.';
+                    return;
+                }
 
-              // Bỏ tiền tố "data: "
-            const match = part.match(/^data:\s*(.*)$/i);
-            if (!match) continue;
+                const reader = response.body.getReader();
+                const textDecoder = new TextDecoder();
+                let buffer = "";
 
-            const jsonStr = match[1].trim();
-              // nếu backend gửi token đặc biệt [DONE]
-              if (jsonStr  === '[DONE]') {
-                // chờ tất cả animation hiện tại hoàn thành rồi kết thúc
+                let done = false;
+                let pendingAnimate = Promise.resolve(); // chuỗi các animation để giữ thứ tự
+
+                while (!done) {
+                    const { value, done: streamDone } = await reader.read();
+                    done = streamDone;
+                    if (!value) continue;
+
+                    buffer += textDecoder.decode(value, { stream: true });
+
+                    // SSE event kết thúc bằng \n\n
+                    let parts = buffer.split(/\n\n/);
+
+                    // giữ lại phần cuối chưa hoàn chỉnh
+                    buffer = parts.pop() || "";
+
+                    for (let part of parts) {
+                        if (!part.trim()) continue;
+
+                        // Bỏ tiền tố "data: "
+                        const match = part.match(/^data:\s*(.*)$/i);
+                        if (!match) continue;
+
+                        const jsonStr = match[1].trim();
+                        // nếu backend gửi token đặc biệt [DONE]
+                        if (jsonStr === '[DONE]') {
+                            // chờ tất cả animation hiện tại hoàn thành rồi kết thúc
+                            await pendingAnimate;
+                            return;
+                        }
+
+                        let parsed;
+                        try {
+                            parsed = JSON.parse(jsonStr);
+                        } catch (e) {
+                            console.error("Lỗi parse SSE chunk", e);
+                            continue;
+                        }
+
+                        if (parsed.type === "text") {
+                            // nếu có text thực, đẩy vào hàng animation để vẫn giữ thứ tự
+                            // (nếu 1 chunk lớn, sẽ animate từng ký tự liên tục)
+                            pendingAnimate = pendingAnimate.then(() => animateAppend(botBubble, parsed.data));
+                        } else if (parsed.type === "places") {
+                            // cập nhật sidebar
+                            renderSidebar(parsed.data);
+                        }
+                    }
+                }
+
+                // chờ animation cuối cùng xong
                 await pendingAnimate;
-                return;
-              }
 
-                let parsed;
-                try {
-                parsed = JSON.parse(jsonStr);
-                } catch(e) {
-                console.error("Lỗi parse SSE chunk", e);
-                continue;
-                }
-
-                if (parsed.type === "text") {
-              // nếu có text thực, đẩy vào hàng animation để vẫn giữ thứ tự
-              // (nếu 1 chunk lớn, sẽ animate từng ký tự liên tục)
-              pendingAnimate = pendingAnimate.then(() => animateAppend(botBubble, parsed.data));
-                } else if (parsed.type === "places") {
-                    // cập nhật sidebar
-                    renderSidebar(parsed.data);
-                }
-            
-          }
+            } catch (err) {
+                console.error(err);
+                botBubble.textContent = '⚠️ Mất kết nối server!';
+            }
         }
-
-    // chờ animation cuối cùng xong
-    await pendingAnimate;
-
-  } catch (err) {
-    console.error(err);
-    botBubble.textContent = '⚠️ Mất kết nối server!';
-  }
-}
-
 
         // Nhấn Enter để gửi
         userInput.addEventListener('keypress', function (e) {
@@ -204,33 +370,7 @@
     </script>
 
     <!-- JS -->
-    <!-- const imageBtn = document.getElementById("image-btn");
-    const imageInput = document.getElementById("image-input");
-    const sendBtn = document.getElementById("send-btn");
-    const messageInput = document.getElementById("user-message");
-
-    imageBtn.addEventListener("click", () => {
-        imageInput.click(); // mở dialog chọn ảnh
-    });
-
-    imageInput.addEventListener("change", async () => {
-        const file = imageInput.files[0];
-        if (!file) return;
-
-        const formData = new FormData();
-        formData.append("image", file);
-
-        const response = await fetch("/chat", {
-            method: "POST",
-            body: formData
-        });
-
-        const data = await response.json();
-        displayChatReply(data.reply, data.places);
-    }); -->
-
-    <!--JS Loader-->
-  <script src="{{ url_for('chat_bot.static', filename='js/sidebar.js') }}"></script>
-  <script src="{{ url_for('chat_bot.static', filename='js/chat.js') }}"></script>
+    <script src="{{ url_for('chat_bot.static', filename='js/sidebar.js') }}"></script>
+    <script src="{{ url_for('chat_bot.static', filename='js/chat.js') }}"></script>
 </body>
 </html>
