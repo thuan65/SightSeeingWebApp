@@ -18,7 +18,6 @@ def search_image():
         upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], file.filename)
         file.save(upload_path)
 
-        # --- PHẦN ĐÃ SỬA ---
         # 1. Nhận về danh sách kết quả (list of dicts)
         faiss_results  = find_similar(upload_path)
         if not faiss_results:

@@ -28,6 +28,10 @@
 
             <div class="input-area">
                 <input id="userInput" placeholder="Hỏi gì đó về du lịch đi..." autocomplete="off">
+                <!-- <button id="image-btn" title="Gửi ảnh">
+                <img src="/static/icons/photo-icon.svg" alt="Ảnh" width="24">
+                </button> -->
+                <!-- <input type="file" id="image-input" accept="image/*" style="display:none"> -->
                 <button onclick="sendMessage()">Gửi ➤</button>
             </div>
         </div>
@@ -200,6 +204,32 @@
     </script>
 
     <!-- JS -->
+    <!-- const imageBtn = document.getElementById("image-btn");
+    const imageInput = document.getElementById("image-input");
+    const sendBtn = document.getElementById("send-btn");
+    const messageInput = document.getElementById("user-message");
+
+    imageBtn.addEventListener("click", () => {
+        imageInput.click(); // mở dialog chọn ảnh
+    });
+
+    imageInput.addEventListener("change", async () => {
+        const file = imageInput.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        const response = await fetch("/chat", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+        displayChatReply(data.reply, data.places);
+    }); -->
+
+    <!--JS Loader-->
   <script src="{{ url_for('chat_bot.static', filename='js/sidebar.js') }}"></script>
   <script src="{{ url_for('chat_bot.static', filename='js/chat.js') }}"></script>
 </body>

@@ -49,9 +49,13 @@ def aTemporaryCreateApp():
 # ===================  Intent dectector =================== 
 INTENT_KEYWORDS = {
     "suggest": [
-        "gợi ý", "đề xuất", "nên đi",
-        "đi đâu", "chỗ nào", "ở đâu chơi",
-        "gần đây", "địa điểm", "tham quan"
+          "gợi ý", "đề xuất", "nên đi", "muốn đi",
+    "đi đâu", "chỗ nào", "ở đâu chơi",
+    "gần đây", "địa điểm", "tham quan",
+    "nơi vui chơi", "điểm đến", "tham quan đâu",
+    "tour", "chuyến đi", "lịch trình",
+    "du lịch", "check-in", "khám phá",
+    "địa điểm nổi tiếng", "địa điểm đẹp"
     ],
     "info": [
         "ở đâu", "là gì", "giá vé",
@@ -102,7 +106,7 @@ def detect_intent(text: str) -> str:
 # Trả về danh sách địa điểm giống trên một tiêu chí nhất định
 def threshold_search(query_emb):
     top_k = 50
-    threshold = 0.35
+    threshold = 0.38
     distances, indices = faiss_loader.faiss_Text_index.search(query_emb, top_k)
     results = [
         {"id": idx, "score": score}
