@@ -1,4 +1,5 @@
-# app.py
+import time
+start = time.time()
 
 from flask import (
     Flask, render_template, request, jsonify, Response, json,
@@ -64,24 +65,24 @@ blueprint_name = MapRouting_bp.name  # Lấy tên định danh của Blueprint (
 
 if blueprint_name not in app.blueprints:
     app.register_blueprint(MapRouting_bp, url_prefix="/MapRouting")
-    print(f"✅ Đã đăng ký thành công Blueprint: {blueprint_name} tại /MapRouting")
+    print(f" Đã đăng ký thành công Blueprint: {blueprint_name} tại /MapRouting")
 else:
-    print(f"ℹ️ Blueprint '{blueprint_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
+    print(f" Blueprint '{blueprint_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
 
 # Đăng ký Blueprint LocationSharing
 blueprint2_name = location_bp.name
 if blueprint2_name not in app.blueprints:
     app.register_blueprint(location_bp)
-    print(f"✅ Đã đăng ký thành công Blueprint: {blueprint2_name} tại /location_sharing")
+    print(f" Đã đăng ký thành công Blueprint: {blueprint2_name} tại /location_sharing")
 else:
-    print(f"ℹ️ Blueprint '{blueprint2_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
+    print(f" Blueprint '{blueprint2_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
 
 blueprint3_name = messaging_bp.name
 if blueprint3_name not in app.blueprints:
     app.register_blueprint(messaging_bp)
-    print(f"✅ Đã đăng ký thành công Blueprint: {blueprint3_name} tại /messaging")
+    print(f" Đã đăng ký thành công Blueprint: {blueprint3_name} tại /messaging")
 else:
-    print(f"ℹ️ Blueprint '{blueprint3_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
+    print(f" Blueprint '{blueprint3_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
 
 # Đăng ký các sự kiện SocketIO từ LocationSharing
 register_location_socket_events(socketio)
@@ -154,16 +155,10 @@ def friends_map_test():
 if __name__ == "__main__":
     print("=== System Starting ===")
 
-    # Tạo context để đảm bảo truy cập được DB
-    with app.app_context():
-        # db.create_all()  # Uncomment nếu bạn muốn tạo bảng mới (cẩn thận mất dữ liệu cũ)
-        pass
-    
-    print(print(app.config["SQLALCHEMY_DATABASE_URI"]))
-    print(f"🚀 Server đang chạy tại: http://localhost:5001")
-    print(f"🗺️  MapRouting module tại: http://localhost:5001/MapRouting/")
+    #print(print(app.config["SQLALCHEMY_DATABASE_URI"]))
+    print(f" Server đang chạy tại: http://localhost:5001")
+    end = time.time()
+    print("Thời gian khởi chạy tổng:", end - start, "giây")
 
-    # app.run(debug=True, use_reloader=False)
-    # socketio.run(app, debug=False, use_reloader=False)
     # Đổi port thành 5001
     socketio.run(app, host="0.0.0.0", port=5001, debug=False, use_reloader=False)

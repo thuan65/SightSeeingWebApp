@@ -14,18 +14,6 @@ import os
 # 1. Định nghĩa Blueprint
 search_text = Blueprint("search_text", __name__)
 
-# 2. Khởi tạo SentenceTransformer Model
-# Sử dụng mô hình tiếng Việt đã được nhắc đến
-
-# 3. Kết nối Database Engine
-# def get_db_engine():
-#     """
-#     Tạo và trả về SQLAlchemy Engine để kết nối tới images.db.
-#     Lưu ý: Engine này phải đồng nhất với cấu hình trong createDataBase.py
-#     (đã giả định là sqlite:///images.db).
-#     """
-#     return create_engine("sqlite:///instance/images.db", echo=False)
-
 # --- Logic Xử lý Dữ liệu ---
 
 def get_all_places():

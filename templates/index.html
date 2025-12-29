@@ -219,6 +219,7 @@
           gap: 10px;
           margin-bottom: 25px;
           flex-wrap: wrap;
+          justify-content: center;
       }
 
       .tab {
@@ -736,9 +737,9 @@
 
           <div class="search-container">
               <div class="search-tabs">
-                  <div class="tab active" onclick="switchTab('keyword')">Từ khóa</div>
+                  <div class="tab" onclick="switchTab('ai')">Từ khóa</div>
+                  <!-- <div class="tab active" onclick="switchTab('keyword')">Từ khóa</div> -->
                   <div class="tab" onclick="switchTab('filter')">Thành phố & Thẻ</div>
-                  <div class="tab" onclick="switchTab('ai')">Tìm bằng AI</div>
                   <div class="tab" onclick="switchTab('image')">Tìm bằng hình ảnh</div>
               </div>
 
@@ -761,7 +762,7 @@
               <div id="ai" class="search-form">
                   <div class="search-row">
                       <input type="text" id="queryText" placeholder="VD: địa điểm có nhiều cây xanh, gần biển...">
-                      <button class="search-button" onclick="searchText()">Tìm bằng AI</button>
+                      <button class="search-button" onclick="searchText()">Tìm kiếm</button>
                   </div>
               </div>
 
