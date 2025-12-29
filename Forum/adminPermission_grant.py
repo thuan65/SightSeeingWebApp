@@ -1,6 +1,6 @@
 import sqlite3
 
-DB_PATH = "instance\FlaskDataBase.db"   # ⚠️ để đúng đường dẫn DB của bạn
+DB_PATH = "instance\FlaskDataBase.db"
 
 def grant_admin(username):
     conn = sqlite3.connect(DB_PATH)
@@ -11,7 +11,7 @@ def grant_admin(username):
     user = cur.fetchone()
 
     if not user:
-        print("❌ Không tìm thấy user:", username)
+        print(" Không tìm thấy user:", username)
         conn.close()
         return
 
@@ -20,7 +20,7 @@ def grant_admin(username):
     conn.commit()
     conn.close()
 
-    print(f"✔️ Đã cấp quyền admin cho user: {username}")
+    print(f" Đã cấp quyền admin cho user: {username}")
 
 if __name__ == "__main__":
-    grant_admin("123456")     # ⚠️ sửa tên user vào đây
+    grant_admin("123456")     # sửa tên user vào đây

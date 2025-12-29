@@ -155,10 +155,11 @@ def friends_map_test():
 if __name__ == "__main__":
     print("=== System Starting ===")
 
-    #print(print(app.config["SQLALCHEMY_DATABASE_URI"]))
-    print(f" Server đang chạy tại: http://localhost:5001")
     end = time.time()
     print("Thời gian khởi chạy tổng:", end - start, "giây")
 
+    #print(print(app.config["SQLALCHEMY_DATABASE_URI"]))
+    print(f" Server đang chạy tại: http://localhost:5001")
+    
     # Đổi port thành 5001
     socketio.run(app, host="0.0.0.0", port=5001, debug=False, use_reloader=False)

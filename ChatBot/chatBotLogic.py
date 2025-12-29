@@ -29,15 +29,8 @@ with open(file_path, 'r', encoding='utf-8') as file:
 load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-# ======================================================
-#Khởi tạo model
-# ======================================================
-# Mô hình hiểu ngữ nghĩa cho tiếng Việt
-# sem_model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
-
 # Mô hình hội thoại Gemini
 gemini_model = genai.GenerativeModel("gemini-2.5-flash")
-# gemini_model = genai.GenerativeModel("gemini-live-2.5-flash")
 
 def aTemporaryCreateApp():
     app = Flask(__name__)
@@ -101,8 +94,6 @@ def detect_intent(text: str) -> str:
 
 # ======================================================
 # COSINE SIMILARITY HELPER
-# ======================================================
-
 # Trả về danh sách địa điểm giống trên một tiêu chí nhất định
 def threshold_search(query_emb):
     top_k = 50
@@ -172,20 +163,21 @@ def load_chat_history(user_id: str):
         })
     return chat_history
 
+
 # ======================================================
 # Trả lời bằng Gemini
 # ======================================================
 
+# === Trả lời khi có đủ kết quả ===
 def gemini_reply(user_message: str) -> str:
-    """
-    Gửi user_message đến Gemini và trả về phản hồi dạng chuỗi.
-    """
     try:
         response = gemini_model.generate_content(user_message, stream= True)
         return response.text
     except Exception as e:
         return f"Lỗi khi gọi Gemini API: {e}"
-    
+# === Trả lời khi có đủ kết quả ===    
+
+# === Trả lời từ ký tự ===
 def gemini_stream(user_message: str):
  
         response = gemini_model.generate_content(
@@ -195,8 +187,9 @@ def gemini_stream(user_message: str):
         for chunk in response:
             if chunk.text:
                 yield chunk.text
+# === Trả lời từ ký tự ===
 
-
+# ===================BUILD PROMPT======================
 def build_suggest_Prompt(user_message: str, places):
     raw_info = "\n".join([f"{p['name']} — {p['tags']}" for p in places])
     return raw_info
@@ -211,7 +204,7 @@ def build_safe_prompt(intent, data):
 
 
 # ======================================================
-# 7. Hàm trung tâm: Chatbot trả lời
+# 7. Chat Bot trả lời
 # ======================================================
 def chatbot_reply(user_message: str,  places, intent):
 
@@ -274,14 +267,11 @@ def chatbot_reply(user_message: str,  places, intent):
         for line in fallback_reply.split("\n"):
             yield line
 
+# ===================BUILD PROMPT======================
 
-
+# Một phiên bản rule-based fallback nếu Gemini API không dùng được.
 def rule_based_reply(user_message: str, places, intent):
-    """
-    Một phiên bản rule-based fallback nếu Gemini API không dùng được.
-    """
-
-
+    
     if intent == "suggest" and places:
         # trả lời dựa trên cơ sở dữ liệu
         return "\n".join([f"{p['name']} — {p['description']}" for p in places])  # lấy tối đa 5 địa điểm
@@ -290,9 +280,3 @@ def rule_based_reply(user_message: str, places, intent):
     else:
         # fallback generic
         return f"Xin lỗi, tôi chưa hiểu ý của bạn."
-
-
-
-
-
-print("Chat Bot loaded")

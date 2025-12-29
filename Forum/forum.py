@@ -245,7 +245,7 @@ def get_visible_posts_orm():
         })
     return result
 
-# --- ROUTE HIỂN THỊ FORUM (Bổ sung lại hàm này) ---
+# --- ROUTE HIỂN THỊ FORUM ---
 @forum.route("/forum")
 def show_forum():
     mode = request.args.get("mode")  # public / friends / private / None
@@ -283,7 +283,7 @@ def new_post():
         content = request.form.get("content")
         privacy = request.form.get("privacy", "public")
 
-        # 1️⃣ Filter toxic text
+        # Filter toxic text
         if is_toxic(title) or is_toxic(content):
             return render_template("new_post.html",
                                    error="Nội dung bài viết không phù hợp.")
@@ -305,7 +305,7 @@ def new_post():
             os.makedirs("static/checkImage", exist_ok=True)
             img.save(temp_path)
 
-            # 2️⃣ NSFW Filter (only for public posts)
+            # NSFW Filter (only for public posts)
             if privacy == "public":
                 blocked, info = is_nsfw_image(temp_path)
                 print("NSFW check:", info)
@@ -317,7 +317,7 @@ def new_post():
                         error=f"Ảnh không hợp lệ: NSFW score {info['nsfw_score']:.2f}"
                     )
 
-            # 3️⃣ Save safe image to final folder
+            # Save safe image to final folder
             base, ext = os.path.splitext(safe_name)
             final_path = os.path.join(UPLOAD_FOLDER, safe_name)
             counter = 1
@@ -329,7 +329,7 @@ def new_post():
             os.rename(temp_path, final_path)
             saved_filenames.append(safe_name)
 
-        # 4️⃣ Insert post into DB
+        # Insert post into DB
         new_post = Post(
             title=title,
             content=content,

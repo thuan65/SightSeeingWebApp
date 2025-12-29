@@ -1,3 +1,5 @@
+#This is for generate the temporary database for testing
+#OUTDATED
 import csv
 from sqlalchemy import create_engine, Column, Integer, String, Text, Float, DateTime, func, ForeignKey, UniqueConstraint, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship, backref
@@ -14,7 +16,7 @@ class Image(Base):
     description = Column(Text)
     rating = Column(Float)
     rating_count = Column(Integer, default=1) # So luong nguoi danh gia
-    address = Column(String)   # <── thêm dòng này
+    address = Column(String)
 
 
 class Feedback(Base):
