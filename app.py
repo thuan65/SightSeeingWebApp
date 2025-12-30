@@ -64,32 +64,32 @@ blueprint_name = MapRouting_bp.name  # Lấy tên định danh của Blueprint (
 
 if blueprint_name not in app.blueprints:
     app.register_blueprint(MapRouting_bp, url_prefix="/MapRouting")
-    print(f"✅ Đã đăng ký thành công Blueprint: {blueprint_name} tại /MapRouting")
+    print(f"Đã đăng ký thành công Blueprint: {blueprint_name} tại /MapRouting")
 else:
-    print(f"ℹ️ Blueprint '{blueprint_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
+    print(f"Blueprint '{blueprint_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
 
 # Đăng ký Blueprint LocationSharing
 blueprint2_name = location_bp.name
 if blueprint2_name not in app.blueprints:
     app.register_blueprint(location_bp)
-    print(f"✅ Đã đăng ký thành công Blueprint: {blueprint2_name} tại /location_sharing")
+    print(f"Đã đăng ký thành công Blueprint: {blueprint2_name} tại /location_sharing")
 else:
-    print(f"ℹ️ Blueprint '{blueprint2_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
+    print(f"Blueprint '{blueprint2_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
 
 blueprint3_name = messaging_bp.name
 if blueprint3_name not in app.blueprints:
     app.register_blueprint(messaging_bp)
-    print(f"✅ Đã đăng ký thành công Blueprint: {blueprint3_name} tại /messaging")
+    print(f"Đã đăng ký thành công Blueprint: {blueprint3_name} tại /messaging")
 else:
-    print(f"ℹ️ Blueprint '{blueprint3_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
+    print(f"Blueprint '{blueprint3_name}' đã được đăng ký từ trước (Bỏ qua để tránh lỗi).")
 
 # Đăng ký Blueprint Favorite
 blueprint4_name = favorite_bp.name
 if blueprint4_name not in app.blueprints:
     app.register_blueprint(favorite_bp)
-    print(f"✅ Đã đăng ký thành công Blueprint: {blueprint4_name} tại /favorite")
+    print(f"Đã đăng ký thành công Blueprint: {blueprint4_name} tại /favorite")
 else:
-    print(f"ℹ️ Blueprint '{blueprint4_name}' đã được đăng ký từ trước.")
+    print(f"Blueprint '{blueprint4_name}' đã được đăng ký từ trước.")
 
 # Đăng ký các sự kiện SocketIO từ LocationSharing
 register_location_socket_events(socketio)
