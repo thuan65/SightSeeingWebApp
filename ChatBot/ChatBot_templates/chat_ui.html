@@ -151,7 +151,13 @@
                 <a href="/forum">Forum</a>
                 <a href="/friends_map">Friends map</a>
 
-                <span class="nav-user">Xin chào, User</span>
+                 {% if current_user.is_authenticated %}
+                  <span class="nav-user">
+                      Xin chào, {{ current_user.username }}
+                  </span>
+              {% else %}
+                  <a href="{{ url_for('login_bp.login') }}" class="btn-primary">Đăng nhập</a>
+              {% endif %}
 
                 <button class="hamburger-btn" onclick="toggleMenu()">
                     <i class="fas fa-bars"></i>
@@ -159,7 +165,9 @@
                 <div class="dropdown-menu" id="dropdownMenu">
                     <a href="/favorites"><i class="fas fa-heart"></i> Danh sách yêu thích</a>
                     <a href="/friends"><i class="fas fa-user-friends"></i> Bạn bè</a>
-                    <a href="/logout"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    {% if current_user.is_authenticated %}
+                    <a href="/auth/logout"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -242,6 +250,11 @@
 
                 if (loadingMsg) loadingMsg.style.display = 'none';
 
+                if (!Array.isArray(data) || data.length == 0) {
+                    appendMessage(getRandomWelcome(), 'bot');
+                    return;
+                }
+
                 if (Array.isArray(data)) {
                     data.forEach(msg => {
                         appendMessage(msg.user_message, 'user');
@@ -250,7 +263,7 @@
                 }
             } catch (err) {
                 console.error("Lỗi tải lịch sử:", err);
-                if (loadingMsg) loadingMsg.innerText = "Chưa có lịch sử chat nào.";
+                if (loadingMsg) loadingMsg.innerText = "Lỗi tải lịch sử";
             }
         }
 
@@ -372,5 +385,6 @@
     <!-- JS -->
     <script src="{{ url_for('chat_bot.static', filename='js/sidebar.js') }}"></script>
     <script src="{{ url_for('chat_bot.static', filename='js/chat.js') }}"></script>
+    <script src="{{ url_for('chat_bot.static', filename='js/welcome_text.js') }}"></script>
 </body>
 </html>

@@ -36,8 +36,8 @@ def aTemporaryCreateApp():
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///FlaskDataBase.db"
     db.init_app(app)
-    return app
-
+    return app                                                              
+# ======================================================
 
 # ===================  Intent dectector =================== 
 INTENT_KEYWORDS = {
@@ -85,9 +85,6 @@ def detect_intent(text: str) -> str:
     return "chat"
 # =================== Intent dectector =================== 
 
-
-
-
 # ======================================================
 #Gợi ý địa điểm từ cơ sở dữ liệu
 # ======================================================
@@ -115,9 +112,11 @@ def query_places(user_query: str) -> dict:
     faiss.normalize_L2(query_emb)  # nếu index đã normalize
     topK_Similarity_List = threshold_search(query_emb)
 
+# DEBUG AREA
     # print("############################")
     # for r in topK_Similarity_List:
     #     print(r["id"], r["score"])
+# DEBUG AREA
 
     results = [] 
 
@@ -154,7 +153,7 @@ def load_chat_history(user_id: str):
     # Lấy tất cả message của user, sắp xếp theo thời gian
     logs = ConversationHistory.query.filter_by(user_id=user_id).order_by(ConversationHistory.timestamp).all()
     
-    # Tạo list message theo format OpenAI / Gemini
+    # Tạo list message theo format Gemini
     chat_history = []
     for log in logs:
         chat_history.append({
@@ -171,7 +170,7 @@ def load_chat_history(user_id: str):
 # === Trả lời khi có đủ kết quả ===
 def gemini_reply(user_message: str) -> str:
     try:
-        response = gemini_model.generate_content(user_message, stream= True)
+        response = gemini_model.generate_content(user_message)
         return response.text
     except Exception as e:
         return f"Lỗi khi gọi Gemini API: {e}"
@@ -188,6 +187,43 @@ def gemini_stream(user_message: str):
             if chunk.text:
                 yield chunk.text
 # === Trả lời từ ký tự ===
+
+# =================== Enity dealing =================== 
+def extract_entities(user_message):
+    prompt = f"""
+    Trích xuất entity từ câu sau dưới dạng JSON.
+    CÁC TRƯỜNG:
+    - place_name (string | null)
+    - place_type (string | null)
+    - location (string | null)
+    - attribute (string | null)
+
+    Câu: "{user_message}"
+    """
+
+    result = gemini_reply(prompt)
+    return json.loads(result)
+# =================== Tách Enity =================== 
+# =================== Enity dealing =================== 
+
+# =================== Context dealing =================== 
+def resolve_entities(entities, context):
+    if entities["place_name"] is None:
+        entities["place_name"] = context.get("last_place")
+
+    return entities
+
+
+def update_context(context, intent, entities, places):
+    context["last_intent"] = intent
+
+    if entities.get("place_name"):
+        context["last_place"] = entities["place_name"]
+
+    if places:
+        context["last_places"] = places[:3]  # lưu vài chỗ gần nhất
+
+# =================== Context dealing =================== 
 
 # ===================BUILD PROMPT======================
 def build_suggest_Prompt(user_message: str, places):

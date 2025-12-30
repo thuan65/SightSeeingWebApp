@@ -55,7 +55,7 @@ def load_user(user_id):
 
 
 # =========================================================
-# 3. ĐĂNG KÝ BLUEPRINT (AN TOÀN TUYỆT ĐỐI)
+# 3. ĐĂNG KÝ BLUEPRINT
 # =========================================================
 # Logic này kiểm tra xem Blueprint đã tồn tại trong app chưa.
 # Nếu create_app() đã đăng ký rồi thì bỏ qua, nếu chưa thì đăng ký mới.

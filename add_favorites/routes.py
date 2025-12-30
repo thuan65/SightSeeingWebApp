@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify, url_for, redirect, session, render_template
-#from createDataBase import Favorite, Image, UserSession
 from extensions import db
 from models import Favorite, Image
 
